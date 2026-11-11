@@ -1,0 +1,31 @@
+Unofficial DeepSeek-V4.1-Flash Spark recipe
+
+This package is not affiliated with DeepSeek. No endorsement is implied.
+
+Engine: Andy Shu (upstream engine, Copyright (c) 2026 Andy Shu) and Picom
+(Pico optimizations/fork), MIT. Source:
+https://github.com/ofan/pico-dgx-ds4
+Direct Pico parent: https://github.com/Picom-code/pico-dgx-ds4
+Pinned production engine: d04020cc1193364e042314a2ad8e0b8e6bccc46e
+The complete engine MIT notice is preserved in licenses/ENGINE-MIT.txt.
+Preserve the upstream tree's NOTICE and all third-party notices in a built image.
+
+Model: DeepSeek, DeepSeek-V4.1-Flash-1017, Copyright (c) 2023 DeepSeek,
+MIT (code and model weights). Source:
+https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017
+Revision: 1bae0e1088993b9b82de08f59de5be5a34e42170
+The publisher's complete MIT notice is preserved in licenses/MODEL-MIT.txt.
+No model weights are contained in this Git repository.
+
+Optional steering vector: msuiche, GLP-39 for stock 1017, MIT as declared
+by the publisher's public model-card metadata. Source:
+https://huggingface.co/msuiche/DeepSeek-V4.1-Flash-1017-abliterated-cyber-GLP-39-L1-39-a0.75
+Keep the publisher's notices with any separately obtained vector. This scaffold
+contains neither vector tensors nor a manufactured substitute license notice.
+
+Recipe code and documentation: ofan, MIT; see LICENSE.
+
+CUDA, NVIDIA runtime components, Linux distribution packages, RDMA libraries,
+Rust crates, reference code and any other dependencies retain their own licenses.
+The MIT statements above do NOT relicense those components. A distributable
+image requires a complete dependency/license inventory before publication.

@@ -1,0 +1,6 @@
+/work/
+/bundle/
+/build/
+/dist/
+__pycache__/
+*.pyc

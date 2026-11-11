@@ -1,0 +1,14 @@
+{
+  "verified_digest": "sha256:bc0d7b73ed1d6e5408f9707d613b5c7c8a42f7c23c07b061f8aadafa9f22b3bc",
+  "registry_digest": "sha256:bc0d7b73ed1d6e5408f9707d613b5c7c8a42f7c23c07b061f8aadafa9f22b3bc",
+  "media_type": "application/vnd.docker.distribution.manifest.v2+json",
+  "config_digest": "sha256:187b53d50685f7e7b6ae65e7908b07e673315557ad8a2b042809b45554f68281",
+  "config_bytes": 85742,
+  "layer_count": 68,
+  "compressed_layer_bytes": 10785944568,
+  "manifest_bytes": 14567,
+  "source_artifact": "pico-dsgx10:2026.11.08-sampler-open-unit-r1",
+  "verified_by": "Read-only registry manifest GET by digest and by version tag; both matched",
+  "observed_date": "2026-11-11",
+  "compressed_layers_plus_config_bytes": 10786030310
+}

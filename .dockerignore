@@ -1,0 +1,9 @@
+*
+!bundle/
+!bundle/**
+!scripts/
+!scripts/entrypoint.py
+!LICENSE
+!NOTICE
+!licenses/
+!licenses/**
