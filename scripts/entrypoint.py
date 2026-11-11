@@ -26,10 +26,12 @@ def steering_environment(parent, mode):
     return env
 
 def check(path, expected):
-    if not expected or hashlib.sha256(Path(path).read_bytes()).hexdigest()!=expected:
+    with Path(path).open('rb') as stream:
+        actual=hashlib.file_digest(stream,'sha256').hexdigest()
+    if not expected or actual!=expected:
         raise ValueError('Artifact hash mismatch: '+Path(path).name)
 
-def command_plan(rank, fleet, listen, spill):
+def command_plan(rank, fleet, listen, spill, vision=True):
     if rank not in range(4):
         raise ValueError('Rank must be 0..3')
     socket='/run/pico/engine.sock'
@@ -48,6 +50,10 @@ def command_plan(rank, fleet, listen, spill):
                          '--tokenizer',model+'/tokenizer.json','--model-name','deepseek-v4.1-flash',
                          '--encoding','1017','--temperature','1','--top-p','1',
                          '--session-cache-tokens','160000000'])
+    if rank==0 and vision:
+        commands[1].extend(['--vision-addr','127.0.0.1:18950'])
+        commands.insert(0,['python3','/opt/package/vision/vision_encoder.py','--model','/opt/package/vision',
+                           '--device','cuda','--host','127.0.0.1','--port','18950','--max-images','16'])
     return commands
 
 def supervise(commands, env):
@@ -88,19 +94,27 @@ def main():
     p.add_argument('--rank',type=int,choices=range(4),required=True)
     p.add_argument('--fleet',required=True)
     p.add_argument('--steering',choices=('off','glp39'),default='off')
+    p.add_argument('--no-vision',action='store_true',help='Disable image side encoder/frontend ingress')
     p.add_argument('--listen',default='0.0.0.0:8888')
     p.add_argument('--spill',default='/var/lib/pico')
     a=p.parse_args()
     profile=json.loads(Path('/opt/package/profile.json').read_text())
     check('/opt/package/bin/dsgb10_rank',profile['engine_sha256'])
     check('/opt/package/bin/dsfront',profile['frontend_sha256'])
+    if not a.no_vision and a.rank==0:
+        for name,sha in profile['vision_files_sha256'].items():
+            if Path(name).is_absolute() or '..' in Path(name).parts:raise ValueError('Unsafe vision path')
+            check('/opt/package/vision/'+name,sha)
+        check('/opt/package/vision/vision.safetensors',profile['vision_pack_sha256'])
     if a.steering=='glp39':
         check('/opt/package/vectors/glp39.gguf',profile.get('glp39_sha256'))
     if not Path(a.fleet).is_file():
         p.error('A site-specific fleet file must be supplied')
     Path('/run/pico').mkdir(parents=True,exist_ok=True)
     Path(a.spill).mkdir(parents=True,exist_ok=True)
-    return supervise(command_plan(a.rank,a.fleet,a.listen,a.spill),steering_environment(os.environ,a.steering))
+    env=steering_environment(os.environ,a.steering)
+    env.update(VISION_SDPA_OPT_IN='0',VISION_PRELOAD='1')
+    return supervise(command_plan(a.rank,a.fleet,a.listen,a.spill,vision=not a.no_vision),env)
 
 if __name__=='__main__':
     raise SystemExit(main())

@@ -33,20 +33,20 @@ class ScaffoldTests(unittest.TestCase):
     def test_unknown_mode_refused(self):
         with self.assertRaises(ValueError):entry.steering_environment({},'unknown')
     def test_frontend_only_on_rank_zero(self):
-        self.assertEqual([len(entry.command_plan(i,'fleet.conf','listener','spill')) for i in range(4)],[2,1,1,1])
+        self.assertEqual([len(entry.command_plan(i,'fleet.conf','listener','spill',vision=False)) for i in range(4)],[2,1,1,1])
     def test_all_ranks_use_own_assets(self):
         for i in range(4):
-            command=entry.command_plan(i,'fleet.conf','listener','spill')[0]
+            command=entry.command_plan(i,'fleet.conf','listener','spill',vision=False)[0]
             self.assertIn(f'/opt/package/model/rank{i}.dsw',command)
             self.assertIn(f'/opt/package/model/engram-l14-r{i}of4.bin',command)
     def test_rank_rejected(self):
         with self.assertRaises(ValueError):entry.command_plan(4,'fleet.conf','listener','spill')
     def test_frozen_settings(self):
-        c=entry.command_plan(0,'fleet.conf','listener','spill')[0]
+        c=entry.command_plan(0,'fleet.conf','listener','spill',vision=False)[0]
         for flag,value in [('--max-ctx','1048576'),('--slots','16'),('--session-gib','3'),('--disk-gib','160')]:
             self.assertEqual(c[c.index(flag)+1],value)
     def test_production_frontend_defaults(self):
-        c=entry.command_plan(0,'fleet.conf','listener','spill')[1]
+        c=entry.command_plan(0,'fleet.conf','listener','spill',vision=False)[1]
         for flag,value in [('--encoding','1017'),('--temperature','1'),('--top-p','1'),('--session-cache-tokens','160000000')]:
             self.assertEqual(c[c.index(flag)+1],value)
     def test_artifact_hash_success(self):

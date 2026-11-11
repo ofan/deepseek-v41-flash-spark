@@ -9,6 +9,8 @@ ROOT=Path(__file__).resolve().parents[1]
 PATTERNS = {
     'internal-domain': re.compile('lab'+r'\.tf', re.I),
     'internal-routing-reference': re.compile('llm'+'-proxy', re.I),
+    'tailnet-domain': re.compile(r'\.'+'ts'+r'\.net', re.I),
+    'credential-path': re.compile(r'(?:/run/'+r'secrets/|\.se'+r'crets/|\.s'+r'sh/|/gh/'+r'hosts\.yml)', re.I),
     'personal-home-path': re.compile(r'/(?:home|Users)/'),
     'access-secret': re.compile(r'gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----'),
     'special-token-string': re.compile(r'<[|｜]|place_'+'holder_mm_span|deepseek_'+'image'),

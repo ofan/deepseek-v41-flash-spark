@@ -15,7 +15,7 @@ def digest(path):
     return h.hexdigest()
 
 def checked(path, expected):
-    if path.is_symlink() or not path.is_file() or digest(path) != expected:
+    if path.is_symlink() or any(p.is_symlink() for p in path.parents) or not path.is_file() or digest(path) != expected:
         raise ValueError('Missing, linked or hash-mismatched artifact: '+str(path.name))
 
 def main():
@@ -26,9 +26,9 @@ def main():
     checked(b/'bin/dsgb10_rank',lock['engine_binary_sha256'])
     checked(b/'bin/dsfront',lock['frontend_binary_sha256'])
     receipt=json.loads((b/'model/asset-hashes.json').read_text())
-    if (receipt.get('model'),receipt.get('revision'),receipt.get('engine_commit')) != (lock['model_repository'],lock['model_revision'],lock['engine_commit']):
+    if (receipt.get('model'),receipt.get('revision'),receipt.get('verification_engine_commit',receipt.get('engine_commit'))) != (lock['model_repository'],lock['model_revision'],lock['engine_commit']):
         raise ValueError('Asset receipt has incorrect provenance')
-    if receipt.get('all_conversion_commands_exit_zero') is not True:
+    if receipt.get('all_conversion_commands_exit_zero') is not True or receipt.get('all_verification_commands_exit_zero',True) is not True:
         raise ValueError('Conversion/verification is incomplete')
     required={'config.json','tokenizer.json','engram_hashmap.bin'}
     required.update('rank%d.dsw'%i for i in range(4))
@@ -41,13 +41,23 @@ def main():
         checked(b/'model'/name,sha)
     if not (b/'notices/engine-NOTICE').is_file():
         raise ValueError('The authentic upstream engine NOTICE must be staged')
+    vision=b/'vision'
+    checked(vision/'vision.safetensors',lock['vision_pack_sha256'])
+    vr=json.loads((vision/'asset-hashes.json').read_text())
+    if (vr.get('model'),vr.get('revision'),vr.get('engine_commit'),vr.get('pack_sha256')) != (lock['model_repository'],lock['model_revision'],lock['engine_commit'],lock['vision_pack_sha256']):
+        raise ValueError('Vision receipt has incorrect provenance')
+    required_vision={'vision.safetensors','config.json','model.safetensors.index.json','inference/vision.py','inference/image_processor.py','vision_encoder.py','image_io.py'}
+    if not required_vision <= vr.get('sha256',{}).keys():raise ValueError('Incomplete vision receipt')
+    for name,sha in vr['sha256'].items():
+        if Path(name).is_absolute() or '..' in Path(name).parts:raise ValueError('Unsafe vision path')
+        checked(vision/name,sha)
     vector=b/'vectors/glp39.gguf'
     if vector.exists():
         checked(vector,lock['optional_glp39_sha256'])
     profile={k:lock[k] for k in ('engine_commit','frontend_commit','model_repository','model_revision')}
     profile.update(engine_sha256=lock['engine_binary_sha256'], frontend_sha256=lock['frontend_binary_sha256'],
                    glp39_sha256=lock['optional_glp39_sha256'] if vector.exists() else None,
-                   steering_default='off')
+                   steering_default='off', vision_pack_sha256=lock['vision_pack_sha256'], vision_files_sha256=vr['sha256'])
     (b/'profile.json').write_text(json.dumps(profile,indent=2)+'\n')
     print('Profile written only after qualified binary and asset hash checks; no image built.')
 

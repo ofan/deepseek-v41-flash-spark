@@ -14,7 +14,7 @@ The implementation preserves the reference's 320-thread × 16-column projection/
 
 ## Enable / disable
 
-The scaffold supervisor has an explicit runtime flag on **every rank**:
+The bundled-image supervisor has an explicit runtime flag on **every rank**:
 
 ```sh
 # Default, including when the optional vector is in the image:
@@ -33,8 +33,10 @@ Author: **msuiche**. Public source: [GLP-39 model repository](https://huggingfac
 
 `glp.deepseek-v41-flash-1017-GLP-39-L1-39-a0.75.gguf`
 
-The tested full-file SHA256 is `9c66d47701e0ceb42c33906f2d3789c0f1f16b21e7d97185f20f7f3f09fbf5cf` (homeinfra `docs/operations/evidence/pico-glp-upstream-prepare-20261107/README.md`). Verify that exact digest before bundling as `bundle/vectors/glp39.gguf`. The publisher's public model-card metadata declares **MIT**; the base model is also MIT. The vector is optional and is **not downloaded or included in this Git scaffold**. Retain author/license notices when obtaining it; any hosting access terms must also be respected.
+The tested full-file SHA256 is `9c66d47701e0ceb42c33906f2d3789c0f1f16b21e7d97185f20f7f3f09fbf5cf` (homeinfra `docs/operations/evidence/pico-glp-upstream-prepare-20261107/README.md`). Verify that exact digest before bundling as `bundle/vectors/glp39.gguf`. The publisher's public model-card metadata declares **MIT**; the base model is also MIT. The vector is optional and is **not downloaded or included in this Git repository**. Retain author/license notices when obtaining it; any hosting access terms must also be respected.
 
-## Recorded validation, not fresh scaffold validation
+## Recorded validation, not fresh recipe validation
 
-`docs/operations/evidence/pico-glp-upstream-prepare-20261107/README.md` records **0 reference-arithmetic differences** over 798,720 folded values and 156 dot rows. The sampler production qualification, `docs/operations/evidence/pico-token-corruption-20261108/README.md`, records **9/9 OFF** and **9/9 alpha-zero** output identity including the 1M needle. Quality/stability and benchmark provenance are in [benchmarks](benchmarks.md). A newly packaged image still needs its own acceptance; these results do not automatically qualify it.
+`docs/operations/evidence/pico-glp-upstream-prepare-20261107/README.md` records **0 reference-arithmetic differences** over 798,720 folded values and 156 dot rows. The current vision qualification at homeinfra `cf6e8b67c`, `docs/operations/evidence/pico-image-support-20261111/retrial-spark-only/REPORT.md`, records **9/9 OFF + 9/9 alpha-zero** bit-identical identity (including the 1M needle) and **88/88 image QA with steering OFF + 88/88 with GLP-39**. Native image support and steering are independent switches. The generic launcher enables vision by default while leaving steering OFF. Image-bearing histories are intentionally uncached; changing the steering configuration is not an image-prefix cache feature.
+
+The exact production mirror retains its existing production defaults; mirroring its digest cannot change them. **Public/default-OFF applies to this recipe's explicit supervisor**, not a claim that the mirrored production launcher is OFF. Never launch the mirror unchanged assuming this default. A newly bundled image still requires its own acceptance; see [build gaps](build.md#residual-gaps).

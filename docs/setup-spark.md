@@ -33,9 +33,13 @@ Pico uses **native verbs**, not NCCL environment settings, for production collec
 
 Before model launch, verify neighbor connectivity, jumbo MTU end to end, all HCA ports ACTIVE, stable link/error counters and Pico's own ring/collective correctness check. These checks are necessary but not a replacement for model acceptance.
 
+## Native vision operating profile
+
+The current vision build uses the stock checkpoint's own tower on rank0 and broadcasts image spans to all four ranks. Reserve additional rank0 encoder/activation memory; **0.904 GiB** is only BF16 weight payload, not the peak memory budget. Keep the canonical attention path (`VISION_SDPA_OPT_IN=0`) and serialized image encoder. Six-fixture QA passed **88/88 OFF and 88/88 GLP-39** on the qualified production image; this is not a claim that any new all-in-one layout is qualified.
+
 ## Storage / operating profile
 
-Retain per-rank model and Engram assets, **160 GiB** writable saved-session spill and the **32 GiB** free-space guard. Spill is for saved-session snapshots, not a reduction of active KV capacity. An image carrying all four ranks will have a very different disk footprint from the historical engine-only image. Measure actual storage before any future deployment.
+Retain per-rank model and Engram assets, **160 GiB** writable saved-session spill and the **32 GiB** free-space guard. Spill is for saved-session snapshots, not a reduction of active KV capacity. An image carrying all four ranks will have a very different disk footprint from the production runtime/vision image with external text assets. Measure actual storage before any future deployment.
 
 ## Provenance (generic facts only)
 
@@ -47,4 +51,6 @@ Homeinfra branch `glp/pico-glp-steer-20261106`:
 - `docs/operations/evidence/pico-session-cache-fix-20261106/README.md`: spill and free-space guard.
 - Pinned engine `ds41f-4xgx10-switchless/README.md`: compiler/runtime prerequisites and fleet-file keys.
 
-These documents describe the declarative fleet configuration without publishing fleet addresses, device identities, access instructions or credentials. No host was inspected or changed to prepare this scaffold.
+These documents describe the declarative fleet configuration without publishing fleet addresses, device identities, access instructions or credentials. No host was inspected or changed to finish this recipe.
+
+Current-serving authority: homeinfra `cf6e8b67c`, `docs/operations/evidence/pico-image-support-20261111/retrial-spark-only/REPORT.md`. The older host facts above remain historical compatibility evidence, not a fresh host audit.

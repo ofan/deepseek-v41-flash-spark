@@ -24,6 +24,7 @@ def main():
     p.add_argument('--build', type=Path, default=ROOT / 'work/compiled/engine')
     p.add_argument('--output', type=Path, default=ROOT / 'bundle/model')
     p.add_argument('--execute', action='store_true')
+    p.add_argument('--reuse', action='store_true',help='Verify existing receipted text assets without rewriting ranks/Engram')
     a = p.parse_args()
     lock = json.loads((ROOT / 'sources.lock.json').read_text())
     if a.checkpoint_revision != lock['model_revision']:
@@ -37,6 +38,8 @@ def main():
             [str(build/'engram/engram_pack'), str(ck), str(out), str(rank)],
         ]
     commands += [['python3', str(a.source.resolve()/lock['source_directory']/'engine/engram/py/make_hashmap_stdlib.py'), str(ck), str(out/'engram_hashmap.bin')]]
+    if a.reuse:
+        commands=[c for c in commands if Path(c[0]).name=='dsw_verify']
     if not a.execute:
         print(json.dumps({'mode':'plan-only', 'commands':commands}, indent=2))
         return
@@ -45,26 +48,40 @@ def main():
         p.error('Converter source is not the production engine commit')
     if subprocess.check_output(['git','-C',str(a.source),'status','--porcelain'], text=True).strip():
         p.error('Converter source is dirty')
-    if out.exists():
+    prior=None
+    if a.reuse:
+        if not (out/'asset-hashes.json').is_file():p.error('Reuse requires the original authentic conversion receipt')
+        prior=json.loads((out/'asset-hashes.json').read_text())
+        if (prior.get('model'),prior.get('revision'))!=(lock['model_repository'],lock['model_revision']):p.error('Wrong reused checkpoint provenance')
+        if prior.get('all_conversion_commands_exit_zero') is not True:p.error('Original conversion was incomplete')
+        for name,expected in prior.get('sha256',{}).items():
+            if Path(name).name!=name:p.error('Unsafe original asset name')
+            if sha(out/name)!=expected:p.error('Reused asset no longer matches its original receipt')
+    elif out.exists():
         p.error('Refusing to overwrite an existing output directory')
     # Revision is operator-supplied provenance, not a substitute for verified HF snapshot acquisition.
     for f in ('config.json', 'tokenizer.json'):
         if not (ck/f).is_file():
             p.error('Required checkpoint metadata is absent')
-    out.mkdir(parents=True)
+    if not a.reuse:out.mkdir(parents=True)
     logs = ROOT / 'work/conversion-logs'
     logs.mkdir(parents=True, exist_ok=True)
     for i, command in enumerate(commands):
-        with (logs/f'step-{i:02d}.log').open('wb') as log:
+        with (logs/f'{"reuse" if a.reuse else "convert"}-step-{i:02d}.log').open('wb') as log:
             subprocess.run(command, check=True, stdout=log, stderr=subprocess.STDOUT)
-    for name in ('config.json','tokenizer.json','tokenizer_config.json','generation_config.json','special_tokens_map.json'):
+    for name in (() if a.reuse else ('config.json','tokenizer.json','tokenizer_config.json','generation_config.json','special_tokens_map.json')):
         if (ck/name).is_file():
             shutil.copyfile(ck/name, out/name)
-    hashes = {f.name: sha(f) for f in sorted(out.iterdir()) if f.is_file()}
+    hashes = {f.name: sha(f) for f in sorted(out.iterdir()) if f.is_file() and f.name!='asset-hashes.json'}
     receipt = {'model':lock['model_repository'], 'revision':lock['model_revision'], 'engine_commit':head,
-               'all_conversion_commands_exit_zero':True, 'sha256':hashes}
+               'all_conversion_commands_exit_zero':True, 'all_verification_commands_exit_zero':True,
+               'verification_engine_commit':head, 'sha256':hashes}
+    if prior:
+        receipt.update(engine_commit=prior['engine_commit'],
+                       conversion_engine_commit=prior.get('conversion_engine_commit',prior['engine_commit']),
+                       prior_receipt_sha256=sha(out/'asset-hashes.json'))
     (out/'asset-hashes.json').write_text(json.dumps(receipt, indent=2)+'\n')
-    print('All four ranks converted and verified; Engram tables materialized. See work/conversion-logs.')
+    print('All four ranks verified; '+('reused text/Engram bytes unchanged.' if a.reuse else 'conversion and Engram materialization complete.')+' See work/conversion-logs.')
 
 if __name__ == '__main__':
     main()

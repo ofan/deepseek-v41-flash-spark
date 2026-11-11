@@ -1,119 +1,151 @@
-# Build recipe and provenance map
+# Build the native-vision recipe
 
-## Scope and honest reproducibility boundary
+## Two different artifacts — do not confuse them
 
-Pinned engine: `ofan/pico-dgx-ds4` at **`d04020cc1193364e042314a2ad8e0b8e6bccc46e`**. Pinned production frontend source: **`5559a1a611cf25af27e509d179c62bdc7b4f31fd`** from the same fork. Source subdirectory: `ds41f-4xgx10-switchless`. Keep all GLP, serving/cache, DSML and sampler fixes; do not substitute one standalone contribution branch for the production lineage.
+1. **Exact private production mirror**: `ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1@sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9`. Same manifest/config/layers as the qualified production artifact, including its existing launcher/defaults. **Transfer failed; this reference is not published yet.** Its text rank/Engram assets are externally mounted. It is not an all-in-one model package.
+2. **All-in-one bundle candidate**: the Dockerfile combines the qualified runtime/binaries, independently verified official stock rank files/Engram, compact vision pack, publisher preprocessing/ViT modules and optional GLP-39 into a **new** image. Its generic supervisor defaults steering OFF and vision ON. Adding assets/changing launcher changes the digest. **Not built or fleet-qualified in this task.**
 
-Model: `deepseek-ai/DeepSeek-V4.1-Flash-1017` at **`1bae0e1088993b9b82de08f59de5be5a34e42170`**. Conversion changes storage layout, **not quantization or tensor values**. The public default is GLP OFF; optional GLP-39 is checked independently.
+No script builds on a Spark, deploys, changes a route or pushes an image automatically. Use an off-serving build host; TP4 model acceptance requires a separate compatible four-rank ring or a separately authorized window.
 
-The Dockerfile packages verified inputs into a **new all-in-one candidate**. It does not recreate the historical OCI digest: that image used inherited runtime layers and separately supplied model assets. Nor is an arbitrary clean compilation promised to reproduce the qualified production binary: the original release used a hash-guarded relink with preserved native r5 inputs. A release must close the gaps below, not label a successful compile as exact reproduction.
+## Locked inputs
 
-## Sequence (commands supplied, not executed in this scaffold turn)
+See `sources.lock.json` (full revisions/hashes):
 
-### 1. Fetch pinned code only
+- Engine AND frontend: `ofan/pico-dgx-ds4`, `feature/native-vision-20261108`, **b7c3eb5b12a030725bfb0186d27065bc6e376685**. This retains GLP, DSML, sampler, cache and native-vision fixes together. Do not substitute a contribution-only branch.
+- Stock text and native vision weights: `deepseek-ai/DeepSeek-V4.1-Flash-1017`, revision **1bae0e1088993b9b82de08f59de5be5a34e42170**. Lossless layout conversion, no re-quantization, no training, no baked uncensoring.
+- Compact vision: **266 BF16 tensors**, **970,536,960 payload bytes** (0.904 GiB rounded), pack SHA256 **b07abf470c4107ba3029fedb9de1fd8823a40041f99d0d278e536b06ed5bb446**. The pack contains tower + trained aligner + three learned delimiter vectors. The text rank files already contain the visual routing biases and need no vision-related reconversion.
+- Optional authentic msuiche GLP-39: SHA256 **9c66d47701e0ceb42c33906f2d3789c0f1f16b21e7d97185f20f7f3f09fbf5cf**; tested alpha0.75/layers1–39. See [license/source](steering.md).
+
+## 1. Fetch source, compile or reuse exact qualified binaries
 
 ```sh
 bash scripts/fetch-sources.sh
-```
-
-This obtains separate read-only-by-convention engine/frontend source checkouts under ignored `work/source/`; existing destinations are refused. No weights, vectors or images are fetched.
-
-### 2. Compile on an off-serving ARM64 CUDA build machine
-
-```sh
+# Off-serving ARM64 CUDA13 builder only; creates source-build candidate:
 bash scripts/build-engine.sh
 ```
 
-This mirrors the pinned engine's CMake + locked Cargo commands, producing a **source-build candidate** in `work/compiled/`. Production byte identity is a separate step. The production engine binary SHA256 is `644b40acac23cc7d0455723eff5370ecb88d9d30f9b5ab2c1d82b3a773dfebe9`; frontend SHA256 is `530d6c2512eeccbe50d7826ede5b2a1c93428998c273112a7eaa20a656173eb4`. `prepare-bundle.py` refuses any other binaries. Do not bypass that check to make a fresh compilation appear qualified.
+The source script checks clean pinned checkouts, builds CMake engine and locked Cargo frontend and copies upstream notices. Prerequisites are in [setup](setup-spark.md). A clean source build is **not guaranteed to reproduce qualified binary bytes**: production used a hash-preserving cross-relink with 13 preserved native inputs. The exact original input/sysroot/builder bundle is not published here. The validator rejects binaries other than:
 
-For the historical cross-build, use the qualified aarch64 cross toolchain, preserve the 13 native r5 linker inputs, verify their committed hash manifest, reconstruct r5's control binary **first**, then link only the updated model archive. The baseline control must match `6eb1b00cd14a5f280b021d230047aeed5be04cf61d1fa142d1244b91c8145c85`. Those native inputs/toolchain are **not shipped in this scaffold**; therefore the exact cross-relink is a named release gap rather than a fabricated runnable command.
+- Engine `b12cbb69d30976d2a378f258fb2f75eee36da251ced1530f47ccea56993286b2`.
+- Frontend `860ec4f3a88c3b6833b88f03829728f537a498deee67cb540f9bd50ad72223f5`.
 
-### 3. Obtain the official checkpoint separately
+**Scripted qualified-binary route once the mirror is available:**
 
-Use the Hugging Face client against the exact locked model/revision into `work/checkpoint`, with your own authorized access where needed. Do not use the uncensored community checkpoint, a moving main revision, the retired sparse conversion staging format or a tokenizer from another model. The input snapshot must include all tensors needed to materialize the Engram tables.
+```sh
+bash scripts/stage-qualified.sh
+```
 
-**No download command runs automatically. No weights were downloaded to prepare this repository.** The converter's revision option is an assertion of acquisition provenance, not a cryptographic substitute for pinning and verifying the downloaded snapshot.
+This pulls the digest-pinned mirror on the build host, creates but **never starts** a disposable container, extracts `/opt/pico/dsgb10_rank`, `/opt/pico/dsfront` and `/opt/pico/vision/vision.safetensors` into ignored `bundle/`, checks their three qualified hashes and removes the never-started container. It refuses existing destination artifacts. This preserves qualified binaries instead of pretending a new compiler produced the same bytes. Source remains pinned for audit/rebuild.
 
-### 4. Convert all ranks and materialize Engram
+**Manual step if using a new source build:** obtain the original qualified 13-input/linker/sysroot bundle and original relink procedure from its custodian, verify the native-input manifest/control binary, then link the changed model/Engram/server modules exactly as recorded. If unavailable, keep the source-build result separate and independently qualify it; do not edit the expected hashes to make it appear production-identical. No public download URL or builder digest is known, so none is invented.
 
-First inspect the plan (default; no tensor I/O or GPU execution):
+## 2. Acquire the pinned official snapshot
+
+Install the Hugging Face client on a build host and acquire the exact revision with your own authorized access:
+
+```sh
+hf download deepseek-ai/DeepSeek-V4.1-Flash-1017 \
+  --revision 1bae0e1088993b9b82de08f59de5be5a34e42170 --local-dir work/checkpoint
+```
+
+This is an explicit large download, **not executed in this task**. Keep acquisition/verification receipts. Revision arguments in our converters assert provenance; they cannot cryptographically prove an arbitrary local directory came from that revision. Include original metadata and `inference/{vision.py,image_processor.py}`. Never print tokenizer contents or inference captures into a text-only model session.
+
+## 3. Text rank files and Engram — only for a new standalone package
+
+```sh
+# Plan-only by default, no assets read or created:
+python3 scripts/convert-assets.py --checkpoint work/checkpoint \
+  --checkpoint-revision 1bae0e1088993b9b82de08f59de5be5a34e42170
+# Add --execute only on the prepared off-serving converter host.
+```
+
+For each rank0–3 the script runs the pinned `dsw_convert`, every-byte `dsw_verify --threads 4` and `engram_pack`; then the pinned `make_hashmap_stdlib.py`. It preserves metadata and writes a file-hash receipt only after every command exits0. Review the verifier logs: require zero bad tensors and every-byte comparison, not load/CRC alone. Conversion timestamps can change full-file DSW hashes without changing tensor bytes.
+
+If reusing already verified stock text ranks/Engram, **do not reconvert them just to add vision**. Stage the four DSW files, eight Engram shards, hash map, metadata and original authentic conversion receipt/logs. Then use:
 
 ```sh
 python3 scripts/convert-assets.py --checkpoint work/checkpoint \
-  --checkpoint-revision 1bae0e1088993b9b82de08f59de5be5a34e42170
-# Only on an appropriate off-serving conversion host, add --execute.
+  --checkpoint-revision 1bae0e1088993b9b82de08f59de5be5a34e42170 --reuse
+# Add --execute only on the prepared build host; runs FOUR dsw_verify commands.
 ```
 
-The executable sequence mirrors the pinned engine documentation:
+Reuse mode checks every original file hash, runs every-byte verification with the current pinned tools against the pinned checkpoint, retains the original conversion commit and receipt hash, and records the new verification commit separately. It does **not** rewrite rank/Engram files or relabel their converter lineage. Without authentic acquisition/conversion receipts, reconstruct provenance from the original verified logs and source acquisition records before using this path; a self-authored hash list alone does not prove official model identity.
 
-- `dsw_convert --ckpt CHECKPOINT --rank R --out rankR.dsw`, for ranks 0–3.
-- `dsw_verify --ckpt CHECKPOINT --file rankR.dsw --threads 4`, every rank. Require every byte verified, zero bad tensors, not just a successful load or CRC.
-- `engram_pack CHECKPOINT OUTPUT R`, two shards for each rank.
-- `make_hashmap_stdlib.py CHECKPOINT OUTPUT/engram_hashmap.bin`, shared map.
-- Preserve the matching config/tokenizer metadata; record hashes and converter logs. The script never prints or includes tokenizer contents in documentation.
+## 4. Prepare compact vision (no text rank changes)
 
-The original rollout reused already-materialized Engram data and eventually removed the full source snapshot. A new standalone package must materialize those tables from the full pinned checkpoint or obtain independently verified equivalents. Whole-file DSW hashes vary with the converter's creation timestamp; the tensor-byte verifier, not an expectation of identical creation headers, establishes conversion equivalence.
+```sh
+python3 scripts/prepare-vision.py --checkpoint work/checkpoint \
+  --checkpoint-revision 1bae0e1088993b9b82de08f59de5be5a34e42170
+# Plan-only; add --execute on the prepared build host.
+```
 
-### 5. Stage qualified binaries, notices and optional vector
+The wrapper verifies the fork revision, stages the checkpoint's exact `vision.py`, `image_processor.py` and config, plus the fork's `vision_encoder.py` / bounded `image_io.py`. If an exact pack was extracted by `stage-qualified.sh`, it verifies/reuses it. Otherwise it derives the **266-tensor inventory and raw headers** from the pre-obtained pinned snapshot and invokes the fork's existing **`tools/vision/extract_pack.py`**. That exporter fetches exact HTTP206 tensor ranges from the pinned publisher revision, without reconverting/downloading text tensor payloads. The wrapper requires the qualified **full-file pack SHA256**, writes a compact-only index and hashes every vision runtime file. No replacement encoder/projector or synthetic weights are permitted.
 
-Expected ignored build context:
+The public-source inventory wrapper has offline header/schema tests; its full ~1GiB extraction was **not executed here**. If it fails the qualified pack hash, stop; preserve logs and compare header ordering/serialization against the pinned exporter before claiming byte identity. The qualified-mirror extraction is the exact-byte fallback, **not a generated substitute**.
+
+Canonical publisher attention is selected with `VISION_SDPA_OPT_IN=0`, serialized rank0 GPU encoding with `VISION_PRELOAD=1`. Do not enable the inherited optional SDPA reshape optimization without separate arithmetic/output acceptance. Image histories are fresh, no-base, no-KEEP, no prefix reuse. The engine broadcasts/injects image spans across all ranks, selects visual routing bias and masks Engram on span positions.
+
+## 5. Optional authentic vector, notices and bundle validation
+
+```sh
+python3 scripts/fetch-vector.py             # show public URL/hash, no download
+python3 scripts/fetch-vector.py --execute   # optional explicit download + exact hash
+```
+
+The public vector URL is hash-guarded even if its hosting branch changes. If access terms/authentication prevent download, obtain the exact publisher file manually and copy it to `bundle/vectors/glp39.gguf`, verify the SHA256 above and retain publisher notices. Never synthesize or silently replace it. Omit it entirely for a stock-only image; default steering stays OFF either way.
+
+Required ignored bundle layout:
 
 ```text
 bundle/
-  bin/dsgb10_rank
-  bin/dsfront
+  bin/{dsgb10_rank,dsfront}
   notices/engine-NOTICE
-  model/config.json
-  model/tokenizer.json
-  model/rank0.dsw ... rank3.dsw
-  model/engram-l1-r0of4.bin ... engram-l1-r3of4.bin
-  model/engram-l14-r0of4.bin ... engram-l14-r3of4.bin
-  model/engram_hashmap.bin
-  model/asset-hashes.json
-  vectors/glp39.gguf                  # optional
+  model/{config.json,tokenizer.json,rank0.dsw,rank1.dsw,rank2.dsw,rank3.dsw}
+  model/engram-l{1,14}-r{0,1,2,3}of4.bin
+  model/{engram_hashmap.bin,asset-hashes.json}
+  vision/{vision.safetensors,config.json,model.safetensors.index.json}
+  vision/{vision_encoder.py,image_io.py,asset-hashes.json}
+  vision/inference/{vision.py,image_processor.py}
+  vectors/glp39.gguf                       # optional
 ```
 
-Supply the authentic upstream NOTICE and retain dependency notices. Obtain the optional vector from [msuiche](steering.md), verify its tested SHA256 and honor any access terms. No synthetic direction or automatic fallback is acceptable.
+Copy authentic upstream engine NOTICE from the pinned source (`work/source/engine/NOTICE`); preserve all model, vector and dependency notices. Run:
 
 ```sh
 python3 scripts/prepare-bundle.py
 ```
 
-The validator requires the **qualified production binary hashes**, all four rank files, all eight Engram shards, matching metadata/receipt hashes, engine notice, and the authentic vector hash if present. It generates `bundle/profile.json` only after validation. Asset receipts bind outputs to their conversion run; independent checkpoint acquisition proof and review of the verifier logs remain release requirements.
+The validator checks qualified binaries, all rank/Engram/metadata receipt hashes, exact vision pack/runtime hashes, provenance, path traversal/symlinks and optional authentic vector. Only then does it generate `bundle/profile.json`. This proves internal artifact consistency, **not** truth of a forged acquisition/conversion receipt or model acceptance.
 
-### 6. Assemble one immutable candidate, locally
-
-Choose a licensed **public ARM64 CUDA 13 / RDMA runtime**, with all the qualified binaries' shared dependencies, pinned by digest. No default is invented for this unresolved runtime dependency.
+## 6. Build the NEW all-in-one candidate (no push)
 
 ```sh
-RUNTIME_BASE=PUBLIC_RUNTIME_IMAGE_AT_DIGEST bash scripts/build-image.sh
+bash scripts/build-image.sh
 ```
 
-The script builds a local `ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-sampler-open-unit-r1-bundle-candidate`; it **never pushes**. Extract the resulting profile and binaries and prove their hashes match before a future serving trial. Verify ELF architecture, dynamic library closure, CUDA compatibility, authentic notices and SBOM. Keep all four rank assets in this same image; select the rank at runtime.
+The default Dockerfile runtime base is the qualified private mirror **by immutable tag+digest**. This closes the arbitrary-runtime-selection gap **only when that mirror is actually available**; the present transfer blocker still prevents pulling it. It inherits production CUDA/RDMA/Python dependencies instead of inventing a supposedly equivalent public base. An alternate reviewed base must be pinned by digest and independently qualified for shared-library closure, ARM64/GB10, Python/PyTorch/Pillow/safetensors, licenses and runtime behavior.
 
-## Mapping to homeinfra
+The result is a **local** `2026.11.08-native-vision-bundle-candidate`. It includes all ranks and will be much larger than the 11.56GB compressed runtime/vision mirror. Full bundled compressed size, extraction/disk headroom and registry large-layer compatibility have not been measured. No image build or model download ran here.
 
-Source reference: `glp/pico-glp-steer-20261106` at `f2a0a4dbea07ac9bf94bb24d8605da8f43a9a099`.
+Before release: extract actual profile/binaries/vision pack from the built image and compare hashes; inspect dynamic dependencies; retain SBOM/licenses; smoke-test the generic supervisor; then run all full-ring gates. Text SUBMIT layout must remain unchanged when no images are supplied. Image payload/slot lifecycle, cache isolation and bounded input rejection must be checked, not inferred from host tests.
 
-| Public build step | Homeinfra counterpart | Boundary |
+## Provenance mapping to homeinfra
+
+Reference branch `glp/pico-glp-steer-20261106`, current evidence commit **cf6e8b67c**. Evidence paths below are under `docs/operations/evidence/` unless explicitly `config/`.
+
+| Recipe step | Recorded counterpart | What is / is not reproduced |
 |---|---|---|
-| Pin full production engine/frontend | `config/pico-production/profile.json`; `pico-token-corruption-20261108/README.md` | Full production lineage, not standalone PR branches |
-| Preserve r5 server/cache fixes; add GLP arithmetic | `config/pico-glp-steer/{source-contract.json,restore-r5-base.patch,glp-on-r5.patch}` | Use committed fork source instead of applying local patch files |
-| Compile updated model / sampler | `pico-glp-steer-20261106/build/`; `pico-token-corruption-20261108/build-models.sh` | Generic native source-build commands supplied; exact cross builder missing |
-| Hash-check 13 native inputs, reproduce r5, relink | `config/pico-glp-steer/relink-preserving-r5.sh`; `pico-session-cache-fix-20261106/native-input-sha256.json` | Recorded control/relink procedure, qualified inputs not redistributed |
-| Convert official stock; verify all tensors | `pico-glp-promotion-20261107/README.md`; `pico-glp-r4-window-20261106/README.md` | Same converter/verifier, full pinned checkpoint rather than retired sparse staging |
-| Produce Engram tables / map | Inherited assets described in promotion README; pinned engine README steps 4–5 | New package materializes the previously external tables |
-| Include optional authentic GLP-39 | `pico-glp-upstream-prepare-20261107/README.md` | Exact tested full-file SHA256; default OFF |
-| Profile-guarded supervision and packaging | `recipes/pico-dsgx10/{Dockerfile,entrypoint.py}`; `pico-token-corruption-20261108/image/` | New generic paths/all-in-one layout, no inherited site configuration |
-| Qualify and publish | Sampler `README.md`, fresh qualification | Re-run gates for the new packaging; historical results are not new acceptance |
+| Full source pin and binary guards | `config/pico-production/profile.json`; `pico-image-support-20261108/window-r2/REPORT.md` | Current engine/frontend b7c3eb5, retains all production fixes |
+| Engine source compile / qualified extraction | `pico-image-support-20261108/window-r2/HOST-QUALIFICATION.md`, `host/` | Compile command supplied; original exact relink inputs not publicly packaged |
+| Stock text conversion / every-byte verification | `pico-glp-promotion-20261107/README.md`; pinned engine README steps4–5 | Same tools; reused production text ranks need no vision rewrite |
+| Exact compact vision and publisher code | `pico-image-support-20261108/window-r2/HOST-QUALIFICATION.md`; pinned fork `tools/vision/extract_pack.py` | Qualified pack hash enforced; public preparation wrapper added, full extraction not rerun |
+| Optional vector | `pico-glp-upstream-prepare-20261107/README.md` | Exact published hash, default OFF in generic supervisor |
+| Supervision / immutable packaging | `config/pico-vision-entrypoint.py`; `pico-image-support-20261108/window-r2/image/` | Generic new launcher/paths, distinct all-in-one layout; not an exact OCI rebuild |
+| Qualified production gates | `pico-image-support-20261111/retrial-spark-only/REPORT.md` | Historical exact production artifact passed; new bundle still requires acceptance |
 
-All shortened `pico-*` evidence paths in this table are under `docs/operations/evidence/`. Reports/text docs were read; other recipe/source artifacts were inventoried by filename and size only under the session safety restriction. Thus this is a faithful **documented workflow scaffold**, not an executed end-to-end build or an independent audit of every original script byte.
+## Residual gaps
 
-## Gaps before a reproducible release
-
-1. **Exact native build input distribution / cross-toolchain lock.** The qualified 13-input manifest/control relink is described, but its original object/library/sysroot bundle and builder image digest are not supplied. A clean compile may differ and is rejected by the qualified packaging validator until resolved or independently requalified.
-2. **Public runtime-base dependency and license closure.** Select and pin a redistributable ARM64 CUDA 13 / RDMA base; prove every dynamic dependency and preserve dependency notices/SBOM. No private base image is referenced in this scaffold.
-3. **Large asset materialization.** Download/verify the pinned checkpoint, run the supplied conversions and every-byte verification, materialize/hash Engram, and obtain/verify the optional vector. None occurred in this turn.
-4. **One-image redesign is not byte-identical production reproduction.** Existing production layers do not bundle the large model data. Adding all ranks, generic paths and public-default-OFF supervision produces a new digest. Full package compressed size, extraction/disk cost and registry large-layer support remain unmeasured.
-5. **Generated launcher / package acceptance.** The new supervisor is host-unit-tested scaffolding, not a tested four-rank launcher. Validate CLI compatibility, rank/device mapping, GID selection, NVMe spill/guard and access-control integration before a trial.
-6. **Fresh rebuilt-image gates.** OFF/alpha-zero identity, capability/needles, protocol, throughput and 16-stream stability must be rerun on the immutable candidate. No production system or Spark was touched here.
+1. **GHCR transfer blocked**: source blob reconnect failed with connection refused on both attempts; no destination manifest/package published. Exact sanitized errors/receipt: [completion report](completion-report.md), `ghcr-transfer.json`. Remaining action: restore source-registry connectivity on the transfer/build host and rerun the digest-preserving private copy, then verify visibility and digest. No serving change is involved.
+2. **Independent public-source byte-identical engine build is not turnkey**: the original 13 qualified native inputs/toolchain/sysroot are not distributed. The scripted exact-binary extraction requires the private mirror; otherwise obtain those inputs from their custodian or independently qualify a new build. No builder digest/download URL is invented.
+3. **New all-in-one layout remains unexecuted/unqualified**: official snapshot acquisition, text conversion/verification, public compact extraction, optional vector acquisition, all-asset build, storage/SBOM/license closure and generic launcher/full-ring acceptance must actually run. Commands and fail-closed checks are supplied; test success here is **offline recipe verification only**. Snapshot origin and authentic notices still require operator review.
+4. **Public distribution readiness is separate**: the exact inherited image preserves existing defaults, labels/history/layers; it is not a scrubbed public rebuild. Review all layer contents/dependency licenses and remove any nonpublishable material in a separately built image before any public-release decision. No visibility change is authorized here.

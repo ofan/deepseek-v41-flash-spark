@@ -1,0 +1,42 @@
+{
+  "verified_at": "2026-11-11T21:20:20.784149+00:00",
+  "scope": "offline recipe checks only; no serving/inference/build acceptance",
+  "unit_tests": {
+    "passed": 43,
+    "failed": 0,
+    "command": "python3 -B -m unittest discover -s tests -v"
+  },
+  "scrub": {
+    "text_files": 30,
+    "forbidden_matches": 0,
+    "status": "pass"
+  },
+  "checks": {
+    "shell_syntax": "pass",
+    "python_ast": {
+      "status": "pass",
+      "files": 8
+    },
+    "json_parse": {
+      "status": "pass",
+      "files": 4
+    },
+    "text_conversion_plan": {
+      "status": "pass",
+      "steps": 13,
+      "rank_verifications": 4
+    },
+    "text_reuse_plan": {
+      "status": "pass",
+      "steps": 4,
+      "text_asset_rewrites": 0
+    },
+    "vision_preparation_plan": "pass; no asset reads/downloads",
+    "optional_vector_plan": "pass; no download",
+    "cli_help": "pass",
+    "diff_whitespace": "pass"
+  },
+  "weights_downloaded": false,
+  "new_image_built": false,
+  "production_or_sparks_touched": false
+}

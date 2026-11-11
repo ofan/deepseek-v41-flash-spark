@@ -1,3 +1,7 @@
+# Historical scaffold report (superseded)
+
+This file records the **initial scaffold at 75f0448**, before native vision became production. It is retained as historical provenance only. Its sampler artifact, no-image statement, gaps and unexecuted push plan are **not current status**. See [completion report](completion-report.md), [current build](build.md) and [current benchmarks](benchmarks.md).
+
 # Private recipe scaffold — 2026-11-11
 
 ## Verdict

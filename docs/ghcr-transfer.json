@@ -1,0 +1,62 @@
+{
+  "attempts": [
+    {
+      "started_at": "2026-11-11T21:05:47.592641+00:00",
+      "destination": "ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1",
+      "source_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
+      "secret_storage": "memory-only; inherited file descriptor",
+      "visibility_changed": false,
+      "package_before": {
+        "http_status": 404,
+        "visibility": null,
+        "message": "Package not found."
+      },
+      "finished_at": "2026-11-11T21:06:52.142037+00:00",
+      "copy_exit_code": 1,
+      "package_after": {
+        "http_status": 404,
+        "visibility": null,
+        "repository": null,
+        "message": "Package not found."
+      },
+      "matching_private_copy": false,
+      "sanitized_error": "time=\"2026-11-11T16:06:52-05:00\" level=fatal msg=\"writing blob: Patch \\\"https://ghcr.io/v2/ofan/deepseek-v41-flash-spark/blobs/upload/UPLOAD_ID\\\": happened during read: unexpected EOF (while reconnecting: Get \\\"https://SOURCE_REGISTRY/v2/library/pico-dsgx10/blobs/sha256:2fe1bd723675049a1f5c52ea338ce521041685f0a9be654144096643d8cb07b8\\\": dial tcp SOURCE_ADDRESS:443: connect: connection refused)\"",
+      "redactions": [
+        "private source registry hostname",
+        "private source address",
+        "ephemeral destination upload identifier"
+      ]
+    },
+    {
+      "started_at": "2026-11-11T21:07:51.184497+00:00",
+      "destination": "ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1",
+      "source_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
+      "secret_storage": "memory-only; inherited file descriptor",
+      "visibility_changed": false,
+      "package_before": {
+        "http_status": 404,
+        "visibility": null,
+        "message": "Package not found."
+      },
+      "finished_at": "2026-11-11T21:07:54.908901+00:00",
+      "copy_exit_code": 1,
+      "package_after": {
+        "http_status": 404,
+        "visibility": null,
+        "repository": null,
+        "message": "Package not found."
+      },
+      "matching_private_copy": false,
+      "sanitized_error": "time=\"2026-11-11T16:07:54-05:00\" level=fatal msg=\"writing blob: Patch \\\"https://ghcr.io/v2/ofan/deepseek-v41-flash-spark/blobs/upload/UPLOAD_ID\\\": happened during read: unexpected EOF (while reconnecting: Get \\\"https://SOURCE_REGISTRY/v2/library/pico-dsgx10/blobs/sha256:2fe1bd723675049a1f5c52ea338ce521041685f0a9be654144096643d8cb07b8\\\": dial tcp SOURCE_ADDRESS:443: connect: connection refused)\"",
+      "redactions": [
+        "private source registry hostname",
+        "private source address",
+        "ephemeral destination upload identifier"
+      ]
+    }
+  ],
+  "verified_private_repository": true,
+  "visibility_changed": false,
+  "package_manifest_published": false,
+  "credentials_written_to_disk": false
+}
