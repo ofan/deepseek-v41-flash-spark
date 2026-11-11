@@ -1,13 +1,13 @@
 {
-  "verified_at": "2026-11-11T21:20:20.784149+00:00",
+  "verified_at": "2026-11-11T22:26:32.966707+00:00",
   "scope": "offline recipe checks only; no serving/inference/build acceptance",
   "unit_tests": {
-    "passed": 43,
+    "passed": 49,
     "failed": 0,
     "command": "python3 -B -m unittest discover -s tests -v"
   },
   "scrub": {
-    "text_files": 30,
+    "text_files": 31,
     "forbidden_matches": 0,
     "status": "pass"
   },
@@ -15,7 +15,7 @@
     "shell_syntax": "pass",
     "python_ast": {
       "status": "pass",
-      "files": 8
+      "files": 6
     },
     "json_parse": {
       "status": "pass",
@@ -34,7 +34,8 @@
     "vision_preparation_plan": "pass; no asset reads/downloads",
     "optional_vector_plan": "pass; no download",
     "cli_help": "pass",
-    "diff_whitespace": "pass"
+    "diff_whitespace": "pass",
+    "private_registry_readback": "pass; separate owner-authenticated readback retained in ghcr-transfer.json"
   },
   "weights_downloaded": false,
   "new_image_built": false,

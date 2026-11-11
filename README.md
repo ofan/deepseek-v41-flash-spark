@@ -15,20 +15,20 @@ Version **2026.11.08-native-vision-trial-r1**, fork engine **b7c3eb5**, stock 10
 
 The repository contains the pinned source/build/conversion recipe, vision-asset preparation, hash-guarded generic supervisor, optional vector acquisition, licenses, tests and benchmark provenance. **No model/vector tensor payloads are stored in Git.**
 
-The intended private image mirror is:
+The verified private image mirror is:
 
 ```text
 ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1
 sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9
 ```
 
-**Mirror transfer is blocked; no GHCR package manifest has been published.** See [completion report](docs/completion-report.md) for the exact sanitized failure. Do not treat the intended reference as pullable. The existing production OCI contains binaries/runtime/vision pack but **mounts text rank files and Engram separately**. Mirroring that digest does not bundle the hundreds of GB of text assets. The Dockerfile here can assemble those assets into a **distinct all-in-one candidate**, not the production digest. That layout has not been built or fleet-qualified; its residual gaps are explicit in [build documentation](docs/build.md#residual-gaps).
+**The private GHCR mirror is published and verified byte-identical by manifest readback.** Owner-authenticated lookup confirms PRIVATE visibility. See [completion report](docs/completion-report.md) for the transfer diagnosis and receipt. The existing production OCI contains binaries/runtime/vision pack but **mounts text rank files and Engram separately**. Mirroring that digest does not bundle the hundreds of GB of text assets. The Dockerfile here can assemble those assets into a **distinct all-in-one candidate**, not the production digest. That layout has not been built or fleet-qualified; its residual gaps are explicit in [build documentation](docs/build.md#residual-gaps).
 
-## Quick-start shape (after resolving transfer/build gaps)
+## Quick-start shape (remaining build gaps apply)
 
 1. Review [optional host setup](docs/setup-spark.md), qualify your four-node native-verbs RoCE ring and reserve actual NVMe capacity. Build **off serving machines**.
 2. Follow [build steps](docs/build.md): fetch exact fork code; obtain the pinned official checkpoint; convert and verify text ranks/Engram or reuse verified existing assets; prepare the exact compact vision pack and publisher modules; optionally fetch authentic GLP-39.
-3. Stage hash-qualified binaries, validate the bundle, then build a **new** immutable ARM64 image. The qualified private mirror is the default runtime dependency, but its failed transfer currently blocks that build. No script deploys or pushes automatically.
+3. Stage hash-qualified binaries, validate the bundle, then build a **new** immutable ARM64 image. The qualified private mirror is the available default runtime dependency. No script deploys or pushes automatically.
 4. Supply your own fleet file, GPU/RDMA access and local writable spill. Every node runs the same image with a different rank (0–3). Rank0 starts the serialized local vision encoder and HTTP frontend.
 
 ```sh

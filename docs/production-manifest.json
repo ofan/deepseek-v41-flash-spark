@@ -8,7 +8,9 @@
   "manifest_bytes": 15408,
   "architecture": "arm64",
   "os": "linux",
-  "ghcr_copy_completed": false,
+  "ghcr_copy_completed": true,
   "source_contains_text_rank_assets": false,
-  "evidence_commit": "cf6e8b67c8cb4c7a07dc52aaccf16f09fb39e774"
+  "evidence_commit": "cf6e8b67c8cb4c7a07dc52aaccf16f09fb39e774",
+  "ghcr_visibility": "private",
+  "ghcr_verified_at": "2026-11-11T22:24:00.169116+00:00"
 }

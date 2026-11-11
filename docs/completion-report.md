@@ -2,7 +2,7 @@
 
 ## Verdict
 
-Recipe documentation and fail-closed build scaffolding now target **current native-vision production**, engine **b7c3eb5**, not the retired sampler serving artifact. **GHCR staging is BLOCKED by source-registry blob connectivity.** Two digest-preserving copy attempts failed; neither published a package manifest. The repository remains PRIVATE. No visibility setting was changed. No Spark, production container, service or routing system was accessed or changed.
+Recipe documentation and fail-closed build scaffolding now target **current native-vision production**, engine **b7c3eb5**, not the retired sampler serving artifact. **GHCR staging is complete: the private copy has the exact production manifest digest.** Two historical failed copies are retained in the receipt, followed by the diagnosed/resumed transfer and verified readback. The repository remains PRIVATE. No visibility setting was changed. No Spark, production container, service or routing system was accessed or changed.
 
 The recipe is not represented as a freshly built/qualified all-in-one image: production itself mounts the large text/Engram assets externally. The exact mirror and new all-in-one Dockerfile are explicitly distinguished throughout.
 
@@ -22,7 +22,7 @@ Homeinfra branch `glp/pico-glp-steer-20261106`, **cf6e8b67c8cb4c7a07dc52aaccf16f
 
 ## Registry manifest — freshly read, no serving access
 
-Intended PRIVATE destination:
+Verified PRIVATE destination:
 `ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1`.
 
 - Source manifest: **sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9** (raw bytes independently hashed).
@@ -31,36 +31,23 @@ Intended PRIVATE destination:
 - Linux/ARM64. Read-only configuration inspection; no container ran. Source config/history scan found0 private-domain matches, but **this is not a complete layer-content/public-distribution audit**.
 - Machine-readable facts: `production-manifest.json`.
 
-## GHCR result and exact blocker
+## GHCR transfer — resolved, digest and privacy verified
 
-The owner credential was obtained through the existing secret manager and verified as the intended account. Registry auth stayed in an anonymous in-memory file descriptor inherited by the transfer process; no secret was printed or stored in a disk auth file. Copy used an immutable source digest and `--preserve-digests`. The second attempt enabled two bounded transport retries. No quota/size failure or digest mismatch was reported.
+The transfer ran on an off-serving development host. DNS selected a tailnet TCP relay before the source registry ingress. Read-only inspection showed that relay's nginx container had a **32 MiB memory limit**, was **OOMKilled (exit 137) at 21:07:53 UTC**, and restarted at **21:08:18 UTC**. The second failed copy recorded its refused reconnect at **21:07:54 UTC**, inside that outage. Termination drops established blob streams; the listener is unavailable before restart. This was **TLS TCP stream passthrough with ssl_preread**, not HTTP response buffering. Registry and ingress did not restart. The first copy had the same transport signature, but its exact relay termination timestamp was not retained; it is not independently timestamp-proven.
 
-Both failures occurred while writing a destination blob after the source stream broke and the reconnect to the **source blob endpoint was refused**. The failing source blob digest was:
+**Fix:** the transfer client alone selected the directly routed registry ingress, retaining the original TLS hostname, SNI and certificate verification. An unauthenticated registry probe returned expected 401 with TLS verification 0; an authenticated exact 1 MiB byte range of the originally failing blob returned 206. No shared DNS, hosts, gateway, proxy, network or serving configuration was changed. The shared relay memory setting is unchanged; this is a scoped transfer-path fix, not a claim to repair the shared relay.
 
-`sha256:2fe1bd723675049a1f5c52ea338ce521041685f0a9be654144096643d8cb07b8`.
+The resumable client caches opaque source blobs, downloads 64 MiB exact byte ranges, verifies full SHA256, HEAD-checks destination blobs and PATCH-uploads only missing work with offset recovery. GHCR explicitly rejected a 4,611,987-byte PATCH with 416 and message `the request body is too large and exceeds the maximum permissible limit of 4.00MiB`. Reducing PATCH chunks to **4 MiB maximum** fixed that client compatibility issue; completed blobs and verified local cache were reused rather than restarting the image transfer. Credentials remained only in memory; neither credentials nor upload session URLs were recorded.
 
-Sanitized tool error (private network identifiers and ephemeral upload ID removed only):
+**Verified result:**
 
-```text
-writing blob: Patch "https://ghcr.io/v2/ofan/deepseek-v41-flash-spark/blobs/upload/UPLOAD_ID": happened during read: unexpected EOF (while reconnecting: Get "https://SOURCE_REGISTRY/v2/library/pico-dsgx10/blobs/sha256:2fe1bd723675049a1f5c52ea338ce521041685f0a9be654144096643d8cb07b8": dial tcp SOURCE_ADDRESS:443: connect: connection refused)
-```
+- Destination: `ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1`.
+- GET by tag **and** digest returned original raw-manifest bytes with SHA256 **`sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9`**.
+- All **69 unique config/layer blobs** passed digest/size HEAD checks (72 layer descriptors include duplicates). Config GET/hash verified Linux/ARM64 identity. Source config/layers/manifest were not rewritten.
+- Owner-authenticated GitHub package lookup returned **200**, visibility **private**. No visibility setting was changed.
+- Machine-readable timestamps, per-blob results, source/destination digest, diagnostics and historical failures: `ghcr-transfer.json`. Independent post-copy readback is retained there too.
 
-Copy exit status **1** on both attempts. Owner-authenticated package lookup returned **404 before and after** each attempt. No completed package/destination manifest/digest is claimed. Partial blob upload traffic is not a published image. Full sanitized attempt times/errors and visibility status are retained in `ghcr-transfer.json`.
-
-## Remaining private transfer steps
-
-1. Restore source-registry connectivity from an authorized transfer host, including sustained reads of the named blob. Do not change serving systems to do this.
-2. Re-read the immutable source tag/digest; confirm destination absent or already PRIVATE. Stop if an existing destination is public. Never mutate visibility.
-3. Run an OCI-aware digest-preserving copy, using transient authentication. Generic command shape:
-
-```sh
-# SOURCE_IMAGE_AT_DIGEST is supplied out of band; no private endpoint is committed.
-skopeo copy --preserve-digests "$SOURCE_IMAGE_AT_DIGEST" \
-  docker://ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1
-```
-
-4. Verify the destination raw-manifest SHA256 equals the locked digest, config/layer digests/counts agree, ARM64 identity and owner-authenticated pull work, and the package is PRIVATE (new GHCR packages default private). If privacy cannot be verified, do not report success.
-5. Update the transfer receipt/status only after proof. Linking inherited package source metadata to this private recipe is separate from copying bytes; do not rewrite image labels and still claim the original digest.
+The mirror preserves the original image bytes and existing metadata. It is not a rebuilt or newly qualified all-in-one bundle and does not embed externally mounted text assets. Public publication requires separate review; nothing was made public.
 
 ## Build work and residual gaps
 
@@ -68,12 +55,13 @@ Added compact-vision staging from the pinned public checkpoint/fork extractor, q
 
 Remaining gaps are explicit:
 
-1. Failed private registry transfer (above); no GHCR package exists yet.
-2. Original cross-build native-input/sysroot/toolchain bundle is not published; exact binaries can be extracted once the qualified mirror exists. A fresh compile is not falsely promised byte-identical.
-3. New all-in-one layout and public-source asset pipeline have not been executed end-to-end: acquire/verify official snapshot and authentic notices, convert/verify/reuse text assets, extract/verify compact vision, optional vector, build, size/SBOM/dependency audit and full-ring acceptance. The generic launcher has host tests only, not four-rank deployment acceptance.
-4. Public-release license/layer-content review is still required. Neither repository nor package may be made public under this task.
+The private transfer has no remaining blocker. Independent recipe gaps remain:
 
-The original scaffold report is retained as clearly superseded historical evidence. No model/vector download, engine compile, new container build, deployment or new inference was performed in this recipe-completion turn. The registry copy did transfer some image blobs before failing; it must not be described as zero image traffic.
+1. Original cross-build native-input/sysroot/toolchain bundle is not published; exact binaries can now be extracted from the qualified private mirror. A fresh compile is not falsely promised byte-identical.
+2. New all-in-one layout and public-source asset pipeline have not been executed end-to-end: acquire/verify official snapshot and authentic notices, convert/verify/reuse text assets, extract/verify compact vision, optional vector, build, size/SBOM/dependency audit and full-ring acceptance. The generic launcher has host tests only, not four-rank deployment acceptance.
+3. Public-release license/layer-content review is still required. Neither repository nor package may be made public under this task.
+
+The original scaffold report is retained as clearly superseded historical evidence. No model/vector download, engine compile, new container build, deployment or new inference was performed in this recipe-completion turn. The follow-up transfer copied the image successfully; it did not download external text weights, execute a container, or qualify a fresh bundle.
 
 ## Verification
 

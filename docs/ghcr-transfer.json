@@ -53,10 +53,1179 @@
         "private source address",
         "ephemeral destination upload identifier"
       ]
+    },
+    {
+      "started_at": "2026-11-11T21:58:18.305769+00:00",
+      "source_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
+      "destination": "ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1",
+      "method": "direct TLS-verified ingress pin; sequential ranged per-blob cache; destination HEAD reuse and resumable PATCH uploads",
+      "source_route": "transfer-host routed LAN -> registry ingress; registry TLS hostname/SNI unchanged",
+      "proxy_or_serving_changes": false,
+      "visibility_changes": false,
+      "credentials_written_to_disk": false,
+      "blobs": [
+        {
+          "digest": "sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1",
+          "size": 32,
+          "source_bytes_transferred": 0,
+          "seconds": 0.182,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:8cb64f32e012bd82433ae52712a41eb8484e3f59a5715f8abc99541508c3e178",
+          "size": 98,
+          "source_bytes_transferred": 98,
+          "seconds": 1.715,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:c93016be5758e16111e76b04d6b6fb0275c5a1e61775f00d853f1be08dbe0ad8",
+          "size": 98,
+          "source_bytes_transferred": 98,
+          "seconds": 1.722,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:aa8ef2a3446b6ac43eb8d97f2e39a5f1fb06e9b806187c8f6d3d66562d6f017d",
+          "size": 98,
+          "source_bytes_transferred": 98,
+          "seconds": 1.662,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:5814fbc68c3d4f237baf21fefd9b6e3afcdd3642d4be14f3fe307184e29c0769",
+          "size": 110,
+          "source_bytes_transferred": 0,
+          "seconds": 0.059,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:18450e24dd36d46e258e989d95061ac24047868062c536a099a32b0cb24d53c9",
+          "size": 150,
+          "source_bytes_transferred": 150,
+          "seconds": 1.604,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:586d73e6d46732224b056fa85bb16ff8f88af98079b13ce4e67ac15212dd0a44",
+          "size": 155,
+          "source_bytes_transferred": 0,
+          "seconds": 0.062,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:bdbf38d915092dd9cd03648ef15dc61f4504cc7cb681e44969e29994a7f2c50f",
+          "size": 174,
+          "source_bytes_transferred": 0,
+          "seconds": 0.069,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:3725bc3a6708a8e8861b28169ba201bd2e3e1e4ac4ed26d20095bd64249cf3a2",
+          "size": 186,
+          "source_bytes_transferred": 186,
+          "seconds": 1.683,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:0b0e1fb3584df51c2aee6ba457e150ef38c45cd15d2f764585a6e2bf35bc3196",
+          "size": 192,
+          "source_bytes_transferred": 192,
+          "seconds": 1.639,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:c19f63f75df4d7fb51a310436b2772c04280c2748a88798925034b57235b4376",
+          "size": 195,
+          "source_bytes_transferred": 0,
+          "seconds": 0.069,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:87f518048f7b447cfb28df5e5f5e68dbab68c3a30255794e6388978306f1e9f5",
+          "size": 205,
+          "source_bytes_transferred": 205,
+          "seconds": 1.562,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:74f06ebca97c21b34a9ca367a115388d1f78311ff4b05e4aaefe70b543b0bee4",
+          "size": 220,
+          "source_bytes_transferred": 220,
+          "seconds": 1.552,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:9fd8b15f808c9a10d3e7a48dcfa7f7b7f694ffdca45831d4001a6060d6709b7a",
+          "size": 237,
+          "source_bytes_transferred": 0,
+          "seconds": 0.082,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:d03a2befe5bafaf1dd40bb49a33496e5795dccb4adba85bd2a2da4947c59b206",
+          "size": 250,
+          "source_bytes_transferred": 250,
+          "seconds": 1.648,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:479eed21c7386b26786c44620ec9084349354116e6fb30b011a3cd79d2843639",
+          "size": 263,
+          "source_bytes_transferred": 263,
+          "seconds": 1.618,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:c213be1c43352faf845570a9b78eadc3295ab4388e808904a0c198a012191940",
+          "size": 835,
+          "source_bytes_transferred": 835,
+          "seconds": 1.709,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:0ab851bc6aa866eeea801d8f9e637b0fe9100ea3219693831746cce7e040b31a",
+          "size": 882,
+          "source_bytes_transferred": 882,
+          "seconds": 1.583,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:dfa9eb74e8321429193884cc27dce353c0b50111614e911641bef9badefc5296",
+          "size": 907,
+          "source_bytes_transferred": 907,
+          "seconds": 1.506,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:00b6238efac7fed5135f8e95b6732d8b401091849cf5567409b458a1ac2c8bb0",
+          "size": 1720,
+          "source_bytes_transferred": 1720,
+          "seconds": 1.623,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:b1b7e7ee31b16228faeb5c7bd7ecd2ae0aa650dac8972331fbb55db7b7065400",
+          "size": 1878,
+          "source_bytes_transferred": 1878,
+          "seconds": 1.722,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:4b817686e30621d224f0a5f1a9c8af5a370bf230f9fdda13459effaa546c6e1e",
+          "size": 2100,
+          "source_bytes_transferred": 2100,
+          "seconds": 1.545,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:bf673d8084247ce84b8203992eec7eaf2d90e20a68df71e388e3d8e42486904b",
+          "size": 2287,
+          "source_bytes_transferred": 0,
+          "seconds": 0.072,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:1d19b88f3ec74f3e71a5b5fec74130aabfecd36ef7e7df31728b584d01b4c203",
+          "size": 2363,
+          "source_bytes_transferred": 0,
+          "seconds": 0.07,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:29205c64c9f3507ec497b01f546cd3005f99c933922aef13ec6fa23e21447151",
+          "size": 2580,
+          "source_bytes_transferred": 0,
+          "seconds": 0.072,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:f0d7f495588972696e6deb7b96ffc78965a3fe65f05744a5383726a578c92f2d",
+          "size": 3429,
+          "source_bytes_transferred": 3429,
+          "seconds": 1.646,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:56d48059aa7f59e08ac4ea37baf1dec8dbd3747e7285141ffbea5a3c559a2aee",
+          "size": 3807,
+          "source_bytes_transferred": 0,
+          "seconds": 0.066,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:5627c9073e8208f5e54983e2fc98ecfd8c3ae855e0f135221f79903716c08fd9",
+          "size": 5576,
+          "source_bytes_transferred": 0,
+          "seconds": 0.067,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:8897307e3a1e092f291d7c7b66c5a1a1e3f3a2918d41bd4043882ed44aa988a2",
+          "size": 7046,
+          "source_bytes_transferred": 0,
+          "seconds": 0.064,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:cb9f7b59991bd210621bfda9c80713f494243a0b5c78372feed940b2d54245cc",
+          "size": 10205,
+          "source_bytes_transferred": 10205,
+          "seconds": 1.597,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:f4f89b596971df8fe917f3cfb2e112951b6c261e8ec254ad532dbc5be0b579a3",
+          "size": 14373,
+          "source_bytes_transferred": 14373,
+          "seconds": 1.596,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:d77e0caf4819bb023f621461932e29cf5d8ccc2bcff3a13e22a6a52f03a18b6a",
+          "size": 14453,
+          "source_bytes_transferred": 14453,
+          "seconds": 1.538,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:8990be26ae46d5b8147a7371ff1389d4d1608c22e5d7349385882426427ae08a",
+          "size": 33914,
+          "source_bytes_transferred": 33914,
+          "seconds": 1.577,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:979ff212061ffe5d43ecd14e2c8a3d32d9cfceedf1b3e350008b7cdcf3226382",
+          "size": 86924,
+          "source_bytes_transferred": 86924,
+          "seconds": 1.644,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:c91841bb6cc73ebb12a917b6cf98a6befbfceffc3c6b942850bb7bd60b56088a",
+          "size": 292687,
+          "source_bytes_transferred": 292687,
+          "seconds": 1.661,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:a53d35c866790f3e77ade7525abba3b6e2a0ce8b86504242be543f0aca4b9eea",
+          "size": 305145,
+          "source_bytes_transferred": 305145,
+          "seconds": 1.542,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:78e23c2e91dd353a9d5247142becd5d118a1aa0df0a9147a9399d3b8441ee486",
+          "size": 306755,
+          "source_bytes_transferred": 306755,
+          "seconds": 1.645,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:848f8e0b44ff98c7d93d21c76a1014e382bc3f15f1295f754ea4c2e64ebeb9ed",
+          "size": 316370,
+          "source_bytes_transferred": 316370,
+          "seconds": 1.556,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:d7ce1a90f4c765749f894650f1350a4c5c9a0828889c88e8c53974858daa78c3",
+          "size": 457946,
+          "source_bytes_transferred": 457946,
+          "seconds": 1.62,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:1a165c07d4aaf7bad5a73b1bd707d7d860caca5c2497d994df54bb98b9e23b94",
+          "size": 550863,
+          "source_bytes_transferred": 550863,
+          "seconds": 1.536,
+          "already_present": false,
+          "chunks": 1,
+          "retries": 0
+        }
+      ],
+      "events": [
+        {
+          "at": "2026-11-11T21:59:06.493676+00:00",
+          "stage": "destination-blob-retry",
+          "digest": "sha256:44ce64f8f30c937df3feb9db7f742abbd8f43b1881c906c13daa4b3817231415",
+          "offset": 0,
+          "error": "HTTPError: HTTP Error 416: Requested Range Not Satisfiable",
+          "attempt": 1
+        },
+        {
+          "at": "2026-11-11T21:59:09.397310+00:00",
+          "stage": "destination-blob-retry",
+          "digest": "sha256:44ce64f8f30c937df3feb9db7f742abbd8f43b1881c906c13daa4b3817231415",
+          "offset": 0,
+          "error": "HTTPError: HTTP Error 416: Requested Range Not Satisfiable",
+          "attempt": 2
+        },
+        {
+          "at": "2026-11-11T21:59:14.296615+00:00",
+          "stage": "destination-blob-retry",
+          "digest": "sha256:44ce64f8f30c937df3feb9db7f742abbd8f43b1881c906c13daa4b3817231415",
+          "offset": 0,
+          "error": "HTTPError: HTTP Error 416: Requested Range Not Satisfiable",
+          "attempt": 3
+        },
+        {
+          "at": "2026-11-11T21:59:24.315053+00:00",
+          "stage": "destination-blob-retry",
+          "digest": "sha256:44ce64f8f30c937df3feb9db7f742abbd8f43b1881c906c13daa4b3817231415",
+          "offset": 0,
+          "error": "HTTPError: HTTP Error 416: Requested Range Not Satisfiable",
+          "attempt": 4
+        },
+        {
+          "at": "2026-11-11T21:59:41.302716+00:00",
+          "stage": "destination-blob-retry",
+          "digest": "sha256:44ce64f8f30c937df3feb9db7f742abbd8f43b1881c906c13daa4b3817231415",
+          "offset": 0,
+          "error": "HTTPError: HTTP Error 416: Requested Range Not Satisfiable",
+          "attempt": 5
+        },
+        {
+          "at": "2026-11-11T22:00:10.624781+00:00",
+          "stage": "destination-blob-retry",
+          "digest": "sha256:44ce64f8f30c937df3feb9db7f742abbd8f43b1881c906c13daa4b3817231415",
+          "offset": 0,
+          "error": "HTTPError: HTTP Error 416: Requested Range Not Satisfiable",
+          "attempt": 6
+        }
+      ],
+      "package_before": {
+        "status": 404,
+        "visibility": null
+      },
+      "source_manifest_verified": true,
+      "config_digest": "sha256:979ff212061ffe5d43ecd14e2c8a3d32d9cfceedf1b3e350008b7cdcf3226382",
+      "layer_count": 72,
+      "compressed_layer_bytes": 11564486734,
+      "finished_at": "2026-11-11T22:00:10.739703+00:00",
+      "result": "FAIL",
+      "error": "HTTPError: HTTP Error 416: Requested Range Not Satisfiable"
+    },
+    {
+      "started_at": "2026-11-11T22:01:44.697254+00:00",
+      "source_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
+      "destination": "ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1",
+      "method": "direct TLS-verified ingress pin; sequential ranged per-blob cache; destination HEAD reuse and resumable PATCH uploads",
+      "source_route": "transfer-host routed LAN -> registry ingress; registry TLS hostname/SNI unchanged",
+      "proxy_or_serving_changes": false,
+      "visibility_changes": false,
+      "credentials_written_to_disk": false,
+      "blobs": [
+        {
+          "digest": "sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1",
+          "size": 32,
+          "source_bytes_transferred": 0,
+          "seconds": 0.157,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:8cb64f32e012bd82433ae52712a41eb8484e3f59a5715f8abc99541508c3e178",
+          "size": 98,
+          "source_bytes_transferred": 0,
+          "seconds": 0.067,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:c93016be5758e16111e76b04d6b6fb0275c5a1e61775f00d853f1be08dbe0ad8",
+          "size": 98,
+          "source_bytes_transferred": 0,
+          "seconds": 0.068,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:aa8ef2a3446b6ac43eb8d97f2e39a5f1fb06e9b806187c8f6d3d66562d6f017d",
+          "size": 98,
+          "source_bytes_transferred": 0,
+          "seconds": 0.073,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:5814fbc68c3d4f237baf21fefd9b6e3afcdd3642d4be14f3fe307184e29c0769",
+          "size": 110,
+          "source_bytes_transferred": 0,
+          "seconds": 0.067,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:18450e24dd36d46e258e989d95061ac24047868062c536a099a32b0cb24d53c9",
+          "size": 150,
+          "source_bytes_transferred": 0,
+          "seconds": 0.069,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:586d73e6d46732224b056fa85bb16ff8f88af98079b13ce4e67ac15212dd0a44",
+          "size": 155,
+          "source_bytes_transferred": 0,
+          "seconds": 0.067,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:bdbf38d915092dd9cd03648ef15dc61f4504cc7cb681e44969e29994a7f2c50f",
+          "size": 174,
+          "source_bytes_transferred": 0,
+          "seconds": 0.073,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:3725bc3a6708a8e8861b28169ba201bd2e3e1e4ac4ed26d20095bd64249cf3a2",
+          "size": 186,
+          "source_bytes_transferred": 0,
+          "seconds": 0.071,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:0b0e1fb3584df51c2aee6ba457e150ef38c45cd15d2f764585a6e2bf35bc3196",
+          "size": 192,
+          "source_bytes_transferred": 0,
+          "seconds": 0.066,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:c19f63f75df4d7fb51a310436b2772c04280c2748a88798925034b57235b4376",
+          "size": 195,
+          "source_bytes_transferred": 0,
+          "seconds": 0.076,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:87f518048f7b447cfb28df5e5f5e68dbab68c3a30255794e6388978306f1e9f5",
+          "size": 205,
+          "source_bytes_transferred": 0,
+          "seconds": 0.07,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:74f06ebca97c21b34a9ca367a115388d1f78311ff4b05e4aaefe70b543b0bee4",
+          "size": 220,
+          "source_bytes_transferred": 0,
+          "seconds": 0.071,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:9fd8b15f808c9a10d3e7a48dcfa7f7b7f694ffdca45831d4001a6060d6709b7a",
+          "size": 237,
+          "source_bytes_transferred": 0,
+          "seconds": 0.069,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:d03a2befe5bafaf1dd40bb49a33496e5795dccb4adba85bd2a2da4947c59b206",
+          "size": 250,
+          "source_bytes_transferred": 0,
+          "seconds": 0.069,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:479eed21c7386b26786c44620ec9084349354116e6fb30b011a3cd79d2843639",
+          "size": 263,
+          "source_bytes_transferred": 0,
+          "seconds": 0.067,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:c213be1c43352faf845570a9b78eadc3295ab4388e808904a0c198a012191940",
+          "size": 835,
+          "source_bytes_transferred": 0,
+          "seconds": 0.064,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:0ab851bc6aa866eeea801d8f9e637b0fe9100ea3219693831746cce7e040b31a",
+          "size": 882,
+          "source_bytes_transferred": 0,
+          "seconds": 0.066,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:dfa9eb74e8321429193884cc27dce353c0b50111614e911641bef9badefc5296",
+          "size": 907,
+          "source_bytes_transferred": 0,
+          "seconds": 0.068,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:00b6238efac7fed5135f8e95b6732d8b401091849cf5567409b458a1ac2c8bb0",
+          "size": 1720,
+          "source_bytes_transferred": 0,
+          "seconds": 0.073,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:b1b7e7ee31b16228faeb5c7bd7ecd2ae0aa650dac8972331fbb55db7b7065400",
+          "size": 1878,
+          "source_bytes_transferred": 0,
+          "seconds": 0.067,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:4b817686e30621d224f0a5f1a9c8af5a370bf230f9fdda13459effaa546c6e1e",
+          "size": 2100,
+          "source_bytes_transferred": 0,
+          "seconds": 0.096,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:bf673d8084247ce84b8203992eec7eaf2d90e20a68df71e388e3d8e42486904b",
+          "size": 2287,
+          "source_bytes_transferred": 0,
+          "seconds": 0.067,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:1d19b88f3ec74f3e71a5b5fec74130aabfecd36ef7e7df31728b584d01b4c203",
+          "size": 2363,
+          "source_bytes_transferred": 0,
+          "seconds": 0.064,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:29205c64c9f3507ec497b01f546cd3005f99c933922aef13ec6fa23e21447151",
+          "size": 2580,
+          "source_bytes_transferred": 0,
+          "seconds": 0.065,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:f0d7f495588972696e6deb7b96ffc78965a3fe65f05744a5383726a578c92f2d",
+          "size": 3429,
+          "source_bytes_transferred": 0,
+          "seconds": 0.063,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:56d48059aa7f59e08ac4ea37baf1dec8dbd3747e7285141ffbea5a3c559a2aee",
+          "size": 3807,
+          "source_bytes_transferred": 0,
+          "seconds": 0.065,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:5627c9073e8208f5e54983e2fc98ecfd8c3ae855e0f135221f79903716c08fd9",
+          "size": 5576,
+          "source_bytes_transferred": 0,
+          "seconds": 0.075,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:8897307e3a1e092f291d7c7b66c5a1a1e3f3a2918d41bd4043882ed44aa988a2",
+          "size": 7046,
+          "source_bytes_transferred": 0,
+          "seconds": 0.063,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:cb9f7b59991bd210621bfda9c80713f494243a0b5c78372feed940b2d54245cc",
+          "size": 10205,
+          "source_bytes_transferred": 0,
+          "seconds": 0.069,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:f4f89b596971df8fe917f3cfb2e112951b6c261e8ec254ad532dbc5be0b579a3",
+          "size": 14373,
+          "source_bytes_transferred": 0,
+          "seconds": 0.065,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:d77e0caf4819bb023f621461932e29cf5d8ccc2bcff3a13e22a6a52f03a18b6a",
+          "size": 14453,
+          "source_bytes_transferred": 0,
+          "seconds": 0.064,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:8990be26ae46d5b8147a7371ff1389d4d1608c22e5d7349385882426427ae08a",
+          "size": 33914,
+          "source_bytes_transferred": 0,
+          "seconds": 0.071,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:979ff212061ffe5d43ecd14e2c8a3d32d9cfceedf1b3e350008b7cdcf3226382",
+          "size": 86924,
+          "source_bytes_transferred": 0,
+          "seconds": 0.065,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:c91841bb6cc73ebb12a917b6cf98a6befbfceffc3c6b942850bb7bd60b56088a",
+          "size": 292687,
+          "source_bytes_transferred": 0,
+          "seconds": 0.062,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:a53d35c866790f3e77ade7525abba3b6e2a0ce8b86504242be543f0aca4b9eea",
+          "size": 305145,
+          "source_bytes_transferred": 0,
+          "seconds": 0.067,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:78e23c2e91dd353a9d5247142becd5d118a1aa0df0a9147a9399d3b8441ee486",
+          "size": 306755,
+          "source_bytes_transferred": 0,
+          "seconds": 0.067,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:848f8e0b44ff98c7d93d21c76a1014e382bc3f15f1295f754ea4c2e64ebeb9ed",
+          "size": 316370,
+          "source_bytes_transferred": 0,
+          "seconds": 0.069,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:d7ce1a90f4c765749f894650f1350a4c5c9a0828889c88e8c53974858daa78c3",
+          "size": 457946,
+          "source_bytes_transferred": 0,
+          "seconds": 0.067,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:1a165c07d4aaf7bad5a73b1bd707d7d860caca5c2497d994df54bb98b9e23b94",
+          "size": 550863,
+          "source_bytes_transferred": 0,
+          "seconds": 0.064,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:44ce64f8f30c937df3feb9db7f742abbd8f43b1881c906c13daa4b3817231415",
+          "size": 4611987,
+          "source_bytes_transferred": 0,
+          "seconds": 1.809,
+          "already_present": false,
+          "chunks": 2,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:933a394735d306a327b0f43198651b2beea2e35f4252ca836f938ff7213a8831",
+          "size": 4614676,
+          "source_bytes_transferred": 0,
+          "seconds": 0.068,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:417339a4c8e1cb57059455edf555e3a7b76b9c313dcbed79a789ad8c6da103a9",
+          "size": 7247335,
+          "source_bytes_transferred": 7247335,
+          "seconds": 2.445,
+          "already_present": false,
+          "chunks": 2,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:299e24ecda1f1d6ea2c6404bfb8821d830ad7f9648f2e48e4fb0b1d7d38cdbfd",
+          "size": 9727457,
+          "source_bytes_transferred": 9727457,
+          "seconds": 2.623,
+          "already_present": false,
+          "chunks": 3,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:05c3c728a54ed9e5a99b9dc5646b1ad5973d69a03f9060ef2904103964a5ce7a",
+          "size": 12480010,
+          "source_bytes_transferred": 12480010,
+          "seconds": 2.667,
+          "already_present": false,
+          "chunks": 3,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:9b41be06408125fa997b38d224569ac6cc1718370870f47a5348c38702437b34",
+          "size": 12480609,
+          "source_bytes_transferred": 0,
+          "seconds": 0.07,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:0582c2b9ee640420c207518a4bd923e8a83be56e934f575cefdcad22646f3d6d",
+          "size": 13972048,
+          "source_bytes_transferred": 13972048,
+          "seconds": 3.133,
+          "already_present": false,
+          "chunks": 4,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:63fdd9c1aa614acbd9727dc2b8d95a3dd0cb2affd65d6dc4346f42f147ea0136",
+          "size": 14786370,
+          "source_bytes_transferred": 14786370,
+          "seconds": 2.984,
+          "already_present": false,
+          "chunks": 4,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:1f17e6bc6b7d2000cb16d17772a9e12590d565c3ad3658a89b5392d5a36c5f59",
+          "size": 15099410,
+          "source_bytes_transferred": 15099410,
+          "seconds": 3.191,
+          "already_present": false,
+          "chunks": 4,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:aa820736e977321cb611b479f0529609b3757f1932c6c1269ca685ee4f4b4df7",
+          "size": 16930551,
+          "source_bytes_transferred": 16930551,
+          "seconds": 3.453,
+          "already_present": false,
+          "chunks": 5,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:2fc1ea083420922dbdbfd13f28ea20ffeff32389216c0fca72d4f765df206ce4",
+          "size": 17213754,
+          "source_bytes_transferred": 0,
+          "seconds": 0.065,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:752e689d935166fd0ae29b6775e31873ff882f7aefe8b0dde2eaad65c352bbfa",
+          "size": 30761835,
+          "source_bytes_transferred": 0,
+          "seconds": 0.073,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:afc7de054f80ab9f86db3c00eff3b4a729a0749968b5b156c57d3930554d25f9",
+          "size": 40153535,
+          "source_bytes_transferred": 40153535,
+          "seconds": 7.349,
+          "already_present": false,
+          "chunks": 10,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:f3220070b442f005cb57362f620b7aa403479f3ee723aa861c7b310a83758d82",
+          "size": 41884449,
+          "source_bytes_transferred": 41884449,
+          "seconds": 6.11,
+          "already_present": false,
+          "chunks": 10,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:de000329441e7bd23c99a7adcd9037fa87dd31463fc4552c33385218be635016",
+          "size": 41892342,
+          "source_bytes_transferred": 41892342,
+          "seconds": 6.553,
+          "already_present": false,
+          "chunks": 10,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:deb18564216813d0ba30a7eaa1a23f6ffb0c95f27383b397478b56b8484f35e9",
+          "size": 46098380,
+          "source_bytes_transferred": 46098380,
+          "seconds": 6.359,
+          "already_present": false,
+          "chunks": 11,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:622c9bd573eecc7619983a4c7bc9b5be63dcaadd087145b0c8f6ccb55bc89d57",
+          "size": 50074898,
+          "source_bytes_transferred": 50074898,
+          "seconds": 7.256,
+          "already_present": false,
+          "chunks": 12,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:2fe1bd723675049a1f5c52ea338ce521041685f0a9be654144096643d8cb07b8",
+          "size": 103167154,
+          "source_bytes_transferred": 103167154,
+          "seconds": 12.161,
+          "already_present": false,
+          "chunks": 25,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:b55656e8de2d5a9e1e543b072536a2a54a8a63d417c8ec64b27787b23f2f7cdb",
+          "size": 178368676,
+          "source_bytes_transferred": 178368676,
+          "seconds": 21.15,
+          "already_present": false,
+          "chunks": 43,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:87c1968b47e7e04d60d3bae182bb3c875515f0f883161b0af1f84f0e088d6a14",
+          "size": 203992923,
+          "source_bytes_transferred": 203992923,
+          "seconds": 22.222,
+          "already_present": false,
+          "chunks": 49,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:e8ec7b8ca0e8354bb12c2b34586e50a09c3811b7b617a6993c90d30193dd9d6f",
+          "size": 233073948,
+          "source_bytes_transferred": 233073948,
+          "seconds": 26.368,
+          "already_present": false,
+          "chunks": 56,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:567353710001d103f0eb781792b877bdf8a2f0966fe3cb791493c899d8dee2f3",
+          "size": 238680021,
+          "source_bytes_transferred": 238680021,
+          "seconds": 25.513,
+          "already_present": false,
+          "chunks": 57,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:7e5fa8ec4663ceee8f6906e92f663d0551005bcc1961f171f6be0172b81bd3fb",
+          "size": 288357301,
+          "source_bytes_transferred": 288357301,
+          "seconds": 32.794,
+          "already_present": false,
+          "chunks": 69,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:b1e9f342078b69488dde00bc06477dc856c94ffac53a245fb9c662c887a4b35c",
+          "size": 538715939,
+          "source_bytes_transferred": 538715939,
+          "seconds": 61.158,
+          "already_present": false,
+          "chunks": 129,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:c1b560f902d50cfbf45013317be94b45604b9b286f2e62e28841348ec1525052",
+          "size": 559190792,
+          "source_bytes_transferred": 559190792,
+          "seconds": 68.495,
+          "already_present": false,
+          "chunks": 134,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:d71466cd7b1ce6df92880be8ef50d7bb5227e770b0675adeed284872470d54ce",
+          "size": 761320256,
+          "source_bytes_transferred": 0,
+          "seconds": 0.069,
+          "already_present": true,
+          "chunks": 0,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:26f21ec9a6012bb8bc5911b4ee02504d91126b5254eca2767579cf54621ce830",
+          "size": 1139735468,
+          "source_bytes_transferred": 1139735468,
+          "seconds": 137.947,
+          "already_present": false,
+          "chunks": 272,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:a9a98605605944ad2667c0e309fa656f794db8b50df62c6a1f8c6907b57608dd",
+          "size": 1637792332,
+          "source_bytes_transferred": 1637792332,
+          "seconds": 215.033,
+          "already_present": false,
+          "chunks": 391,
+          "retries": 0
+        },
+        {
+          "digest": "sha256:34b91c34795d746ab45f3cbb3f4fb25932d0b010f823568ea8b553cd8ff66d16",
+          "size": 5299719298,
+          "source_bytes_transferred": 5299719298,
+          "seconds": 646.379,
+          "already_present": false,
+          "chunks": 1264,
+          "retries": 0
+        }
+      ],
+      "events": [],
+      "package_before": {
+        "status": 404,
+        "visibility": null
+      },
+      "source_manifest_verified": true,
+      "config_digest": "sha256:979ff212061ffe5d43ecd14e2c8a3d32d9cfceedf1b3e350008b7cdcf3226382",
+      "layer_count": 72,
+      "compressed_layer_bytes": 11564486734,
+      "manifest_published_at": "2026-11-11T22:23:59.347332+00:00",
+      "destination_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
+      "manifest_bytes_equal": true,
+      "descriptor_head_checks": 69,
+      "config_readback_verified": true,
+      "architecture": "arm64",
+      "os": "linux",
+      "package_after": {
+        "status": 200,
+        "visibility": "private",
+        "name": "deepseek-v41-flash-spark"
+      },
+      "finished_at": "2026-11-11T22:24:00.169116+00:00",
+      "result": "PASS",
+      "matching_private_copy": true
     }
   ],
   "verified_private_repository": true,
   "visibility_changed": false,
-  "package_manifest_published": false,
-  "credentials_written_to_disk": false
+  "package_manifest_published": true,
+  "credentials_written_to_disk": false,
+  "matching_private_copy": true,
+  "destination_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
+  "package_visibility": "private",
+  "diagnosis": {
+    "transfer_host_role": "off-serving development host",
+    "original_route": "DNS-selected tailnet peer -> nginx TCP stream relay -> registry ingress",
+    "relay_protocol": "TLS passthrough with ssl_preread; not HTTP response buffering",
+    "root_cause": "The DNS-selected source path depended on a memory-limited TCP relay. Its nginx container was OOMKilled, terminating source streams and temporarily removing the listener.",
+    "relay_memory_limit": "32Mi",
+    "relay_memory_request": "16Mi",
+    "relay_restart_count_at_diagnosis": 3,
+    "relay_termination": {
+      "reason": "OOMKilled",
+      "exit_code": 137,
+      "finished_at": "2026-11-11T21:07:53Z",
+      "previous_started_at": "2026-11-11T21:06:12Z",
+      "restarted_at": "2026-11-11T21:08:18Z"
+    },
+    "failed_reconnect_at": "2026-11-11T21:07:54.908901+00:00",
+    "correlation_limit": "The second failure falls inside the observed relay outage. An exact earlier termination timestamp for the first failed copy was not retained; its identical transport signature is consistent with the same path, not independently timestamp-proven.",
+    "source_registry_and_ingress_restarted": false,
+    "relay_configuration_sha256": "5705be67d7a9268c0db02529c5654e9611673b0753f479da8447c32fb9d2d945",
+    "fix": "Client-only direct routed ingress connection with original registry TLS hostname, SNI and certificate verification. No hosts/DNS/route/gateway/proxy/serving configuration changed.",
+    "direct_route_proof": {
+      "registry_v2_status": 401,
+      "tls_verify_result": 0,
+      "authenticated_blob_range_status": 206,
+      "range_bytes": 1048576,
+      "blob_digest": "sha256:2fe1bd723675049a1f5c52ea338ce521041685f0a9be654144096643d8cb07b8",
+      "blob_size": 103167154
+    },
+    "ghcr_chunk_limit": {
+      "status": 416,
+      "message": "the request body is too large and exceeds the maximum permissible limit of 4.00MiB",
+      "rejected_chunk_bytes": 4611987,
+      "fixed_max_patch_bytes": 4194304
+    },
+    "resume": "Completed destination blobs reused by digest/size HEAD; source ranges append to per-blob partial files; complete local blobs SHA256-verified; destination PATCH upload offset recovery. Only unfinished blobs transferred; original manifest bytes published unchanged.",
+    "underlying_shared_relay_limit_changed": false,
+    "production_sparks_or_proxy_configuration_touched": false,
+    "post_transfer_relay_check": {
+      "restart_count": 3,
+      "running_since": "2026-11-11T21:08:18Z",
+      "config_sha256": "5705be67d7a9268c0db02529c5654e9611673b0753f479da8447c32fb9d2d945",
+      "unchanged": true
+    }
+  },
+  "independent_readback": {
+    "verified_at": "2026-11-11T22:24:26.902983+00:00",
+    "manifest_checks": [
+      {
+        "reference": "2026.11.08-native-vision-trial-r1",
+        "http_status": 200,
+        "digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
+        "raw_bytes_match": true
+      },
+      {
+        "reference": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
+        "http_status": 200,
+        "digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
+        "raw_bytes_match": true
+      }
+    ],
+    "descriptor_heads": 69,
+    "config_digest": "sha256:979ff212061ffe5d43ecd14e2c8a3d32d9cfceedf1b3e350008b7cdcf3226382",
+    "config_hash_verified": true,
+    "package": {
+      "http_status": 200,
+      "visibility": "private",
+      "version_id": 1546047572,
+      "version_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
+      "tag_present": true
+    },
+    "repository": {
+      "http_status": 200,
+      "private": true
+    },
+    "visibility_changed": false
+  }
 }
