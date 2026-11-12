@@ -1,0 +1,1420 @@
+{
+  "manifest_digest": "sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979",
+  "config_digest": "sha256:97cfdaafc7d1b5e7e0cd0e1b3b7a2cf787e8948586732089c9a24a334379e1df",
+  "config_findings": [],
+  "layers": [
+    {
+      "digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "members": 10329,
+      "regular_files_scanned": 7998,
+      "opaque_payloads": [
+        {
+          "path": "opt/package/vectors/glp39.gguf",
+          "bytes": 803392
+        },
+        {
+          "path": "opt/package/vision/vision.safetensors",
+          "bytes": 970564776
+        }
+      ],
+      "findings": [
+        {
+          "path": "usr/bin/python3.12",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 5540477,
+              "match_sha256": "d9bea3ef21735988cbc4439c529422aac0930b50f35cc73a42ca8bdd3ce63bbf"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7066939,
+              "match_sha256": "d9bea3ef21735988cbc4439c529422aac0930b50f35cc73a42ca8bdd3ce63bbf"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/aarch64-linux-gnu/libc.so.6",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "credential-location",
+              "offset": 1454495,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 1454608,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/aarch64-linux-gnu/libcurl-gnutls.so.4.8.0",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "credential-location",
+              "offset": 590100,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 590112,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 590208,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 590257,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/aarch64-linux-gnu/libcurl.so.4.8.0",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "credential-location",
+              "offset": 604220,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 604232,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 604328,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 604377,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/aarch64-linux-gnu/libgio-2.0.so.0.8000.0",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "credential-value",
+              "offset": 1530440,
+              "match_sha256": "dec643eed02d96980d7003df682d77b28a23f90a6d2a0961886c8953c2e8cb4e"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/aarch64-linux-gnu/libgnutls.so.30.37.1",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "credential-value",
+              "offset": 1644496,
+              "match_sha256": "33ea101ddbe7c33be8f143a2779736d0264a4f4c8f323331a4aa9a1f72d8ab2a"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 1644688,
+              "match_sha256": "33ea101ddbe7c33be8f143a2779736d0264a4f4c8f323331a4aa9a1f72d8ab2a"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 1644896,
+              "match_sha256": "33ea101ddbe7c33be8f143a2779736d0264a4f4c8f323331a4aa9a1f72d8ab2a"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 1645136,
+              "match_sha256": "33ea101ddbe7c33be8f143a2779736d0264a4f4c8f323331a4aa9a1f72d8ab2a"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 1645424,
+              "match_sha256": "33ea101ddbe7c33be8f143a2779736d0264a4f4c8f323331a4aa9a1f72d8ab2a"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 1645808,
+              "match_sha256": "8bcac7908eb950419537b91e19adc83ce2c9cbfdacf4f81157fdadfec11f7017"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 1647488,
+              "match_sha256": "07b213c05939fb7f3f763f3ff68e73ba65d602ab7c027b9a535cb60e845ffcbb"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 1648704,
+              "match_sha256": "3021d90eb9437b2d8f30e8363695c4418b5e5f1870801b5c317e9398ee0f572d"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 1648864,
+              "match_sha256": "3021d90eb9437b2d8f30e8363695c4418b5e5f1870801b5c317e9398ee0f572d"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 1649024,
+              "match_sha256": "3021d90eb9437b2d8f30e8363695c4418b5e5f1870801b5c317e9398ee0f572d"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/aarch64-linux-gnu/libksba.so.8.14.6",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 193984,
+              "match_sha256": "23b20a1d1b274772522c6b454911a5da0478b0b60da1203b295967fa3f7ee288"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/aarch64-linux-gnu/libmbedcrypto.so.2.28.8",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "credential-value",
+              "offset": 372768,
+              "match_sha256": "8bcac7908eb950419537b91e19adc83ce2c9cbfdacf4f81157fdadfec11f7017"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 372832,
+              "match_sha256": "33ea101ddbe7c33be8f143a2779736d0264a4f4c8f323331a4aa9a1f72d8ab2a"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 372896,
+              "match_sha256": "3021d90eb9437b2d8f30e8363695c4418b5e5f1870801b5c317e9398ee0f572d"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 372968,
+              "match_sha256": "dec643eed02d96980d7003df682d77b28a23f90a6d2a0961886c8953c2e8cb4e"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 373232,
+              "match_sha256": "8bcac7908eb950419537b91e19adc83ce2c9cbfdacf4f81157fdadfec11f7017"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 373304,
+              "match_sha256": "33ea101ddbe7c33be8f143a2779736d0264a4f4c8f323331a4aa9a1f72d8ab2a"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/aarch64-linux-gnu/libpython3.12.so.1.0",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 6198525,
+              "match_sha256": "d9bea3ef21735988cbc4439c529422aac0930b50f35cc73a42ca8bdd3ce63bbf"
+            },
+            {
+              "kind": "home-path",
+              "offset": 8250011,
+              "match_sha256": "d9bea3ef21735988cbc4439c529422aac0930b50f35cc73a42ca8bdd3ce63bbf"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/aarch64-linux-gnu/libssh-gcrypt.so.4.9.6",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "credential-value",
+              "offset": 370496,
+              "match_sha256": "03d104c669e3c7b6be7f989db8b12c8b910d3be8c1e2a73c9369d3cc0ba803b5"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 371776,
+              "match_sha256": "8bcac7908eb950419537b91e19adc83ce2c9cbfdacf4f81157fdadfec11f7017"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 371808,
+              "match_sha256": "33ea101ddbe7c33be8f143a2779736d0264a4f4c8f323331a4aa9a1f72d8ab2a"
+            },
+            {
+              "kind": "credential-value",
+              "offset": 375664,
+              "match_sha256": "07b213c05939fb7f3f763f3ff68e73ba65d602ab7c027b9a535cb60e845ffcbb"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/aarch64-linux-gnu/libssh.so.4.9.6",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "credential-value",
+              "offset": 361528,
+              "match_sha256": "03d104c669e3c7b6be7f989db8b12c8b910d3be8c1e2a73c9369d3cc0ba803b5"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/aarch64-linux-gnu/libunistring.so.5.0.0",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "credential-value",
+              "offset": 1021442,
+              "match_sha256": "9103350cce17b3e46c97994f20396b630eb81b4359990e7c184f2d79253a55d4"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/python3.12/ftplib.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "credential-location",
+              "offset": 33539,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 34037,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 34249,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/python3.12/ipaddress.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "private-address",
+              "offset": 43409,
+              "match_sha256": "4b2228c26597aecab7d5894eb1ec83d915bc2e1a75d758b3b53471ce6aa2c91c"
+            },
+            {
+              "kind": "private-address",
+              "offset": 43805,
+              "match_sha256": "4b2228c26597aecab7d5894eb1ec83d915bc2e1a75d758b3b53471ce6aa2c91c"
+            },
+            {
+              "kind": "private-address",
+              "offset": 44707,
+              "match_sha256": "4b2228c26597aecab7d5894eb1ec83d915bc2e1a75d758b3b53471ce6aa2c91c"
+            },
+            {
+              "kind": "private-address",
+              "offset": 51285,
+              "match_sha256": "4b2228c26597aecab7d5894eb1ec83d915bc2e1a75d758b3b53471ce6aa2c91c"
+            },
+            {
+              "kind": "private-address",
+              "offset": 51364,
+              "match_sha256": "4b2228c26597aecab7d5894eb1ec83d915bc2e1a75d758b3b53471ce6aa2c91c"
+            },
+            {
+              "kind": "private-address",
+              "offset": 51642,
+              "match_sha256": "4b2228c26597aecab7d5894eb1ec83d915bc2e1a75d758b3b53471ce6aa2c91c"
+            },
+            {
+              "kind": "private-address",
+              "offset": 51893,
+              "match_sha256": "b0d56c1d28390f7e4ece0ae355b30ebe8c8618788c2d769736a939a7e0bb4dd4"
+            },
+            {
+              "kind": "private-address",
+              "offset": 52003,
+              "match_sha256": "4fb0798e0eb02d5310d95142b51ddadf3d03fcd929382309589f573c0f923264"
+            },
+            {
+              "kind": "private-address",
+              "offset": 52154,
+              "match_sha256": "5da4236dba69f926f858153f06d49edc73f54ce8cd226d7239d1948e663610e0"
+            },
+            {
+              "kind": "private-address",
+              "offset": 67672,
+              "match_sha256": "4b2228c26597aecab7d5894eb1ec83d915bc2e1a75d758b3b53471ce6aa2c91c"
+            },
+            {
+              "kind": "private-address",
+              "offset": 68068,
+              "match_sha256": "4b2228c26597aecab7d5894eb1ec83d915bc2e1a75d758b3b53471ce6aa2c91c"
+            },
+            {
+              "kind": "private-address",
+              "offset": 69060,
+              "match_sha256": "4b2228c26597aecab7d5894eb1ec83d915bc2e1a75d758b3b53471ce6aa2c91c"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/python3.12/netrc.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "credential-location",
+              "offset": 35,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 253,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 1941,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 5672,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 5889,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 6392,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/python3.12/nntplib.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "credential-location",
+              "offset": 11534,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 35359,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 35392,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 35561,
+              "match_sha256": "3de95a09ee1730e3dc474455103e6db896a8efe5a860f85ba57e548c2f276465"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/python3.12/ntpath.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 6601,
+              "match_sha256": "d9bea3ef21735988cbc4439c529422aac0930b50f35cc73a42ca8bdd3ce63bbf"
+            }
+          ]
+        },
+        {
+          "path": "usr/lib/python3.12/urllib/request.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "private-address",
+              "offset": 97410,
+              "match_sha256": "37d7a80604871e579850a658c7add2ae7557d0c6abcc9b31ecddc4424207eba3"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/PIL/ImageFont.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "credential-value",
+              "offset": 59084,
+              "match_sha256": "57a26f03da1274be9ce14c3b04dd685a62f78c9424d2e34addf2d925f55b86fe"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/networkx/algorithms/link_analysis/hits_alg.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 2182,
+              "match_sha256": "e11b6a47cfd55a2f9723a6e04643b22b5d8b7b57ecc144c5230551946a4ee7f8"
+            },
+            {
+              "kind": "home-path",
+              "offset": 6581,
+              "match_sha256": "e11b6a47cfd55a2f9723a6e04643b22b5d8b7b57ecc144c5230551946a4ee7f8"
+            },
+            {
+              "kind": "home-path",
+              "offset": 9441,
+              "match_sha256": "e11b6a47cfd55a2f9723a6e04643b22b5d8b7b57ecc144c5230551946a4ee7f8"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/networkx/algorithms/link_prediction.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 4726,
+              "match_sha256": "e11b6a47cfd55a2f9723a6e04643b22b5d8b7b57ecc144c5230551946a4ee7f8"
+            },
+            {
+              "kind": "home-path",
+              "offset": 6749,
+              "match_sha256": "e11b6a47cfd55a2f9723a6e04643b22b5d8b7b57ecc144c5230551946a4ee7f8"
+            },
+            {
+              "kind": "home-path",
+              "offset": 12188,
+              "match_sha256": "e11b6a47cfd55a2f9723a6e04643b22b5d8b7b57ecc144c5230551946a4ee7f8"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/numpy/lib/_datasource.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 577,
+              "match_sha256": "9df2aebc18ec57c4d4685af795e0754d00af7c12ed333a5fa8aaa677618c6eb9"
+            },
+            {
+              "kind": "home-path",
+              "offset": 6886,
+              "match_sha256": "9df2aebc18ec57c4d4685af795e0754d00af7c12ed333a5fa8aaa677618c6eb9"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7042,
+              "match_sha256": "9df2aebc18ec57c4d4685af795e0754d00af7c12ed333a5fa8aaa677618c6eb9"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7177,
+              "match_sha256": "9df2aebc18ec57c4d4685af795e0754d00af7c12ed333a5fa8aaa677618c6eb9"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7222,
+              "match_sha256": "373ccb98dde02c54fda942bdaa9c29c7c6454147809bd0f85e7e12e116707d1f"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7294,
+              "match_sha256": "9df2aebc18ec57c4d4685af795e0754d00af7c12ed333a5fa8aaa677618c6eb9"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7336,
+              "match_sha256": "9df2aebc18ec57c4d4685af795e0754d00af7c12ed333a5fa8aaa677618c6eb9"
+            },
+            {
+              "kind": "home-path",
+              "offset": 12545,
+              "match_sha256": "9df2aebc18ec57c4d4685af795e0754d00af7c12ed333a5fa8aaa677618c6eb9"
+            },
+            {
+              "kind": "home-path",
+              "offset": 12598,
+              "match_sha256": "29c2834bd788765788aa53b3b319e7ffadd69635be02b08c17d7b215674ecd21"
+            },
+            {
+              "kind": "home-path",
+              "offset": 12681,
+              "match_sha256": "29c2834bd788765788aa53b3b319e7ffadd69635be02b08c17d7b215674ecd21"
+            },
+            {
+              "kind": "home-path",
+              "offset": 12691,
+              "match_sha256": "9df2aebc18ec57c4d4685af795e0754d00af7c12ed333a5fa8aaa677618c6eb9"
+            },
+            {
+              "kind": "home-path",
+              "offset": 18062,
+              "match_sha256": "b98d692c4574a80e508cf6fa38e6f27ae5348e616448edaa7fe675e363669fd2"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/numpy/lib/_utils_impl.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 18389,
+              "match_sha256": "b98d692c4574a80e508cf6fa38e6f27ae5348e616448edaa7fe675e363669fd2"
+            },
+            {
+              "kind": "credential-location",
+              "offset": 18400,
+              "match_sha256": "fd24be005e5d120f4e1e36875ae44e0f469a5ee53500ef42e105a1fef2f685e5"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn.so.9",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 6326369,
+              "match_sha256": "b45095bf8f9a9db72f82d06306153f958f6e0fde34b03dd6cc62025cffc350ca"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_adv.so.9",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 130576860,
+              "match_sha256": "b45095bf8f9a9db72f82d06306153f958f6e0fde34b03dd6cc62025cffc350ca"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_engines_precompiled.so.9",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 45278768,
+              "match_sha256": "d15c0b613b71d3d9787b3492f22d83caf58397f0e885743b694eb2d3155670b0"
+            },
+            {
+              "kind": "home-path",
+              "offset": 46457400,
+              "match_sha256": "d15c0b613b71d3d9787b3492f22d83caf58397f0e885743b694eb2d3155670b0"
+            },
+            {
+              "kind": "home-path",
+              "offset": 298757875,
+              "match_sha256": "b45095bf8f9a9db72f82d06306153f958f6e0fde34b03dd6cc62025cffc350ca"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_engines_runtime_compiled.so.9",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 19068693,
+              "match_sha256": "6c751221e3827072169d6b5f0d7b7f028f898153f3f80304ed9e6a7c2c0afbac"
+            },
+            {
+              "kind": "home-path",
+              "offset": 19094731,
+              "match_sha256": "6c751221e3827072169d6b5f0d7b7f028f898153f3f80304ed9e6a7c2c0afbac"
+            },
+            {
+              "kind": "home-path",
+              "offset": 19096383,
+              "match_sha256": "6c751221e3827072169d6b5f0d7b7f028f898153f3f80304ed9e6a7c2c0afbac"
+            },
+            {
+              "kind": "home-path",
+              "offset": 19108160,
+              "match_sha256": "6c751221e3827072169d6b5f0d7b7f028f898153f3f80304ed9e6a7c2c0afbac"
+            },
+            {
+              "kind": "home-path",
+              "offset": 20881389,
+              "match_sha256": "6c751221e3827072169d6b5f0d7b7f028f898153f3f80304ed9e6a7c2c0afbac"
+            },
+            {
+              "kind": "home-path",
+              "offset": 32585975,
+              "match_sha256": "b45095bf8f9a9db72f82d06306153f958f6e0fde34b03dd6cc62025cffc350ca"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_graph.so.9",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 8822268,
+              "match_sha256": "b45095bf8f9a9db72f82d06306153f958f6e0fde34b03dd6cc62025cffc350ca"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_heuristic.so.9",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 63015142,
+              "match_sha256": "b45095bf8f9a9db72f82d06306153f958f6e0fde34b03dd6cc62025cffc350ca"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_ops.so.9",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 48592908,
+              "match_sha256": "b45095bf8f9a9db72f82d06306153f958f6e0fde34b03dd6cc62025cffc350ca"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/nvidia/cusparselt/lib/libcusparseLt.so.0",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 42074824,
+              "match_sha256": "d15c0b613b71d3d9787b3492f22d83caf58397f0e885743b694eb2d3155670b0"
+            },
+            {
+              "kind": "home-path",
+              "offset": 42075888,
+              "match_sha256": "d15c0b613b71d3d9787b3492f22d83caf58397f0e885743b694eb2d3155670b0"
+            },
+            {
+              "kind": "home-path",
+              "offset": 42076960,
+              "match_sha256": "d15c0b613b71d3d9787b3492f22d83caf58397f0e885743b694eb2d3155670b0"
+            },
+            {
+              "kind": "home-path",
+              "offset": 42078208,
+              "match_sha256": "d15c0b613b71d3d9787b3492f22d83caf58397f0e885743b694eb2d3155670b0"
+            },
+            {
+              "kind": "home-path",
+              "offset": 42078384,
+              "match_sha256": "d15c0b613b71d3d9787b3492f22d83caf58397f0e885743b694eb2d3155670b0"
+            },
+            {
+              "kind": "home-path",
+              "offset": 42078568,
+              "match_sha256": "d15c0b613b71d3d9787b3492f22d83caf58397f0e885743b694eb2d3155670b0"
+            },
+            {
+              "kind": "home-path",
+              "offset": 42078736,
+              "match_sha256": "d15c0b613b71d3d9787b3492f22d83caf58397f0e885743b694eb2d3155670b0"
+            },
+            {
+              "kind": "home-path",
+              "offset": 42967760,
+              "match_sha256": "d15c0b613b71d3d9787b3492f22d83caf58397f0e885743b694eb2d3155670b0"
+            },
+            {
+              "kind": "home-path",
+              "offset": 43024792,
+              "match_sha256": "d15c0b613b71d3d9787b3492f22d83caf58397f0e885743b694eb2d3155670b0"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/nvidia_curand-10.4.0.35.dist-info/METADATA",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "private-address",
+              "offset": 51,
+              "match_sha256": "13afd9b75d7bc7f72a6a2361dec9e6d1b7df880294ead82b21eb5ad4eba5968b"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/safetensors-0.8.0.dist-info/sboms/safetensors-python.cyclonedx.json",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 409,
+              "match_sha256": "b1cbc5f347543a03701354923cd95344068142e4aa08c74d259fbfe7c62984fc"
+            },
+            {
+              "kind": "home-path",
+              "offset": 752,
+              "match_sha256": "b1cbc5f347543a03701354923cd95344068142e4aa08c74d259fbfe7c62984fc"
+            },
+            {
+              "kind": "home-path",
+              "offset": 1234,
+              "match_sha256": "b1cbc5f347543a03701354923cd95344068142e4aa08c74d259fbfe7c62984fc"
+            },
+            {
+              "kind": "home-path",
+              "offset": 1863,
+              "match_sha256": "b1cbc5f347543a03701354923cd95344068142e4aa08c74d259fbfe7c62984fc"
+            },
+            {
+              "kind": "home-path",
+              "offset": 32155,
+              "match_sha256": "b1cbc5f347543a03701354923cd95344068142e4aa08c74d259fbfe7c62984fc"
+            },
+            {
+              "kind": "home-path",
+              "offset": 32439,
+              "match_sha256": "b1cbc5f347543a03701354923cd95344068142e4aa08c74d259fbfe7c62984fc"
+            },
+            {
+              "kind": "home-path",
+              "offset": 32631,
+              "match_sha256": "b1cbc5f347543a03701354923cd95344068142e4aa08c74d259fbfe7c62984fc"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/safetensors/_safetensors_rust.abi3.so",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 596893,
+              "match_sha256": "b1cbc5f347543a03701354923cd95344068142e4aa08c74d259fbfe7c62984fc"
+            },
+            {
+              "kind": "home-path",
+              "offset": 600896,
+              "match_sha256": "b1cbc5f347543a03701354923cd95344068142e4aa08c74d259fbfe7c62984fc"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/torch/distributed/elastic/rendezvous/etcd_rendezvous.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "private-address",
+              "offset": 40999,
+              "match_sha256": "a2061d070343513968766f703811dbd899a02945f9e31350ad3626ee67785302"
+            },
+            {
+              "kind": "private-address",
+              "offset": 41630,
+              "match_sha256": "a2061d070343513968766f703811dbd899a02945f9e31350ad3626ee67785302"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/torch/distributed/launch.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "private-address",
+              "offset": 1776,
+              "match_sha256": "c5eb5a4cc76a5cdb16e79864b9ccd26c3553f0c396d0a21bafb7be71c1efcd8c"
+            },
+            {
+              "kind": "private-address",
+              "offset": 1951,
+              "match_sha256": "c5eb5a4cc76a5cdb16e79864b9ccd26c3553f0c396d0a21bafb7be71c1efcd8c"
+            },
+            {
+              "kind": "private-address",
+              "offset": 2251,
+              "match_sha256": "c5eb5a4cc76a5cdb16e79864b9ccd26c3553f0c396d0a21bafb7be71c1efcd8c"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/torch/fx/passes/graph_drawer.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 7115,
+              "match_sha256": "e0dbc3f08855521e0a5d57dbce83f0009ea3b980e7095fcc00f44b9206d95db4"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/torch/lib/libnvpl_lapack_core.so.0",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 1301152,
+              "match_sha256": "d15c0b613b71d3d9787b3492f22d83caf58397f0e885743b694eb2d3155670b0"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/torch/lib/libnvpl_lapack_lp64_gomp.so.0",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 5405592,
+              "match_sha256": "d15c0b613b71d3d9787b3492f22d83caf58397f0e885743b694eb2d3155670b0"
+            }
+          ]
+        }
+      ],
+      "bytes_scanned": 5638181330,
+      "name_index_sha256": "sha256:c0a785e69f0c6c00b3587c471ca79f95fc76f2771a74913c60cb66b9e3ae8a04",
+      "reused_from_manifest": "sha256:97a3a0753e2085afb173cf13d5b87be2b845585d19b13c4e39d55a280831bed8"
+    },
+    {
+      "digest": "sha256:fef66306d1de38329cce405d60cfc7060b5b3c1f91b14b8aa363687cb18c9111",
+      "members": 1578,
+      "regular_files_scanned": 1386,
+      "opaque_payloads": [
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/distutils-precedence.pth",
+          "bytes": 151
+        }
+      ],
+      "findings": [
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/setuptools/_vendor/platformdirs-4.4.0.dist-info/METADATA",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 4640,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 4741,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 4841,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 5100,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 5171,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 5230,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 5288,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 5343,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 5395,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 5448,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 5521,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7030,
+              "match_sha256": "040211e8f44b481aed0ee05849eb27d7d6263d2300e242b86edbba93dbd2f923"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7104,
+              "match_sha256": "040211e8f44b481aed0ee05849eb27d7d6263d2300e242b86edbba93dbd2f923"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7183,
+              "match_sha256": "040211e8f44b481aed0ee05849eb27d7d6263d2300e242b86edbba93dbd2f923"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7655,
+              "match_sha256": "040211e8f44b481aed0ee05849eb27d7d6263d2300e242b86edbba93dbd2f923"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7729,
+              "match_sha256": "040211e8f44b481aed0ee05849eb27d7d6263d2300e242b86edbba93dbd2f923"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7787,
+              "match_sha256": "040211e8f44b481aed0ee05849eb27d7d6263d2300e242b86edbba93dbd2f923"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7844,
+              "match_sha256": "040211e8f44b481aed0ee05849eb27d7d6263d2300e242b86edbba93dbd2f923"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7898,
+              "match_sha256": "040211e8f44b481aed0ee05849eb27d7d6263d2300e242b86edbba93dbd2f923"
+            },
+            {
+              "kind": "home-path",
+              "offset": 7949,
+              "match_sha256": "040211e8f44b481aed0ee05849eb27d7d6263d2300e242b86edbba93dbd2f923"
+            },
+            {
+              "kind": "home-path",
+              "offset": 8001,
+              "match_sha256": "040211e8f44b481aed0ee05849eb27d7d6263d2300e242b86edbba93dbd2f923"
+            },
+            {
+              "kind": "home-path",
+              "offset": 9747,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 9833,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 9918,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 10134,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 10204,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 10278,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 10340,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 10401,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 10459,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 10514,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 10570,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 10628,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 11018,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 11108,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 11197,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 11423,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 11501,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 11563,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 11624,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 11682,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 11737,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 11793,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            },
+            {
+              "kind": "home-path",
+              "offset": 11851,
+              "match_sha256": "8191954b259159728130b86bc3a00c13d6755448d602cccdde6c4217ad99797e"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/setuptools/_vendor/tomli-2.4.0.dist-info/METADATA",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 9558,
+              "match_sha256": "3d7e17651f31a708f9a2fd1cd86c4812cbd9751ef7a182c46c839b062e069d05"
+            }
+          ]
+        },
+        {
+          "path": "usr/local/lib/python3.12/dist-packages/torch/testing/_internal/common_methods_invocations.py",
+          "where": "content",
+          "hits": [
+            {
+              "kind": "home-path",
+              "offset": 621911,
+              "match_sha256": "f1b97d4a488d198c13eb1f352f4d4b76666015b324da208f6286adb74107ffc1"
+            }
+          ]
+        }
+      ],
+      "bytes_scanned": 697534958,
+      "name_index_sha256": "sha256:cdd98a0504e0873b95c7196b0c9e3e2d3cfa8ed3eb606189ad757cc92e5c639b"
+    }
+  ],
+  "method": "Every path/link and all non-payload regular-file bytes, including ELF files; overlapping streaming chunks; no extraction or execution",
+  "visibility_changed": false,
+  "publication_allowed": false,
+  "finding_file_count": 42,
+  "verdict": "BLOCKED",
+  "adjudications": [
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/bin/python3.12",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Static code/documentation examples or public paper URLs, including synthetic path-handling examples; not a deployed operator directory."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/aarch64-linux-gnu/libc.so.6",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Generic credential-file API/parser/documentation strings, not a credential file included in the archive."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/aarch64-linux-gnu/libcurl-gnutls.so.4.8.0",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Generic credential-file API/parser/documentation strings, not a credential file included in the archive."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/aarch64-linux-gnu/libcurl.so.4.8.0",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Generic credential-file API/parser/documentation strings, not a credential file included in the archive."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/aarch64-linux-gnu/libgio-2.0.so.0.8000.0",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Compiled crypto parser format markers and self-test material; not an operator key file or configured service credential."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/aarch64-linux-gnu/libgnutls.so.30.37.1",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Compiled crypto parser format markers and self-test material; not an operator key file or configured service credential."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/aarch64-linux-gnu/libksba.so.8.14.6",
+      "disposition": "REVIEW",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/aarch64-linux-gnu/libmbedcrypto.so.2.28.8",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Compiled crypto parser format markers and self-test material; not an operator key file or configured service credential."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/aarch64-linux-gnu/libpython3.12.so.1.0",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Static code/documentation examples or public paper URLs, including synthetic path-handling examples; not a deployed operator directory."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/aarch64-linux-gnu/libssh-gcrypt.so.4.9.6",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Compiled crypto parser format markers and self-test material; not an operator key file or configured service credential."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/aarch64-linux-gnu/libssh.so.4.9.6",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Compiled crypto parser format markers and self-test material; not an operator key file or configured service credential."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/aarch64-linux-gnu/libunistring.so.5.0.0",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Pattern coincidence in Unicode-name table or embedded base64 font data, not an authentication credential."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/python3.12/ftplib.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Generic credential-file API/parser/documentation strings, not a credential file included in the archive."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/python3.12/ipaddress.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Standard address-range constants or illustrative addresses in module documentation, not fleet configuration."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/python3.12/netrc.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Generic credential-file API/parser/documentation strings, not a credential file included in the archive."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/python3.12/nntplib.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Generic credential-file API/parser/documentation strings, not a credential file included in the archive."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/python3.12/ntpath.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Static code/documentation examples or public paper URLs, including synthetic path-handling examples; not a deployed operator directory."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/lib/python3.12/urllib/request.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Standard address-range constants or illustrative addresses in module documentation, not fleet configuration."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/PIL/ImageFont.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Pattern coincidence in Unicode-name table or embedded base64 font data, not an authentication credential."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/networkx/algorithms/link_analysis/hits_alg.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Static code/documentation examples or public paper URLs, including synthetic path-handling examples; not a deployed operator directory."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/networkx/algorithms/link_prediction.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Static code/documentation examples or public paper URLs, including synthetic path-handling examples; not a deployed operator directory."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/numpy/lib/_datasource.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Static code/documentation examples or public paper URLs, including synthetic path-handling examples; not a deployed operator directory."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/numpy/lib/_utils_impl.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Static code/documentation examples or public paper URLs, including synthetic path-handling examples; not a deployed operator directory."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn.so.9",
+      "disposition": "REVIEW",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_adv.so.9",
+      "disposition": "REVIEW",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_engines_precompiled.so.9",
+      "disposition": "REVIEW",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_engines_runtime_compiled.so.9",
+      "disposition": "REVIEW",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_graph.so.9",
+      "disposition": "REVIEW",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_heuristic.so.9",
+      "disposition": "REVIEW",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_ops.so.9",
+      "disposition": "REVIEW",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/nvidia/cusparselt/lib/libcusparseLt.so.0",
+      "disposition": "REVIEW",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/nvidia_curand-10.4.0.35.dist-info/METADATA",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Version metadata resembles an IPv4 literal; it is a package version field, not a network destination."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/safetensors-0.8.0.dist-info/sboms/safetensors-python.cyclonedx.json",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Generic hosted CI runner path in package SBOM/source-location provenance, not a local operator home or credential."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/safetensors/_safetensors_rust.abi3.so",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Generic hosted CI runner path in package SBOM/source-location provenance, not a local operator home or credential."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/torch/distributed/elastic/rendezvous/etcd_rendezvous.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Standard address-range constants or illustrative addresses in module documentation, not fleet configuration."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/torch/distributed/launch.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Standard address-range constants or illustrative addresses in module documentation, not fleet configuration."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/torch/fx/passes/graph_drawer.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Static code/documentation examples or public paper URLs, including synthetic path-handling examples; not a deployed operator directory."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/torch/lib/libnvpl_lapack_core.so.0",
+      "disposition": "REVIEW",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+    },
+    {
+      "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "path": "usr/local/lib/python3.12/dist-packages/torch/lib/libnvpl_lapack_lp64_gomp.so.0",
+      "disposition": "REVIEW",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+    },
+    {
+      "layer_digest": "sha256:fef66306d1de38329cce405d60cfc7060b5b3c1f91b14b8aa363687cb18c9111",
+      "path": "usr/local/lib/python3.12/dist-packages/setuptools/_vendor/platformdirs-4.4.0.dist-info/METADATA",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Static code/documentation examples or public paper URLs, including synthetic path-handling examples; not a deployed operator directory."
+    },
+    {
+      "layer_digest": "sha256:fef66306d1de38329cce405d60cfc7060b5b3c1f91b14b8aa363687cb18c9111",
+      "path": "usr/local/lib/python3.12/dist-packages/setuptools/_vendor/tomli-2.4.0.dist-info/METADATA",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Static code/documentation examples or public paper URLs, including synthetic path-handling examples; not a deployed operator directory."
+    },
+    {
+      "layer_digest": "sha256:fef66306d1de38329cce405d60cfc7060b5b3c1f91b14b8aa363687cb18c9111",
+      "path": "usr/local/lib/python3.12/dist-packages/torch/testing/_internal/common_methods_invocations.py",
+      "disposition": "BENIGN_PATTERN",
+      "reason": "Quoted example assertion traceback inside a commented test-case annotation; not a deployed operator path."
+    }
+  ],
+  "unresolved_file_count": 11,
+  "benign_pattern_file_count": 31
+}

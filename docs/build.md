@@ -3,7 +3,7 @@
 ## Two different artifacts — do not confuse them
 
 1. **Exact private production mirror**: `ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1@sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9`. Same manifest/config/layers as the qualified production artifact, including its existing launcher/defaults. **Published and verified PRIVATE; raw-manifest digest matches exactly.** Its text rank/Engram assets are externally mounted. It is not an all-in-one model package.
-2. **All-in-one bundle candidate**: the Dockerfile combines the qualified runtime/binaries, independently verified official stock rank files/Engram, compact vision pack, publisher preprocessing/ViT modules and optional GLP-39 into a **new** image. Its generic supervisor defaults steering OFF and vision ON. Adding assets/changing launcher changes the digest. **Not built or fleet-qualified in this task.**
+2. **All-in-one bundle candidate**: the Dockerfile must use a separately privacy-cleared sanitized runtime and its source-rebuilt engine, independently verified official stock rank files/Engram, compact vision pack, publisher preprocessing/ViT modules and optional GLP-39 into a **new** image. Its generic supervisor defaults steering OFF and vision ON. Adding assets/changing launcher changes the digest. **Not built or fleet-qualified in this task.**
 
 No script builds on a Spark, deploys, changes a route or pushes an image automatically. Use an off-serving build host; TP4 model acceptance requires a separate compatible four-rank ring or a separately authorized window.
 
@@ -29,13 +29,13 @@ The source script checks clean pinned checkouts, builds CMake engine and locked 
 - Engine `b12cbb69d30976d2a378f258fb2f75eee36da251ced1530f47ccea56993286b2`.
 - Frontend `860ec4f3a88c3b6833b88f03829728f537a498deee67cb540f9bd50ad72223f5`.
 
-**Scripted qualified-binary route using the verified private mirror:**
+**Historical qualified-binary route using the verified private mirror — forensic/private use only:**
 
 ```sh
 bash scripts/stage-qualified.sh
 ```
 
-This pulls the digest-pinned mirror on the build host, creates but **never starts** a disposable container, extracts `/opt/pico/dsgb10_rank`, `/opt/pico/dsfront` and `/opt/pico/vision/vision.safetensors` into ignored `bundle/`, checks their three qualified hashes and removes the never-started container. It refuses existing destination artifacts. This preserves qualified binaries instead of pretending a new compiler produced the same bytes. Source remains pinned for audit/rebuild.
+This pulls the digest-pinned mirror on the build host, creates but **never starts** a disposable container, extracts `/opt/pico/dsgb10_rank`, `/opt/pico/dsfront` and `/opt/pico/vision/vision.safetensors` into ignored `bundle/`, checks their three qualified hashes and removes the never-started container. It refuses existing destination artifacts. This preserves qualified binaries instead of pretending a new compiler produced the same bytes. **The engine itself contains operator-path strings; do not use that executable for a publication build.** Source remains pinned for audit/rebuild. The new publication path rebuilds under generic paths and requires a separate runtime receipt/new acceptance.
 
 **Manual step if using a new source build:** obtain the original qualified 13-input/linker/sysroot bundle and original relink procedure from its custodian, verify the native-input manifest/control binary, then link the changed model/Engram/server modules exactly as recorded. If unavailable, keep the source-build result separate and independently qualify it; do not edit the expected hashes to make it appear production-identical. No public download URL or builder digest is known, so none is invented.
 
@@ -123,9 +123,9 @@ The validator checks qualified binaries, all rank/Engram/metadata receipt hashes
 bash scripts/build-image.sh
 ```
 
-The default Dockerfile runtime base is the qualified private mirror **by immutable tag+digest**. The mirror is now published and its exact digest/private visibility are verified; this closes the runtime availability gap for authorized package readers. It inherits production CUDA/RDMA/Python dependencies instead of inventing a supposedly equivalent public base. An alternate reviewed base must be pinned by digest and independently qualified for shared-library closure, ARM64/GB10, Python/PyTorch/Pillow/safetensors, licenses and runtime behavior.
+**The old default base was removed by the publication remediation.** `Dockerfile` now has no default `RUNTIME_BASE`. `scripts/build-image.sh` requires `docs/publication-runtime.json` (or an explicit receipt path) with a CLEAN privacy verdict, zero unresolved findings and zero inherited source layers. It supplies the receipt's tag+digest and validates the staged engine against the receipt's source-rebuilt hash, not the contaminated production executable. A blocked receipt stops before Docker is invoked. See [publication remediation](publication-remediation.md). A new runtime requires independent shared-library, ARM64/GB10, Python/vision and full-ring acceptance. Manifest/private visibility verification of the old mirror is not clearance to use it in a distributable image.
 
-The result is a **local** `2026.11.08-native-vision-bundle-candidate`. It includes all ranks and will be much larger than the 11.56GB compressed runtime/vision mirror. Full bundled compressed size, extraction/disk headroom and registry large-layer compatibility have not been measured. No image build or model download ran here.
+The intended result is a **local, unqualified** `2026.11.11-native-vision-bundle-candidate`. It includes all ranks and will be much larger than the 11.56GB compressed runtime/vision mirror. Full bundled compressed size, extraction/disk headroom and registry large-layer compatibility have not been measured. No full text-weight bundle build or model download ran here. A separate slim runtime candidate was built for the publication remediation; do not confuse it with the all-in-one bundle.
 
 Before release: extract actual profile/binaries/vision pack from the built image and compare hashes; inspect dynamic dependencies; retain SBOM/licenses; smoke-test the generic supervisor; then run all full-ring gates. Text SUBMIT layout must remain unchanged when no images are supplied. Image payload/slot lifecycle, cache isolation and bounded input rejection must be checked, not inferred from host tests.
 
@@ -147,6 +147,6 @@ Reference branch `glp/pico-glp-steer-20261106`, current evidence commit **cf6e8b
 
 **GHCR transfer resolved**: the exact production runtime/vision mirror is published PRIVATE with matching manifest digest. The transfer client bypassed an OOM-prone TCP relay without changing shared infrastructure. Diagnosis, historical failures and readback receipt: [completion report](completion-report.md), `ghcr-transfer.json`. This does not qualify the distinct all-in-one bundle.
 
-1. **Independent public-source byte-identical engine build is not turnkey**: the original 13 qualified native inputs/toolchain/sysroot are not distributed. The scripted exact-binary extraction requires the private mirror; otherwise obtain those inputs from their custodian or independently qualify a new build. No builder digest/download URL is invented.
+1. **Independent public-source engine build is not turnkey**: the original qualified native inputs/toolchain/sysroot are not distributed. A generic-path rebuild was performed with an existing local cross-builder; its image ID, new engine hash and regression results are documented in publication remediation. No public builder download URL or byte-identity claim is invented. The rebuilt runtime needs GPU qualification.
 2. **New all-in-one layout remains unexecuted/unqualified**: official snapshot acquisition, text conversion/verification, public compact extraction, optional vector acquisition, all-asset build, storage/SBOM/license closure and generic launcher/full-ring acceptance must actually run. Commands and fail-closed checks are supplied; test success here is **offline recipe verification only**. Snapshot origin and authentic notices still require operator review.
-3. **Public distribution readiness is separate**: the exact inherited image preserves existing defaults, labels/history/layers; it is not a scrubbed public rebuild. Review all layer contents/dependency licenses and remove any nonpublishable material in a separately built image before any public-release decision. No visibility change is authorized here.
+3. **Public distribution readiness is separate**: the exact inherited image preserves existing defaults, labels/history/layers; it is not a scrubbed public rebuild. The separate runtime remediation removes the known deployment disclosures, but 11 vendor-provenance file reviews remain open. The strict clean-audit release gate is not met. The original digest and new candidate both stay private; no visibility change has been made.

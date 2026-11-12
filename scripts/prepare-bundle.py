@@ -21,8 +21,16 @@ def checked(path, expected):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--bundle', type=Path, default=ROOT/'bundle')
+    p.add_argument('--publication-runtime',type=Path,help='Audited source-rebuilt runtime receipt; never changes production locks')
     a=p.parse_args(); b=a.bundle.resolve()
     lock=json.loads((ROOT/'sources.lock.json').read_text())
+    if a.publication_runtime:
+        runtime=json.loads(a.publication_runtime.read_text())
+        if runtime['privacy_verdict']!='CLEAN' or runtime['unresolved_findings']!=0 or runtime['inherited_source_layers']!=0:
+            raise ValueError('Publication runtime privacy gate is not clear')
+        if runtime['source_engine_commit']!=lock['engine_commit']:
+            raise ValueError('Publication runtime source mismatch')
+        lock['engine_binary_sha256']=runtime['engine_binary_sha256']
     checked(b/'bin/dsgb10_rank',lock['engine_binary_sha256'])
     checked(b/'bin/dsfront',lock['frontend_binary_sha256'])
     receipt=json.loads((b/'model/asset-hashes.json').read_text())
@@ -58,6 +66,8 @@ def main():
     profile.update(engine_sha256=lock['engine_binary_sha256'], frontend_sha256=lock['frontend_binary_sha256'],
                    glp39_sha256=lock['optional_glp39_sha256'] if vector.exists() else None,
                    steering_default='off', vision_pack_sha256=lock['vision_pack_sha256'], vision_files_sha256=vr['sha256'])
+    if a.publication_runtime:
+        profile.update(runtime_manifest_digest=runtime['manifest_digest'],qualification='source rebuilt; new GPU acceptance required')
     (b/'profile.json').write_text(json.dumps(profile,indent=2)+'\n')
     print('Profile written only after qualified binary and asset hash checks; no image built.')
 

@@ -1,0 +1,74 @@
+{
+  "verified_at": "2026-11-12T04:16:11.629215+00:00",
+  "manifest_digest": "sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979",
+  "scope": "Offline recipe, archive/privacy scan, CPU regressions and bounded development-only runtime smoke; not serving qualification",
+  "source_unchanged": true,
+  "profile_hashes_match": {
+    "engine": true,
+    "frontend": true
+  },
+  "original_confirmed_path_occurrences_absent_from_core": 61,
+  "original_binary_operator_path_occurrences": 88,
+  "rebuilt_binary_operator_path_occurrences": 0,
+  "arm64_qemu_regressions": [
+    {
+      "test": "sample_rng_test",
+      "binary_sha256": "0bf554b090dbd238df6069922eba17029496e6c101cf2d650b6e7b950c309330",
+      "exit_code": 0,
+      "elapsed_seconds": 3.879,
+      "output_sha256": "1c8a708b04bdd1b6188f4db836a8859ff1b19e9c91ea3985cb8407b21929684f"
+    },
+    {
+      "test": "glp_math_test",
+      "binary_sha256": "1e4d928dc33c7e04750a23640d21418f96dcc1ce416108a05d8482a35569caf4",
+      "exit_code": 0,
+      "elapsed_seconds": 5.465,
+      "output_sha256": "174204e993ca6284083550e73afd0655a74c957efefc6684a9457269fec95625",
+      "argument": "authentic hash-verified vector",
+      "prior_invocation": "Missing required vector argument returned usage exit 2; corrected invocation recorded here"
+    },
+    {
+      "test": "glp_test",
+      "binary_sha256": "be8de5782b00d1fc0f2d537ba0fe669e6727448833bee1ae2d9008944e7203e4",
+      "exit_code": 0,
+      "elapsed_seconds": 0.87,
+      "output_sha256": "0db2627cd6456de1406666acb233ff3acabd1bd33aeaaa4e831086e18ca07acc"
+    }
+  ],
+  "fold_reference": {
+    "fold_values": 798720,
+    "dot_rows": 156,
+    "column_coverage": 5120,
+    "differences": 0,
+    "alpha_zero_finite_identity": true
+  },
+  "runtime_smoke": {
+    "gpu_execution": false,
+    "network": "none",
+    "read_only_rootfs": true,
+    "timeout_seconds": 660,
+    "timed_out": true,
+    "seconds": 690.271,
+    "status": "INCOMPLETE_TIMEOUT",
+    "completed_imports": [
+      "numpy",
+      "PIL",
+      "safetensors"
+    ],
+    "incomplete_import": "torch",
+    "not_reached": [
+      "torchgen",
+      "yaml",
+      "cuda.bindings",
+      "triton"
+    ],
+    "log_sha256": "23e06b0f41af6780feb0997475f1bb902277a7f8c388b654e58e2d3993dd8003",
+    "task_container_state": "removed automatically after bounded stop; inspect confirms no such object",
+    "serving_acceptance": false
+  },
+  "privacy_verdict": "BLOCKED",
+  "vendor_provenance_files_unresolved": 11,
+  "gpu_acceptance_performed": false,
+  "visibility_changed": false,
+  "production_or_sparks_touched": false
+}

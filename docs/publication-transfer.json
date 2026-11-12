@@ -1,0 +1,41 @@
+{
+  "started_at": "2026-11-12T04:01:34.554583+00:00",
+  "image": "ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.11-native-vision-sanitized-candidate-r4",
+  "manifest_digest": "sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979",
+  "method": "Destination-only HEAD reuse and 4 MiB resumable PATCH; explicit new private candidate tag",
+  "visibility_changed": false,
+  "production_touched": false,
+  "blobs": [
+    {
+      "digest": "sha256:97cfdaafc7d1b5e7e0cd0e1b3b7a2cf787e8948586732089c9a24a334379e1df",
+      "size": 1267,
+      "already_present": false,
+      "chunks": 1,
+      "retries": 0
+    },
+    {
+      "digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "size": 4369091181,
+      "already_present": true,
+      "chunks": 0,
+      "retries": 0
+    },
+    {
+      "digest": "sha256:fef66306d1de38329cce405d60cfc7060b5b3c1f91b14b8aa363687cb18c9111",
+      "size": 212623276,
+      "already_present": false,
+      "chunks": 51,
+      "retries": 0
+    }
+  ],
+  "events": [],
+  "finished_at": "2026-11-12T04:02:18.900919+00:00",
+  "manifest_tag_and_digest_get_verified": true,
+  "config_get_hash_verified": true,
+  "all_blob_heads_verified": true,
+  "package_visibility": "private",
+  "repository_private": true,
+  "package_version_id": 1547326582,
+  "original_manifest_digest_unchanged": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
+  "anonymous_readback_not_attempted": true
+}

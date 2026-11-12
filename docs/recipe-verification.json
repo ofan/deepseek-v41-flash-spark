@@ -1,44 +1,42 @@
 {
-  "verified_at": "2026-11-12T03:01:07.182513+00:00",
-  "scope": "offline recipe checks only; no serving/inference/build acceptance",
+  "verified_at": "2026-11-12T04:16:39.616453+00:00",
+  "scope": "Current offline recipe/publication-remediation checks only; no serving qualification",
   "unit_tests": {
-    "passed": 54,
+    "passed": 74,
     "failed": 0,
-    "command": "python3 -B -m unittest discover -s tests -v"
+    "command": "python3 -B -m unittest discover -s tests -v",
+    "output_sha256": "bdca92dc54bb36740a9941ee441255590b2a7a86aa0102a32ddbe1b1fcea1f81"
   },
   "scrub": {
-    "text_files": 34,
+    "text_files": 44,
     "forbidden_matches": 0,
     "status": "pass"
   },
   "checks": {
-    "shell_syntax": "pass",
-    "python_ast": {
-      "status": "pass",
-      "files": 6
-    },
-    "json_parse": {
+    "shell_syntax": {
       "status": "pass",
       "files": 5
     },
-    "text_conversion_plan": {
+    "python_ast": {
       "status": "pass",
-      "steps": 13,
-      "rank_verifications": 4
+      "files": 14
     },
-    "text_reuse_plan": {
+    "json_parse": {
       "status": "pass",
-      "steps": 4,
-      "text_asset_rewrites": 0
+      "files": 9
     },
-    "vision_preparation_plan": "pass; no asset reads/downloads",
-    "optional_vector_plan": "pass; no download",
-    "cli_help": "pass",
     "diff_whitespace": "pass",
-    "private_registry_readback": "pass; separate owner-authenticated readback retained in ghcr-transfer.json",
-    "layer_publication_audit": "completed bounded read-only audit; BLOCKED; package and repository remain private"
+    "candidate_receipt_consistency": "pass; private registry proof retained in publication-transfer.json",
+    "layer_publication_audit": "BLOCKED; 11 third-party provenance file reviews remain",
+    "arm64_qemu_regressions": "3 pass; details in publication-verification.json",
+    "runtime_smoke": "INCOMPLETE_TIMEOUT; not a pass",
+    "repository_visibility": "private; fresh owner query verified",
+    "package_visibility": "private; owner-authenticated package-scoped proof in publication-transfer.json; convenience gh token lacks read:packages"
   },
-  "weights_downloaded": false,
-  "new_image_built": false,
-  "production_or_sparks_touched": false
+  "text_weights_downloaded": false,
+  "new_runtime_image_built": true,
+  "all_in_one_text_bundle_built": false,
+  "gpu_qualification_performed": false,
+  "production_or_sparks_touched": false,
+  "visibility_changed": false
 }

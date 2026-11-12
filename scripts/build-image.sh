@@ -1,10 +1,19 @@
 #!/usr/bin/env bash
-# Explicit local build only. Never pushes, deploys or downloads model weights.
+# Explicit local candidate build only; no push, deploy or model download.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-: "${RUNTIME_BASE:=ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1@sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9}"
-[[ "$RUNTIME_BASE" == *@sha256:* ]] || { echo 'Runtime base must be digest-pinned' >&2; exit 1; }
-python3 scripts/prepare-bundle.py
+receipt=${PUBLICATION_RUNTIME_RECEIPT:-docs/publication-runtime.json}
+RUNTIME_BASE=$(python3 - "$receipt" <<'PY'
+import json,re,sys
+r=json.load(open(sys.argv[1]))
+assert r['privacy_verdict']=='CLEAN' and r['unresolved_findings']==0, 'Runtime privacy gate not clear'
+assert r['inherited_source_layers']==0, 'Historical layers are forbidden'
+ref=r['image']+'@'+r['manifest_digest']
+assert re.fullmatch(r'ghcr.io/ofan/deepseek-v41-flash-spark:[A-Za-z0-9_.-]+@sha256:[0-9a-f]{64}',ref)
+print(ref)
+PY
+)
+python3 scripts/prepare-bundle.py --publication-runtime "$receipt"
 docker build --platform linux/arm64 --build-arg "RUNTIME_BASE=$RUNTIME_BASE" \
- -t ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-bundle-candidate .
-echo 'LOCAL candidate only. Requires profile extraction and four-rank acceptance; nothing pushed.'
+ -t ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.11-native-vision-bundle-candidate .
+echo 'LOCAL unqualified candidate only. Requires full artifact audit and four-rank acceptance.'

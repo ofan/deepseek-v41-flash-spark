@@ -53,7 +53,9 @@ class VisionRecipeTests(unittest.TestCase):
         with self.assertRaises(ValueError):vision.inventory(Path('.'),{'weight_map':{}})
     def test_runtime_is_digest_pinned(self):
         docker=(ROOT/'Dockerfile').read_text()
-        self.assertIn(json.loads((ROOT/'sources.lock.json').read_text())['production_manifest_digest'],docker)
+        self.assertIn('ARG RUNTIME_BASE\nFROM ${RUNTIME_BASE}',docker)
+        self.assertNotIn(json.loads((ROOT/'sources.lock.json').read_text())['production_manifest_digest'],docker)
+        self.assertIn('manifest_digest',(ROOT/'scripts/build-image.sh').read_text())
     def test_current_benchmarks_cite_current_evidence(self):
         text=(ROOT/'docs/benchmarks.md').read_text()
         for value in ('8,951','9,259','9,076','8,598','88.772','retrial-spark-only/REPORT.md'):

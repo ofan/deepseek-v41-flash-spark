@@ -197,3 +197,7 @@ An unchanged manifest digest cannot be sanitized: config and every historical la
 ## Verification
 
 See `layer-audit.json` for coverage/match receipts and `recipe-verification.json` for offline recipe tests and scrub. The audit files intentionally contain no secret values, internal domain/address literals, or raw generation/tokenizer/tensor data.
+
+## Follow-up remediation
+
+The original digest and this historical audit remain unchanged. See [publication remediation](publication-remediation.md) for fresh allowlist layers, a generic-path engine rebuild and the separate candidate audit. A new top-level deletion layer was deliberately not used to hide these findings.

@@ -2,9 +2,31 @@
 
 ## Verdict
 
-Recipe documentation and fail-closed build scaffolding now target **current native-vision production**, engine **b7c3eb5**, not the retired sampler serving artifact. **GHCR staging is complete: the private copy has the exact production manifest digest.** Two historical failed copies are retained in the receipt, followed by the diagnosed/resumed transfer and verified readback. The repository remains PRIVATE. No visibility setting was changed. No Spark, production container, service or routing system was accessed or changed.
+The exact production mirror is private and intact. The follow-up remediation removed the known deployment-specific disclosures in a **separate source-rebuilt runtime candidate**, also private. **Publication remains BLOCKED**, not cleared: 11 third-party binary files retain user-like vendor build/assertion paths whose provenance has not been independently established. No visibility setting changed. The repository remains private; production, hardware hosts and routing were untouched.
 
-The recipe is not represented as a freshly built/qualified all-in-one image: production itself mounts the large text/Engram assets externally. The exact mirror and new all-in-one Dockerfile are explicitly distinguished throughout.
+The candidate is a runtime plus compact vision pack and optional vector, **not an all-in-one text-checkpoint bundle**. The original production qualification does not qualify its new executable/runtime. The sections below retain the historical production/mirror evidence; see the dated remediation section for the new artifact.
+
+## Publication remediation — follow-up, 2026-11-12 UTC
+
+Full evidence and tooling: [publication-remediation.md](publication-remediation.md), `publication-audit.json`, `publication-runtime.json`, and `publication-transfer.json`.
+
+**Fixed:** fresh runtime-allowlist layers with generic config/profile/launcher; no inherited operational trees, homes, stale profiles, launchers or build history. The original executable itself contained **88 operator-home path occurrences**, also inside CUDA fatbins; host debug stripping retained them. Rebuilding unchanged source **b7c3eb5b12a030725bfb0186d27065bc6e376685** under generic paths removed those occurrences (**88 → 0**). No source or executable-string patch was used. The qualified frontend, compact vision pack and authentic optional vector retain their locked hashes. Steering defaults OFF. The recipe's build path now refuses the blocked original base and any uncleared runtime receipt.
+
+**Private candidate:**
+
+- `ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.11-native-vision-sanitized-candidate-r4`.
+- Manifest **`sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979`**.
+- Config **`sha256:97cfdaafc7d1b5e7e0cd0e1b3b7a2cf787e8948586732089c9a24a334379e1df`**.
+- **2 fresh layers**, **4,581,714,457 compressed bytes**; zero original layer digests retained.
+- Rebuilt engine **`9b4aadf1ed5a5890d5e201d1f304be4a5461657d54eddf7df8b0f21882f45659`**. Full GPU/model qualification has **not** run.
+- Owner-authenticated manifest GET by tag and digest, config hash and all three referenced blob digest/size HEAD checks pass. Package and repository remain **private**. This is not an independent full multi-gigabyte pull. No public/anonymous readback is claimed.
+- The original production tag still resolves to **`sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9`**; it was not overwritten or deployed.
+
+**Deeper audit:** all **11,907 members** indexed; **9,384 non-payload regular files / 6,335,716,288 bytes** scanned, including binaries and large text. The two locked vision/vector payloads stay opaque. Config has **0 findings** and scanned bytes have no private-domain, tailnet-domain or internal-routing matches. Of **42 screening files / 173 raw matches**, bounded review classifies **31 files as benign patterns** and retains **11 for review**. These are third-party libksba, seven cuDNN libraries, cuSPARSELt and two NVPL libraries, listed with exact paths and layer digest in `publication-remediation.md`. They are not asserted to contain working credentials. They are also not silently waived: privacy verdict remains **BLOCKED**, publication gate fails closed.
+
+**Host-only verification:** rebuilt ARM64 tests under QEMU pass authentic-vector reader validation (including six malformed-file refusals), fold arithmetic **0 reference differences** over **798,720 values / 156 rows**, and sampler endpoint regression over **16,777,216 bins**. Earlier isolated packaging smokes found missing loader/Python APIs; those failures are retained as packaging iterations rather than release passes. The final r4 smoke imported NumPy, PIL and safetensors, then **timed out during PyTorch import at the 660-second deadline**; the isolated task container was stopped/removed. No complete-import or runtime readiness pass is claimed. **74 offline recipe tests pass**. Results and scrub/static checks are recorded in `publication-verification.json` and `recipe-verification.json`. These are not GPU, generation identity, quality or performance acceptance.
+
+**Remaining blockers:** resolve all 11 vendor-provenance review files or replace their dependencies with independently audited equivalents; approve the exact new digest before any public release; independently review/reproduce the currently local cross-toolchain/sysroot; obtain separately authorized full four-rank acceptance before serving use. External text assets and the new all-in-one bundle still require their own end-to-end build/audit/qualification. No production or visibility changes are part of this remediation.
 
 ## Layer-content publication audit — BLOCKED
 
@@ -17,7 +39,7 @@ The image is mirrored correctly but **must remain PRIVATE**. The follow-up [laye
 
 **Ryan's conditional publication authorization was not exercised:** zero forbidden findings was required and that condition failed. No visibility change or anonymous-public-readback success is claimed. Final owner-authenticated readback confirms the package is still private and the manifest digest is unchanged; the git repository is also still private. No production, Spark or routing system was accessed. No image code was executed and no tensor/tokenizer member was opened.
 
-A new, clean publication artifact must exclude old operational layers and use generic config/launcher/metadata. Overwriting or deleting a file in a later layer does not remove the older bytes. Sanitizing necessarily changes the digest. This audit did not rebuild, deploy or publish anything.
+A new, clean publication artifact must exclude old operational layers and use generic config/launcher/metadata. Overwriting or deleting a file in a later layer does not remove the older bytes. Sanitizing necessarily changes the digest. That original audit did not rebuild, deploy or publish anything; the subsequent private remediation is documented above.
 
 ## Current qualification provenance
 
@@ -64,17 +86,17 @@ The mirror preserves the original image bytes and existing metadata. It is not a
 
 ## Build work and residual gaps
 
-Added compact-vision staging from the pinned public checkpoint/fork extractor, qualified-image artifact extraction, bounded optional authentic vector acquisition, vision-aware profile validation, rank0 native-encoder orchestration and offline regressions. Pinned the default runtime to the qualified image instead of inventing a public CUDA/PyTorch/RDMA substitute. Every step maps to recorded homeinfra or fork documentation in [build.md](build.md).
+Added compact-vision staging from the pinned public checkpoint/fork extractor, qualified-image artifact extraction, bounded optional authentic vector acquisition, vision-aware profile validation, rank0 native-encoder orchestration and offline regressions. The historical recipe pinned the qualified mirror; remediation now removes that contaminated default and requires a separately audited source-rebuilt runtime receipt. Every step maps to recorded homeinfra or fork documentation in [build.md](build.md).
 
 Remaining gaps are explicit:
 
 The private transfer has no remaining blocker. Independent recipe gaps remain:
 
-1. Original cross-build native-input/sysroot/toolchain bundle is not published; exact binaries can now be extracted from the qualified private mirror. A fresh compile is not falsely promised byte-identical.
+1. Original cross-build native-input/sysroot/toolchain bundle is not published; original binaries remain extractable for private/forensic use but contain deployment-path disclosures. A generic-path rebuild was performed with local tooling; the toolchain/sysroot are still not independently published or reproduced. It is not byte-identical or GPU-qualified.
 2. New all-in-one layout and public-source asset pipeline have not been executed end-to-end: acquire/verify official snapshot and authentic notices, convert/verify/reuse text assets, extract/verify compact vision, optional vector, build, size/SBOM/dependency audit and full-ring acceptance. The generic launcher has host tests only, not four-rank deployment acceptance.
 3. Layer-content review is now recorded and **BLOCKED**. Remove the exact findings in a separately built artifact, resolve remaining review candidates and complete dependency/license review before considering publication. Conditional package-only publication was authorized only for a clean audit; this artifact did not meet that condition. Repository visibility remains private.
 
-The original scaffold report is retained as clearly superseded historical evidence. No model/vector download, engine compile, new container build, deployment or new inference was performed in this recipe-completion turn. The follow-up transfer copied the image successfully; it did not download external text weights, execute a container, or qualify a fresh bundle.
+The original scaffold report is retained as superseded historical evidence. Original completion/transfer did not compile or qualify a new image. The later remediation did rebuild the engine and construct/run isolated development-only runtime candidates, as documented above; it did not deploy, download/reconvert text weights, or perform new model inference.
 
 ## Verification
 
