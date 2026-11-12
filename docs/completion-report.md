@@ -6,6 +6,19 @@ Recipe documentation and fail-closed build scaffolding now target **current nati
 
 The recipe is not represented as a freshly built/qualified all-in-one image: production itself mounts the large text/Engram assets externally. The exact mirror and new all-in-one Dockerfile are explicitly distinguished throughout.
 
+## Layer-content publication audit — BLOCKED
+
+The image is mirrored correctly but **must remain PRIVATE**. The follow-up [layer-content audit](layer-audit.md) indexed **72 layer descriptors / 68 unique layers**, scanned the authenticated image config (**1084 field/container entries, 199 history entries**) and bounded configuration text. It identified **61 file/directory occurrences across 9 layers** as publication blockers, plus separate unresolved screening candidates. Every finding is recorded with its exact layer digest, relative archive member and line references in `layer-audit.md` / `layer-audit.json`.
+
+- Config: operator-home trial working directory/history; inherited operational and stale build/checkpoint metadata.
+- Five historical `opt/pico/profile.json` versions: internal registry hostname, operator-home paths and rollback metadata. The final layer70 profile still contains these disclosures.
+- Two `opt/pico/entrypoint.py` versions: fixed private-network frontend bind address. The layer69 version remains effective.
+- Inherited vLLM operational scripts and b12x benchmark/evidence files: network literals and operator-home paths. An operator-named working-directory tree is also present.
+
+**Ryan's conditional publication authorization was not exercised:** zero forbidden findings was required and that condition failed. No visibility change or anonymous-public-readback success is claimed. Final owner-authenticated readback confirms the package is still private and the manifest digest is unchanged; the git repository is also still private. No production, Spark or routing system was accessed. No image code was executed and no tensor/tokenizer member was opened.
+
+A new, clean publication artifact must exclude old operational layers and use generic config/launcher/metadata. Overwriting or deleting a file in a later layer does not remove the older bytes. Sanitizing necessarily changes the digest. This audit did not rebuild, deploy or publish anything.
+
 ## Current qualification provenance
 
 Homeinfra branch `glp/pico-glp-steer-20261106`, **cf6e8b67c8cb4c7a07dc52aaccf16f09fb39e774**:
@@ -28,7 +41,7 @@ Verified PRIVATE destination:
 - Source manifest: **sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9** (raw bytes independently hashed).
 - Config: **sha256:979ff212061ffe5d43ecd14e2c8a3d32d9cfceedf1b3e350008b7cdcf3226382**, **86,924 bytes**.
 - **72 layers**, compressed descriptor sum **11,564,486,734 bytes** (~11.564GB; not the hundreds-of-GB external text model, nor unique transfer size/uncompressed footprint).
-- Linux/ARM64. Read-only configuration inspection; no container ran. Source config/history scan found0 private-domain matches, but **this is not a complete layer-content/public-distribution audit**.
+- Linux/ARM64. Read-only configuration inspection; no container ran. The earlier config/history-only domain scan found0 private-domain matches; the later **layer-content audit found publication blockers**, including domains inside profiles. See the audit above; manifest integrity is not publication clearance.
 - Machine-readable facts: `production-manifest.json`.
 
 ## GHCR transfer — resolved, digest and privacy verified
@@ -59,7 +72,7 @@ The private transfer has no remaining blocker. Independent recipe gaps remain:
 
 1. Original cross-build native-input/sysroot/toolchain bundle is not published; exact binaries can now be extracted from the qualified private mirror. A fresh compile is not falsely promised byte-identical.
 2. New all-in-one layout and public-source asset pipeline have not been executed end-to-end: acquire/verify official snapshot and authentic notices, convert/verify/reuse text assets, extract/verify compact vision, optional vector, build, size/SBOM/dependency audit and full-ring acceptance. The generic launcher has host tests only, not four-rank deployment acceptance.
-3. Public-release license/layer-content review is still required. Neither repository nor package may be made public under this task.
+3. Layer-content review is now recorded and **BLOCKED**. Remove the exact findings in a separately built artifact, resolve remaining review candidates and complete dependency/license review before considering publication. Conditional package-only publication was authorized only for a clean audit; this artifact did not meet that condition. Repository visibility remains private.
 
 The original scaffold report is retained as clearly superseded historical evidence. No model/vector download, engine compile, new container build, deployment or new inference was performed in this recipe-completion turn. The follow-up transfer copied the image successfully; it did not download external text weights, execute a container, or qualify a fresh bundle.
 

@@ -1,13 +1,13 @@
 {
-  "verified_at": "2026-11-11T22:26:32.966707+00:00",
+  "verified_at": "2026-11-12T03:01:07.182513+00:00",
   "scope": "offline recipe checks only; no serving/inference/build acceptance",
   "unit_tests": {
-    "passed": 49,
+    "passed": 54,
     "failed": 0,
     "command": "python3 -B -m unittest discover -s tests -v"
   },
   "scrub": {
-    "text_files": 31,
+    "text_files": 34,
     "forbidden_matches": 0,
     "status": "pass"
   },
@@ -19,7 +19,7 @@
     },
     "json_parse": {
       "status": "pass",
-      "files": 4
+      "files": 5
     },
     "text_conversion_plan": {
       "status": "pass",
@@ -35,7 +35,8 @@
     "optional_vector_plan": "pass; no download",
     "cli_help": "pass",
     "diff_whitespace": "pass",
-    "private_registry_readback": "pass; separate owner-authenticated readback retained in ghcr-transfer.json"
+    "private_registry_readback": "pass; separate owner-authenticated readback retained in ghcr-transfer.json",
+    "layer_publication_audit": "completed bounded read-only audit; BLOCKED; package and repository remain private"
   },
   "weights_downloaded": false,
   "new_image_built": false,
