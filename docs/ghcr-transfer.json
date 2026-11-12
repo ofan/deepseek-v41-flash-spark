@@ -2,7 +2,7 @@
   "attempts": [
     {
       "started_at": "2026-11-11T21:05:47.592641+00:00",
-      "destination": "ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1",
+      "destination": "private-predecessor (not distributed)",
       "source_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
       "secret_storage": "memory-only; inherited file descriptor",
       "visibility_changed": false,
@@ -20,7 +20,7 @@
         "message": "Package not found."
       },
       "matching_private_copy": false,
-      "sanitized_error": "time=\"2026-11-11T16:06:52-05:00\" level=fatal msg=\"writing blob: Patch \\\"https://ghcr.io/v2/ofan/deepseek-v41-flash-spark/blobs/upload/UPLOAD_ID\\\": happened during read: unexpected EOF (while reconnecting: Get \\\"https://SOURCE_REGISTRY/v2/library/pico-dsgx10/blobs/sha256:2fe1bd723675049a1f5c52ea338ce521041685f0a9be654144096643d8cb07b8\\\": dial tcp SOURCE_ADDRESS:443: connect: connection refused)\"",
+      "sanitized_error": "time=\"2026-11-11T16:06:52-05:00\" level=fatal msg=\"writing blob: Patch \\\"https://historical-private-upload-endpoint-redacted\\\": happened during read: unexpected EOF (while reconnecting: Get \\\"https://SOURCE_REGISTRY/v2/library/pico-dsgx10/blobs/sha256:2fe1bd723675049a1f5c52ea338ce521041685f0a9be654144096643d8cb07b8\\\": dial tcp SOURCE_ADDRESS:443: connect: connection refused)\"",
       "redactions": [
         "private source registry hostname",
         "private source address",
@@ -29,7 +29,7 @@
     },
     {
       "started_at": "2026-11-11T21:07:51.184497+00:00",
-      "destination": "ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1",
+      "destination": "private-predecessor (not distributed)",
       "source_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
       "secret_storage": "memory-only; inherited file descriptor",
       "visibility_changed": false,
@@ -47,7 +47,7 @@
         "message": "Package not found."
       },
       "matching_private_copy": false,
-      "sanitized_error": "time=\"2026-11-11T16:07:54-05:00\" level=fatal msg=\"writing blob: Patch \\\"https://ghcr.io/v2/ofan/deepseek-v41-flash-spark/blobs/upload/UPLOAD_ID\\\": happened during read: unexpected EOF (while reconnecting: Get \\\"https://SOURCE_REGISTRY/v2/library/pico-dsgx10/blobs/sha256:2fe1bd723675049a1f5c52ea338ce521041685f0a9be654144096643d8cb07b8\\\": dial tcp SOURCE_ADDRESS:443: connect: connection refused)\"",
+      "sanitized_error": "time=\"2026-11-11T16:07:54-05:00\" level=fatal msg=\"writing blob: Patch \\\"https://historical-private-upload-endpoint-redacted\\\": happened during read: unexpected EOF (while reconnecting: Get \\\"https://SOURCE_REGISTRY/v2/library/pico-dsgx10/blobs/sha256:2fe1bd723675049a1f5c52ea338ce521041685f0a9be654144096643d8cb07b8\\\": dial tcp SOURCE_ADDRESS:443: connect: connection refused)\"",
       "redactions": [
         "private source registry hostname",
         "private source address",
@@ -57,7 +57,7 @@
     {
       "started_at": "2026-11-11T21:58:18.305769+00:00",
       "source_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
-      "destination": "ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1",
+      "destination": "private-predecessor (not distributed)",
       "method": "direct TLS-verified ingress pin; sequential ranged per-blob cache; destination HEAD reuse and resumable PATCH uploads",
       "source_route": "transfer-host routed LAN -> registry ingress; registry TLS hostname/SNI unchanged",
       "proxy_or_serving_changes": false,
@@ -490,7 +490,7 @@
     {
       "started_at": "2026-11-11T22:01:44.697254+00:00",
       "source_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
-      "destination": "ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1",
+      "destination": "private-predecessor (not distributed)",
       "method": "direct TLS-verified ingress pin; sequential ranged per-blob cache; destination HEAD reuse and resumable PATCH uploads",
       "source_route": "transfer-host routed LAN -> registry ingress; registry TLS hostname/SNI unchanged",
       "proxy_or_serving_changes": false,

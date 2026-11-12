@@ -1,6 +1,7 @@
 # Current vision production benchmarks
 
-Recorded results, **not new measurements of this recipe build**. Hardware: four GB10 / DGX Spark, TP4; stock DeepSeek-V4.1-Flash-1017, engine **b7c3eb5**, image **2026.11.08-native-vision-trial-r1**. Model and image digests are in `sources.lock.json`. Steering was GLP-39 alpha0.75, layers1–39, except labeled OFF/alpha-zero arms. The recipe default remains OFF.
+Recorded results, **not new measurements of this recipe build**. Hardware: four GB10 / DGX Spark, TP4; stock DeepSeek-V4.1-Flash-1017, engine **b7c3eb5**, the **qualified private predecessor**. Source revisions and the historical production digest are in `sources.lock.json`.
+These rates do not qualify the sanitized distribution candidate; its GPU serving qualification is pending. Steering was GLP-39 alpha0.75, layers1–39, except labeled OFF/alpha-zero arms. The recipe default remains OFF.
 
 ## Current rates
 

@@ -1,3 +1,5 @@
+> Historical audit/remediation record. Current distribution state is in [completion-report.md](completion-report.md). Private-predecessor records below are provenance only, never acquisition instructions.
+
 # Publication packaging remediation — 2026-11-11
 
 ## Scope and release boundary
@@ -12,15 +14,17 @@ The original audit and all its historical findings are retained in [layer-audit.
 
 The incomplete PyTorch/QEMU smoke remains a **serving-qualification note**, not a publication blocker. The candidate is **not GPU-qualified for serving**. Publication permission does not imply runtime acceptance or deployment permission.
 
-### Distribution blocker: GHCR visibility is package-wide
+### Historical distribution blocker — superseded by separate-package copy
 
-The approved candidate and forbidden original mirror currently occupy **one package**, `ofan/deepseek-v41-flash-spark`, owner API package ID **16805256**, as different tagged versions. GHCR visibility belongs to the package, not individual tags. Making that package public would expose both versions, violating the instruction that the original mirror must stay private. GitHub also warns that a public package cannot be made private again. No visibility mutation was attempted.
+At 2026-11-12T05:00:23Z the approved candidate and original mirror occupied one
+private package. Package-wide visibility could not safely expose only the candidate.
+`publication-visibility.json` preserves that dated evidence. The owner subsequently
+authorized a separate distribution package; the digest-preserving copy is complete.
+The **current** blocker is owner-authenticated web access for its visibility change,
+not shared-package placement. See `public-release.json` and the completion report.
+The protected original package remains private; no version was changed or deleted.
 
-Read-only verification at **2026-11-12T05:00:23Z**: owner-authenticated GETs returned 200 and the expected digest for both tags; anonymous manifest requests and anonymous pull-token requests returned 401 for both. Package and repository are private. The exact evidence is in `publication-visibility.json`. Neither the candidate nor original has public-readback success.
-
-The safe next step requires an approved **separate package name** for the sanitized candidate, or a separately authorized migration of all nonpublishable versions out of the existing package. No rename, version deletion, migration, copy to a new package or visibility change is assumed authorized here. Candidate audit clearance is complete; distribution at the requested shared package remains blocked.
-
-Official reference: [GitHub package access control and visibility](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility), personal-account package visibility section.
+Official reference: [GitHub package access control and visibility](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility).
 
 ## Fixed packaging defects
 
@@ -62,11 +66,11 @@ Rebuilt the unchanged pinned engine source **b7c3eb5b12a030725bfb0186d27065bc6e3
 
 Final artifact audit/readback and smoke-test status are recorded in `publication-runtime.json`, `publication-audit.json` and the completion report. No public or GPU-serving claim may be inferred from a locally built OCI artifact.
 
-The owner has cleared the candidate audit and approved its exact digest for publication; only the shared-package visibility conflict prevents distribution as requested. Separately, review/reproduce the local toolchain, complete the runtime smoke and run full four-rank GPU acceptance before serving use. A separate all-in-one text-weight bundle would need its own build/audit. No full text-weight bundle was built in this task.
+The owner has cleared the candidate audit and approved its exact digest for publication; distribution now awaits the separate package visibility change and anonymous readback. Separately, review/reproduce the local toolchain, complete the runtime smoke and run full four-rank GPU acceptance before serving use. A separate all-in-one text-weight bundle would need its own build/audit. No full text-weight bundle was built in this task.
 
 ## Candidate audit outcome — cleared by the owner waiver above
 
-Candidate: `ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.11-native-vision-sanitized-candidate-r4`.
+Candidate: `ghcr.io/ofan/deepseek-v41-flash-spark-public:2026.11.11-native-vision-sanitized-candidate-r4`.
 
 - Manifest: `sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979`.
 - Config: `sha256:97cfdaafc7d1b5e7e0cd0e1b3b7a2cf787e8948586732089c9a24a334379e1df`.
@@ -79,7 +83,7 @@ Review of bounded, redacted context identifies public code examples, protocol/cr
 
 Isolated smoke tests found that the initial pruning omitted `torchgen`, then the importable `torch.testing` API. The final supplement retains the declared CUDA/Python dependencies plus the NumPy/SymPy/PyTorch testing APIs (not their test suites). The earlier r3 private candidate is retained as a failed packaging iteration, not a release; its tag was not overwritten. No serving deployment occurred. Full GPU/image/quality/performance gates still have not run on the rebuilt artifact.
 
-Ryan has supplied explicit adjudication and exact-digest publication approval. A separate package boundary is still required to avoid exposing the original mirror. Serving use additionally needs separately authorized full four-rank qualification. The old digest remains blocked and unchanged.
+Ryan has supplied explicit adjudication and exact-digest publication approval. A separate package boundary has now been created without exposing the original mirror. Serving use additionally needs separately authorized full four-rank qualification. The old digest remains blocked and unchanged.
 
 ### Exact vendor-provenance set waived by Ryan
 
@@ -99,7 +103,7 @@ These are not asserted to contain working credentials. They retain user-like sou
 | `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/torch/lib/libnvpl_lapack_core.so.0` | WAIVED |
 | `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/torch/lib/libnvpl_lapack_lp64_gomp.so.0` | WAIVED |
 
-## Private registry proof
+## Historical private registry proof
 
 Owner-authenticated GHCR GET by final tag and digest hashes to the candidate manifest above; config GET matches its digest, and all three referenced blobs pass digest/size HEAD checks. The owner API reports the package **private**, the tagged version exists, and the git repository is **private**. The original production tag still hashes to `sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9`. Receipt: `publication-transfer.json`. This is not a claim of an independent full multi-gigabyte registry pull. No visibility API was called and no anonymous-public-readback success is claimed.
 
@@ -107,4 +111,8 @@ Owner-authenticated GHCR GET by final tag and digest hashes to the candidate man
 
 The final r4 container ran off-serving under ARM64 QEMU, with no GPU/network, read-only rootfs, all capabilities dropped, a four-CPU/eight-GiB bound and one numerical-library thread. NumPy, PIL and safetensors imported. **PyTorch import did not finish within the 660-second deadline**; the wrapper stopped the task container and it was automatically removed. The wrapper finished after 690.271 seconds including bounded shutdown. No `complete_no_gpu` marker was observed, and later imports were not reached. This is an **incomplete smoke, not a pass** and not proof of another missing dependency or an engine fault. It does not replace native ARM64/GPU qualification. The initial missing-loader/API errors were separately addressed, but the final complete runtime import remains unproven. See `publication-verification.json`.
 
-Final local checks: **75 offline recipe tests passed**, three rebuilt ARM64 CPU regressions returned exit0, and scrub/static checks passed as recorded in `recipe-verification.json`. Mechanical profile checks match engine/frontend hashes; all 61 original confirmed operational-path occurrences are absent from the fresh core namespace. The candidate audit is now cleared by the owner waiver; distribution remains blocked solely by shared package visibility. No deployment or visibility change occurred.
+Final local checks: **75 offline recipe tests passed**, three rebuilt ARM64 CPU regressions returned exit0, and scrub/static checks passed as recorded in `recipe-verification.json`. Mechanical profile checks match engine/frontend hashes; all 61 original confirmed operational-path occurrences are absent from the fresh core namespace. The candidate audit is now cleared by the owner waiver; this historical verification did not change visibility; current distribution status is in the completion report. No deployment or visibility change occurred.
+
+## Separate distribution boundary — 2026-11-12
+
+The approved digest was copied without modification to the separate `ghcr.io/ofan/deepseek-v41-flash-spark-public` package. This removes the shared-package design conflict. Visibility remains private because no authenticated owner web session is available; no public readback is claimed. The original package and predecessor remain private and untouched. See `public-release.json` and the completion report.

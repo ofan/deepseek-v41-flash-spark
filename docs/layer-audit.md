@@ -1,10 +1,12 @@
+> Historical audit/remediation record. Current distribution state is in [completion-report.md](completion-report.md). Private-predecessor records below are provenance only, never acquisition instructions.
+
 # OCI layer-content publication audit — 2026-11-11
 
 ## Verdict: BLOCKED — keep the image package private
 
 **The exact staged digest is not clean for publication. No visibility flip was performed.** The owner authorized publication only after zero forbidden findings in config and every layer. That condition fails. The git repository remains private, and no production or Spark system was accessed.
 
-Image: `ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1`.
+Image: `private-predecessor (not distributed)`.
 Manifest: `sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9`.
 Config: `sha256:979ff212061ffe5d43ecd14e2c8a3d32d9cfceedf1b3e350008b7cdcf3226382`.
 

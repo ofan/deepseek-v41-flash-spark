@@ -1,6 +1,6 @@
 {
   "started_at": "2026-11-12T04:01:34.554583+00:00",
-  "image": "ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.11-native-vision-sanitized-candidate-r4",
+  "image": "Historical approved-candidate transfer to private predecessor package; not a distribution input",
   "manifest_digest": "sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979",
   "method": "Destination-only HEAD reuse and 4 MiB resumable PATCH; explicit new private candidate tag",
   "visibility_changed": false,
@@ -37,5 +37,6 @@
   "repository_private": true,
   "package_version_id": 1547326582,
   "original_manifest_digest_unchanged": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
-  "anonymous_readback_not_attempted": true
+  "anonymous_readback_not_attempted": true,
+  "historical_receipt": true
 }

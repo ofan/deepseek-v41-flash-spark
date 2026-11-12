@@ -39,4 +39,7 @@ The tested full-file SHA256 is `9c66d47701e0ceb42c33906f2d3789c0f1f16b21e7d97185
 
 `docs/operations/evidence/pico-glp-upstream-prepare-20261107/README.md` records **0 reference-arithmetic differences** over 798,720 folded values and 156 dot rows. The current vision qualification at homeinfra `cf6e8b67c`, `docs/operations/evidence/pico-image-support-20261111/retrial-spark-only/REPORT.md`, records **9/9 OFF + 9/9 alpha-zero** bit-identical identity (including the 1M needle) and **88/88 image QA with steering OFF + 88/88 with GLP-39**. Native image support and steering are independent switches. The generic launcher enables vision by default while leaving steering OFF. Image-bearing histories are intentionally uncached; changing the steering configuration is not an image-prefix cache feature.
 
-The exact production mirror retains its existing production defaults; mirroring its digest cannot change them. **Public/default-OFF applies to this recipe's explicit supervisor**, not a claim that the mirrored production launcher is OFF. Never launch the mirror unchanged assuming this default. A newly bundled image still requires its own acceptance; see [build gaps](build.md#residual-gaps).
+The distribution candidate uses the generic supervisor with steering OFF. It contains
+the authentic optional vector but does not activate it. Production used a different
+private launcher; its defaults must not be inferred from this recipe. The candidate
+still needs its own GPU acceptance; see [build gaps](build.md#residual-gaps).

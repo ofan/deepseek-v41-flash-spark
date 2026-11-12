@@ -1,42 +1,52 @@
 {
-  "verified_at": "2026-11-12T05:03:07.123501+00:00",
-  "scope": "Current offline recipe and owner-waiver consistency checks; read-only registry visibility diagnosis; no serving qualification",
+  "verified_at": "2026-11-12T06:21:16.827471+00:00",
+  "scope": "Outside-user preparation and separate-package publication gate; offline tests, current text and reachable Git history; no GPU serving qualification",
+  "base_commit": "3d698275bce001478dffa1f2b63f7a0da90a2d68",
   "unit_tests": {
-    "passed": 75,
+    "passed": 87,
     "failed": 0,
     "command": "python3 -B -m unittest discover -s tests -v",
-    "output_sha256": "6aedbb153f5642a5d9f63a7dfab4713637674579b0e3981b7c31d2c607db1c59"
+    "output_sha256": "38c2b7aa55c6aeac379c187a7873a277d8aeca5782ac25a6149f406c6c3463dc"
   },
   "scrub": {
-    "text_files": 45,
+    "text_files": 49,
     "forbidden_matches": 0,
     "status": "pass"
   },
+  "history_scrub": {
+    "objects": 115,
+    "blobs": 87,
+    "commits": 6,
+    "tags": 0,
+    "forbidden_matches": 0,
+    "status": "pass",
+    "scope": "All refs reachable from the base commit plus a separate current-working-tree scan; final committed history is rechecked after commit"
+  },
   "checks": {
-    "shell_syntax": {
-      "status": "pass",
-      "files": 5
-    },
     "python_ast": {
       "status": "pass",
-      "files": 14
+      "files": 15
     },
     "json_parse": {
       "status": "pass",
-      "files": 10
+      "files": 11
+    },
+    "shell_syntax": {
+      "status": "pass",
+      "files": 6
     },
     "diff_whitespace": "pass",
-    "candidate_receipt_consistency": "pass; 11 vendor files explicitly WAIVED by Ryan at 2026-11-11 23:58 EST; zero unresolved findings",
-    "layer_publication_audit": "Candidate CLEARED_WITH_OWNER_WAIVERS; original mirror remains BLOCKED",
-    "arm64_qemu_regressions": "3 pass; details in publication-verification.json",
-    "runtime_smoke": "INCOMPLETE_TIMEOUT; qualification note, not a publication blocker",
-    "repository_visibility": "private; fresh owner read-only query verified",
-    "package_visibility": "private; fresh package-scoped owner query verified; anonymous manifest/token attempts denied for both tags",
-    "distribution": "BLOCKED_SHARED_PACKAGE_VISIBILITY; no visibility mutation attempted"
+    "distribution_image_references": "Only separate public-package destination in current README/docs/build/extraction instructions",
+    "source_repository_anonymous_read": "200 metadata and pinned README",
+    "layer_publication_audit": "Historical candidate CLEARED_WITH_OWNER_WAIVERS: 11 waived vendor files, zero unresolved/operator findings; no new image bytes introduced",
+    "runtime_smoke": "Historical INCOMPLETE_TIMEOUT; qualification note, not a publication blocker",
+    "repository_visibility": "private; visibility gate held",
+    "package_visibility": "Separate destination private; anonymous manifest401 and anonymous pull token401",
+    "protected_original_package": "16805256 private and unchanged; anonymous manifest401 and anonymous pull token401",
+    "distribution": "HELD_PACKAGE_VISIBILITY_AUTH_REQUIRED"
   },
+  "new_runtime_image_built": false,
   "text_weights_downloaded": false,
-  "new_runtime_image_built": true,
-  "all_in_one_text_bundle_built": false,
   "gpu_qualification_performed": false,
   "production_or_sparks_touched": false,
   "visibility_changed": false

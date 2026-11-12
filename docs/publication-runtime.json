@@ -1,5 +1,5 @@
 {
-  "image": "ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.11-native-vision-sanitized-candidate-r4",
+  "image": "ghcr.io/ofan/deepseek-v41-flash-spark-public:2026.11.11-native-vision-sanitized-candidate-r4",
   "manifest_digest": "sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979",
   "config_digest": "sha256:97cfdaafc7d1b5e7e0cd0e1b3b7a2cf787e8948586732089c9a24a334379e1df",
   "layer_count": 2,
@@ -25,7 +25,7 @@
   "waived_findings": 11,
   "operator_findings": 0,
   "publication_audit_cleared": true,
-  "distribution_verdict": "BLOCKED_SHARED_PACKAGE_VISIBILITY",
+  "distribution_verdict": "HELD_PACKAGE_VISIBILITY_AUTH_REQUIRED",
   "waiver": {
     "authorized_by": "Ryan",
     "authorized_at": "2026-11-11T23:58:00-05:00",

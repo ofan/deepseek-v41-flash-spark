@@ -1,6 +1,6 @@
 {
   "audited_at": "2026-11-12T02:56:25.756221+00:00",
-  "image": "ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1",
+  "image": "private-predecessor (not distributed)",
   "manifest_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
   "config_digest": "sha256:979ff212061ffe5d43ecd14e2c8a3d32d9cfceedf1b3e350008b7cdcf3226382",
   "verdict": "BLOCKED",

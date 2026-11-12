@@ -5,16 +5,19 @@
   "source_directory": "ds41f-4xgx10-switchless",
   "model_repository": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
   "model_revision": "1bae0e1088993b9b82de08f59de5be5a34e42170",
-  "engine_binary_sha256": "b12cbb69d30976d2a378f258fb2f75eee36da251ced1530f47ccea56993286b2",
+  "engine_binary_sha256": "9b4aadf1ed5a5890d5e201d1f304be4a5461657d54eddf7df8b0f21882f45659",
   "frontend_binary_sha256": "860ec4f3a88c3b6833b88f03829728f537a498deee67cb540f9bd50ad72223f5",
   "optional_glp39_sha256": "9c66d47701e0ceb42c33906f2d3789c0f1f16b21e7d97185f20f7f3f09fbf5cf",
   "public_steering_default": "off",
-  "target_image": "ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1",
+  "target_image": "ghcr.io/ofan/deepseek-v41-flash-spark-public:2026.11.11-native-vision-sanitized-candidate-r4",
   "engine_branch": "feature/native-vision-20261108",
   "vision_pack_sha256": "b07abf470c4107ba3029fedb9de1fd8823a40041f99d0d278e536b06ed5bb446",
   "vision_tensor_count": 266,
   "vision_payload_bytes": 970536960,
   "production_manifest_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
   "evidence_commit": "cf6e8b67c8cb4c7a07dc52aaccf16f09fb39e774",
-  "evidence_directory": "docs/operations/evidence/pico-image-support-20261111/retrial-spark-only"
+  "evidence_directory": "docs/operations/evidence/pico-image-support-20261111/retrial-spark-only",
+  "production_engine_binary_sha256": "b12cbb69d30976d2a378f258fb2f75eee36da251ced1530f47ccea56993286b2",
+  "candidate_manifest_digest": "sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979",
+  "qualification": "Sanitized runtime candidate; GPU serving qualification pending. Production digest is historical provenance only."
 }

@@ -35,7 +35,7 @@ Before model launch, verify neighbor connectivity, jumbo MTU end to end, all HCA
 
 ## Native vision operating profile
 
-The current vision build uses the stock checkpoint's own tower on rank0 and broadcasts image spans to all four ranks. Reserve additional rank0 encoder/activation memory; **0.904 GiB** is only BF16 weight payload, not the peak memory budget. Keep the canonical attention path (`VISION_SDPA_OPT_IN=0`) and serialized image encoder. Six-fixture QA passed **88/88 OFF and 88/88 GLP-39** on the qualified production image; this is not a claim that any new all-in-one layout is qualified.
+The reference production vision build uses the stock checkpoint's own tower on rank0 and broadcasts image spans to all four ranks. Reserve additional rank0 encoder/activation memory; **0.904 GiB** is only BF16 weight payload, not the peak memory budget. Keep the canonical attention path (`VISION_SDPA_OPT_IN=0`) and serialized image encoder. Six-fixture QA passed **88/88 OFF and 88/88 GLP-39** on the qualified production image; this is not a claim that any new all-in-one layout is qualified.
 
 ## Storage / operating profile
 
@@ -54,3 +54,32 @@ Homeinfra branch `glp/pico-glp-steer-20261106`:
 These documents describe the declarative fleet configuration without publishing fleet addresses, device identities, access instructions or credentials. No host was inspected or changed to finish this recipe.
 
 Current-serving authority: homeinfra `cf6e8b67c`, `docs/operations/evidence/pico-image-support-20261111/retrial-spark-only/REPORT.md`. The older host facts above remain historical compatibility evidence, not a fresh host audit.
+
+
+## Fleet file
+
+The engine at the pinned source revision reads strict `KEY=value` lines and `#`
+comments; no quoted values or spaces. Unknown/repeated keys are refused. Use
+`examples/fleet.conf.example` as an intentionally incomplete template: replace every
+`REPLACE_...` value with your own devices, GID and link addresses before launching.
+It is not a ready-to-run network configuration. No site addresses are shipped.
+
+- `NEXT_DEV0/1`, `PREV_DEV0/1`: local HCA ports on the two PCI domains, with NEXT
+  connected to the next rank and PREV to the previous rank; same device names across
+  the four nodes are assumed by this schema.
+- `GID_INDEX`: RoCEv2 index matching those physical link addresses on every device.
+- `RANKr_NEXT_IP0/1`, `RANKr_PREV_IP0/1`: each rank's own link addresses. The initial
+  TCP ring handshake uses PREV_IP0 and port18620; permit only ring peers.
+- `RANKr_HOSTNAME`, `RANKr_NAME`, `RANKr_SSH`: local names/log labels and source-script
+  SSH destinations. The recipe container launcher explicitly supplies rank and does
+  not start remote hosts over SSH.
+- `RANKr_WEIGHTS/HASHMAP/ENGRAM/SPILL`: container-visible asset and spill locations;
+  launcher flags override these with the README's fixed model/spill paths.
+- `BIN_DIR/LOG_DIR/SERVICE_DIR/RING_LOCK`: paths used by native helper scripts.
+
+Validate cabling, links, device registration and the pinned engine's `ring_test` on
+an idle ring before loading the model. On the recorded kernel, `kho=off` was needed
+for RDMA memory registration; confirm with your vendor/kernel rather than copying
+boot changes blindly. Never run the upstream example's host-specific fleet unchanged.
+The public runtime is not GPU-qualified; benchmark results in [benchmarks](benchmarks.md)
+refer to the qualified predecessor, not your hardware or this rebuilt candidate.
