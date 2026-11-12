@@ -6,6 +6,22 @@ A **new, private source-rebuilt runtime candidate** is distinct from the qualifi
 
 The original audit and all its historical findings are retained in [layer-audit.md](layer-audit.md). Deleting files in a later layer cannot make that original artifact safe: the older layer blobs remain downloadable. Its digest cannot be both unchanged and sanitized. The prior conditional release authorization named that original digest, not a source rebuild.
 
+## Owner waiver and publication eligibility — 2026-11-11 23:58 EST
+
+**Candidate audit CLEARED WITH OWNER WAIVERS.** Ryan waived exactly the 11 third-party binary files below: vendor build/assertion paths inside NVIDIA and GNU binaries are vendor artifacts present in public CUDA images, not operator data. Every adjudication is retained and marked **WAIVED**, with the prior REVIEW disposition, author, time, scope and reason in `publication-audit.json`. No raw finding was deleted and this is not represented as an independent publisher provenance verification. Operator findings are **0**; unresolved candidate findings are **0**; waived vendor files are **11**. The waiver applies only to the exact sanitized r4 digest, not the original production mirror.
+
+The incomplete PyTorch/QEMU smoke remains a **serving-qualification note**, not a publication blocker. The candidate is **not GPU-qualified for serving**. Publication permission does not imply runtime acceptance or deployment permission.
+
+### Distribution blocker: GHCR visibility is package-wide
+
+The approved candidate and forbidden original mirror currently occupy **one package**, `ofan/deepseek-v41-flash-spark`, owner API package ID **16805256**, as different tagged versions. GHCR visibility belongs to the package, not individual tags. Making that package public would expose both versions, violating the instruction that the original mirror must stay private. GitHub also warns that a public package cannot be made private again. No visibility mutation was attempted.
+
+Read-only verification at **2026-11-12T05:00:23Z**: owner-authenticated GETs returned 200 and the expected digest for both tags; anonymous manifest requests and anonymous pull-token requests returned 401 for both. Package and repository are private. The exact evidence is in `publication-visibility.json`. Neither the candidate nor original has public-readback success.
+
+The safe next step requires an approved **separate package name** for the sanitized candidate, or a separately authorized migration of all nonpublishable versions out of the existing package. No rename, version deletion, migration, copy to a new package or visibility change is assumed authorized here. Candidate audit clearance is complete; distribution at the requested shared package remains blocked.
+
+Official reference: [GitHub package access control and visibility](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility), personal-account package visibility section.
+
 ## Fixed packaging defects
 
 - Construct fresh layers with a runtime **allowlist**, not a descendant of the contaminated image. No original layer or build-history entry is inherited.
@@ -46,9 +62,9 @@ Rebuilt the unchanged pinned engine source **b7c3eb5b12a030725bfb0186d27065bc6e3
 
 Final artifact audit/readback and smoke-test status are recorded in `publication-runtime.json`, `publication-audit.json` and the completion report. No public or GPU-serving claim may be inferred from a locally built OCI artifact.
 
-Residual release requirements: resolve every audit finding; review the exact new digest before public release; independently reproduce/review the currently local cross-builder and sysroot; run full four-rank GPU acceptance before any serving use; build/audit the separate all-in-one text-weight bundle if that distribution form is desired. No full text-weight bundle was built in this task.
+The owner has cleared the candidate audit and approved its exact digest for publication; only the shared-package visibility conflict prevents distribution as requested. Separately, review/reproduce the local toolchain, complete the runtime smoke and run full four-rank GPU acceptance before serving use. A separate all-in-one text-weight bundle would need its own build/audit. No full text-weight bundle was built in this task.
 
-## Candidate audit outcome — not publication-cleared
+## Candidate audit outcome — cleared by the owner waiver above
 
 Candidate: `ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.11-native-vision-sanitized-candidate-r4`.
 
@@ -57,31 +73,31 @@ Candidate: `ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.11-native-vision-sanit
 - Two fresh layer descriptors; **4,581,714,457 compressed bytes**. Zero original layer digests are retained. The large core was scanned completely; the final audit reuses that result only after rehashing the identical core blob, then scans the supplement and final config.
 - **11,907 archive members**, **9,384 non-payload regular files**, **6,335,716,288 bytes** scanned. The vision tensor pack and authentic vector are the two opaque payloads; both have locked, verified hashes.
 - Final config: **0 pattern findings**. No private-domain, tailnet-domain or internal-routing match remains in the scanned bytes. The rebuilt engine has no operator-home path match.
-- **42 third-party files / 173 screening matches were flagged**: 106 home-path references, 24 credential-location references, 24 token/key-marker-shaped references, 19 address-shaped references. Every path, offset, category, match hash, layer digest and adjudication is in `publication-audit.json`. Bounded context review resolves **31 files as benign code/data patterns** and retains **11 files for vendor-provenance review**. The verdict stays BLOCKED and the bundle build gate fails closed.
+- **42 third-party files / 173 screening matches were flagged**: 106 home-path references, 24 credential-location references, 24 token/key-marker-shaped references, 19 address-shaped references. Every path, offset, category, match hash, layer digest and adjudication is in `publication-audit.json`. Bounded context review resolves **31 files as benign code/data patterns** and initially retained **11 files for vendor-provenance review**. All 11 are now WAIVED by Ryan as recorded above; the candidate audit is cleared. Historical raw matches remain available.
 
-Review of bounded, redacted context identifies public code examples, protocol/crypto format strings and library self-test material, base64 font/Unicode-name coincidences, official package SBOM paths, and third-party build provenance/assertion paths. These are **not evidence of working credentials or a current deployment address**. In particular, key markers in a crypto parser and credential filename strings in a client library are not credential files. Some vendor build paths include user-like components and have not been independently matched against publisher artifacts. Under the requested strict zero-finding release condition they remain review items, not an automatic clearance exception. Do not describe this image as fully clean or make it public based on this receipt.
+Review of bounded, redacted context identifies public code examples, protocol/crypto format strings and library self-test material, base64 font/Unicode-name coincidences, official package SBOM paths, and third-party build provenance/assertion paths. These are **not evidence of working credentials or a current deployment address**. In particular, key markers in a crypto parser and credential filename strings in a client library are not credential files. Some vendor build paths include user-like components and have not been independently matched against publisher artifacts. These were not automatically waived by the scanner. Ryan subsequently waived the 11 vendor files explicitly; this is clearance by owner ruling, not zero raw pattern matches. The original production image is not covered by that ruling.
 
 Isolated smoke tests found that the initial pruning omitted `torchgen`, then the importable `torch.testing` API. The final supplement retains the declared CUDA/Python dependencies plus the NumPy/SymPy/PyTorch testing APIs (not their test suites). The earlier r3 private candidate is retained as a failed packaging iteration, not a release; its tag was not overwritten. No serving deployment occurred. Full GPU/image/quality/performance gates still have not run on the rebuilt artifact.
 
-A public release needs (a) explicit adjudication or remediation of the retained third-party references, without disguising real secrets as false positives, and (b) approval applicable to the exact **new** digest. Serving use additionally needs a separately authorized full four-rank qualification. The old digest remains blocked and is unchanged.
+Ryan has supplied explicit adjudication and exact-digest publication approval. A separate package boundary is still required to avoid exposing the original mirror. Serving use additionally needs separately authorized full four-rank qualification. The old digest remains blocked and unchanged.
 
-### Exact remaining vendor-provenance review set
+### Exact vendor-provenance set waived by Ryan
 
 These are not asserted to contain working credentials. They retain user-like source/build-directory strings whose publisher provenance has not been independently established. All are in the fresh core layer; none is an inherited operational layer.
 
 | Layer digest | File | Disposition |
 |---|---|---|
-| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/lib/aarch64-linux-gnu/libksba.so.8.14.6` | REVIEW |
-| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn.so.9` | REVIEW |
-| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_adv.so.9` | REVIEW |
-| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_engines_precompiled.so.9` | REVIEW |
-| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_engines_runtime_compiled.so.9` | REVIEW |
-| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_graph.so.9` | REVIEW |
-| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_heuristic.so.9` | REVIEW |
-| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_ops.so.9` | REVIEW |
-| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cusparselt/lib/libcusparseLt.so.0` | REVIEW |
-| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/torch/lib/libnvpl_lapack_core.so.0` | REVIEW |
-| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/torch/lib/libnvpl_lapack_lp64_gomp.so.0` | REVIEW |
+| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/lib/aarch64-linux-gnu/libksba.so.8.14.6` | WAIVED |
+| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn.so.9` | WAIVED |
+| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_adv.so.9` | WAIVED |
+| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_engines_precompiled.so.9` | WAIVED |
+| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_engines_runtime_compiled.so.9` | WAIVED |
+| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_graph.so.9` | WAIVED |
+| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_heuristic.so.9` | WAIVED |
+| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_ops.so.9` | WAIVED |
+| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/nvidia/cusparselt/lib/libcusparseLt.so.0` | WAIVED |
+| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/torch/lib/libnvpl_lapack_core.so.0` | WAIVED |
+| `sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97` | `usr/local/lib/python3.12/dist-packages/torch/lib/libnvpl_lapack_lp64_gomp.so.0` | WAIVED |
 
 ## Private registry proof
 
@@ -91,4 +107,4 @@ Owner-authenticated GHCR GET by final tag and digest hashes to the candidate man
 
 The final r4 container ran off-serving under ARM64 QEMU, with no GPU/network, read-only rootfs, all capabilities dropped, a four-CPU/eight-GiB bound and one numerical-library thread. NumPy, PIL and safetensors imported. **PyTorch import did not finish within the 660-second deadline**; the wrapper stopped the task container and it was automatically removed. The wrapper finished after 690.271 seconds including bounded shutdown. No `complete_no_gpu` marker was observed, and later imports were not reached. This is an **incomplete smoke, not a pass** and not proof of another missing dependency or an engine fault. It does not replace native ARM64/GPU qualification. The initial missing-loader/API errors were separately addressed, but the final complete runtime import remains unproven. See `publication-verification.json`.
 
-Final local checks: **74 offline recipe tests passed**, three rebuilt ARM64 CPU regressions returned exit0, and scrub/static checks passed as recorded in `recipe-verification.json`. Mechanical profile checks match engine/frontend hashes; all 61 original confirmed operational-path occurrences are absent from the fresh core namespace. Publication remains blocked, and no deployment or visibility change occurred.
+Final local checks: **75 offline recipe tests passed**, three rebuilt ARM64 CPU regressions returned exit0, and scrub/static checks passed as recorded in `recipe-verification.json`. Mechanical profile checks match engine/frontend hashes; all 61 original confirmed operational-path occurrences are absent from the fresh core namespace. The candidate audit is now cleared by the owner waiver; distribution remains blocked solely by shared package visibility. No deployment or visibility change occurred.

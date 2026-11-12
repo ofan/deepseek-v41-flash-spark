@@ -1,6 +1,6 @@
 # DeepSeek-V4.1-Flash on four DGX Sparks
 
-> Publication is blocked for the exact production mirror. A separate source-rebuilt runtime candidate and privacy audit are documented in [publication remediation](docs/publication-remediation.md). Neither that candidate nor the all-in-one bundle is a new GPU-qualified production release. The repository/package remain private.
+> The sanitized r4 candidate is audit-cleared with Ryan's waiver of 11 vendor-binary build/assertion-path findings. **Public distribution is pending:** GHCR visibility is package-wide, and this package also contains the original production mirror, which must stay private. Neither tag is public. See [publication remediation](docs/publication-remediation.md). The candidate is not GPU-qualified for serving; the repository remains private.
 
 An **unofficial recipe** for stock [DeepSeek-V4.1-Flash-1017](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017) with **native image input**, on **4 × NVIDIA DGX Spark / GB10**, TP4. There is **no affiliation with, sponsorship by, or endorsement from DeepSeek**. Engine work builds on Andy Shu's engine and Picom's Pico fork.
 
@@ -17,7 +17,16 @@ Version **2026.11.08-native-vision-trial-r1**, fork engine **b7c3eb5**, stock 10
 
 The repository contains the pinned source/build/conversion recipe, vision-asset preparation, hash-guarded generic supervisor, optional vector acquisition, licenses, tests and benchmark provenance. **No model/vector tensor payloads are stored in Git.**
 
-The verified private image mirror is:
+The audit-cleared candidate intended for public distribution is (currently private pending a separate package boundary):
+
+```text
+ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.11-native-vision-sanitized-candidate-r4
+sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979
+```
+
+It contains the runtime, compact vision pack and optional authentic GLP-39 vector, not external text weights. The incomplete runtime smoke is a qualification note, not a publication blocker. It has not passed full GPU serving acceptance.
+
+The **internal exact production mirror stays private** and is not the proposed public artifact:
 
 ```text
 ghcr.io/ofan/deepseek-v41-flash-spark:2026.11.08-native-vision-trial-r1
@@ -30,7 +39,7 @@ sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9
 
 1. Review [optional host setup](docs/setup-spark.md), qualify your four-node native-verbs RoCE ring and reserve actual NVMe capacity. Build **off serving machines**.
 2. Follow [build steps](docs/build.md): fetch exact fork code; obtain the pinned official checkpoint; convert and verify text ranks/Engram or reuse verified existing assets; prepare the exact compact vision pack and publisher modules; optionally fetch authentic GLP-39.
-3. Stage hash-qualified binaries, validate the bundle, then build a **new** immutable ARM64 image. The contaminated production mirror is forbidden as the publication base; a separately audited sanitized runtime receipt is required. The current candidate remains blocked, so this build gate stops before Docker. No script deploys or pushes automatically.
+3. Stage hash-qualified binaries, validate the bundle, then build a **new** immutable ARM64 image. The contaminated production mirror is forbidden as the publication base; a separately audited sanitized runtime receipt is required. The r4 runtime receipt is now audit-cleared through the explicit owner waiver; this does not certify serving readiness or make the shared registry package public. No script deploys or pushes automatically.
 4. Supply your own fleet file, GPU/RDMA access and local writable spill. Every node runs the same image with a different rank (0–3). Rank0 starts the serialized local vision encoder and HTTP frontend.
 
 ```sh

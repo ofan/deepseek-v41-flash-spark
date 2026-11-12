@@ -8,17 +8,28 @@
   "engine_binary_sha256": "9b4aadf1ed5a5890d5e201d1f304be4a5461657d54eddf7df8b0f21882f45659",
   "frontend_binary_sha256": "860ec4f3a88c3b6833b88f03829728f537a498deee67cb540f9bd50ad72223f5",
   "vision_pack_sha256": "b07abf470c4107ba3029fedb9de1fd8823a40041f99d0d278e536b06ed5bb446",
-  "privacy_verdict": "BLOCKED",
-  "unresolved_findings": 11,
+  "privacy_verdict": "CLEAN",
+  "unresolved_findings": 0,
   "inherited_source_layers": 0,
   "qualification": "New source-rebuilt runtime candidate; no four-rank GPU acceptance or production deployment",
   "visibility_changed": false,
-  "publication_allowed": false,
+  "publication_allowed": true,
   "registry_readback_verified": true,
   "original_production_manifest_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
   "core_layer": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
   "supplement_layer": "sha256:fef66306d1de38329cce405d60cfc7060b5b3c1f91b14b8aa363687cb18c9111",
   "screening_file_count": 42,
   "package_visibility": "private",
-  "repository_private": true
+  "repository_private": true,
+  "clearance_basis": "OWNER_WAIVER_OF_11_VENDOR_FINDINGS",
+  "waived_findings": 11,
+  "operator_findings": 0,
+  "publication_audit_cleared": true,
+  "distribution_verdict": "BLOCKED_SHARED_PACKAGE_VISIBILITY",
+  "waiver": {
+    "authorized_by": "Ryan",
+    "authorized_at": "2026-11-11T23:58:00-05:00",
+    "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
+    "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
+  }
 }

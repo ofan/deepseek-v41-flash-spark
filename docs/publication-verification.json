@@ -64,11 +64,20 @@
     ],
     "log_sha256": "23e06b0f41af6780feb0997475f1bb902277a7f8c388b654e58e2d3993dd8003",
     "task_container_state": "removed automatically after bounded stop; inspect confirms no such object",
-    "serving_acceptance": false
+    "serving_acceptance": false,
+    "publication_blocker": false,
+    "qualification_note": "Incomplete runtime smoke is retained; not a publication blocker under the owner ruling. Candidate is not GPU-qualified for serving."
   },
-  "privacy_verdict": "BLOCKED",
-  "vendor_provenance_files_unresolved": 11,
+  "privacy_verdict": "CLEARED_WITH_OWNER_WAIVERS",
+  "vendor_provenance_files_unresolved": 0,
   "gpu_acceptance_performed": false,
   "visibility_changed": false,
-  "production_or_sparks_touched": false
+  "production_or_sparks_touched": false,
+  "vendor_provenance_files_waived": 11,
+  "waiver": {
+    "authorized_by": "Ryan",
+    "authorized_at": "2026-11-11T23:58:00-05:00",
+    "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
+    "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
+  }
 }

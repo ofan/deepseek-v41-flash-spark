@@ -1,14 +1,14 @@
 {
-  "verified_at": "2026-11-12T04:16:39.616453+00:00",
-  "scope": "Current offline recipe/publication-remediation checks only; no serving qualification",
+  "verified_at": "2026-11-12T05:03:07.123501+00:00",
+  "scope": "Current offline recipe and owner-waiver consistency checks; read-only registry visibility diagnosis; no serving qualification",
   "unit_tests": {
-    "passed": 74,
+    "passed": 75,
     "failed": 0,
     "command": "python3 -B -m unittest discover -s tests -v",
-    "output_sha256": "bdca92dc54bb36740a9941ee441255590b2a7a86aa0102a32ddbe1b1fcea1f81"
+    "output_sha256": "6aedbb153f5642a5d9f63a7dfab4713637674579b0e3981b7c31d2c607db1c59"
   },
   "scrub": {
-    "text_files": 44,
+    "text_files": 45,
     "forbidden_matches": 0,
     "status": "pass"
   },
@@ -23,15 +23,16 @@
     },
     "json_parse": {
       "status": "pass",
-      "files": 9
+      "files": 10
     },
     "diff_whitespace": "pass",
-    "candidate_receipt_consistency": "pass; private registry proof retained in publication-transfer.json",
-    "layer_publication_audit": "BLOCKED; 11 third-party provenance file reviews remain",
+    "candidate_receipt_consistency": "pass; 11 vendor files explicitly WAIVED by Ryan at 2026-11-11 23:58 EST; zero unresolved findings",
+    "layer_publication_audit": "Candidate CLEARED_WITH_OWNER_WAIVERS; original mirror remains BLOCKED",
     "arm64_qemu_regressions": "3 pass; details in publication-verification.json",
-    "runtime_smoke": "INCOMPLETE_TIMEOUT; not a pass",
-    "repository_visibility": "private; fresh owner query verified",
-    "package_visibility": "private; owner-authenticated package-scoped proof in publication-transfer.json; convenience gh token lacks read:packages"
+    "runtime_smoke": "INCOMPLETE_TIMEOUT; qualification note, not a publication blocker",
+    "repository_visibility": "private; fresh owner read-only query verified",
+    "package_visibility": "private; fresh package-scoped owner query verified; anonymous manifest/token attempts denied for both tags",
+    "distribution": "BLOCKED_SHARED_PACKAGE_VISIBILITY; no visibility mutation attempted"
   },
   "text_weights_downloaded": false,
   "new_runtime_image_built": true,

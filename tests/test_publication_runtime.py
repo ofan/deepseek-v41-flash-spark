@@ -99,18 +99,20 @@ class PublicationTests(unittest.TestCase):
             (root/'index.json').write_text(json.dumps({'manifests':[{'digest':'sha256:'+h}]}))
             with self.assertRaisesRegex(AssertionError,'fresh single-layer'):notice.add(root,b'license','candidate')
 
-    def test_candidate_receipts_agree_and_fail_closed(self):
+    def test_candidate_receipts_agree_with_owner_waiver(self):
         r=json.loads((ROOT/'docs/publication-runtime.json').read_text())
         a=json.loads((ROOT/'docs/publication-audit.json').read_text())
         t=json.loads((ROOT/'docs/publication-transfer.json').read_text())
         self.assertEqual(r['manifest_digest'],a['manifest_digest'])
         self.assertEqual(r['manifest_digest'],t['manifest_digest'])
         self.assertEqual(r['config_digest'],a['config_digest'])
-        self.assertEqual(r['privacy_verdict'],'BLOCKED')
-        self.assertFalse(r['publication_allowed'])
+        self.assertEqual(r['privacy_verdict'],'CLEAN')
+        self.assertTrue(r['publication_allowed'])
         self.assertFalse(r['visibility_changed'])
         self.assertEqual(r['unresolved_findings'],a['unresolved_file_count'])
-        self.assertEqual(r['unresolved_findings'],11)
+        self.assertEqual(r['unresolved_findings'],0)
+        self.assertEqual(r['waived_findings'],11)
+        self.assertEqual(a['verdict'],'CLEARED_WITH_OWNER_WAIVERS')
         self.assertEqual(len(a['config_findings']),0)
         self.assertTrue(t['manifest_tag_and_digest_get_verified'])
         self.assertTrue(t['config_get_hash_verified'])
@@ -124,7 +126,13 @@ class PublicationTests(unittest.TestCase):
         reviews=a['adjudications']
         self.assertEqual(len(reviews),len(files))
         self.assertEqual({(x['layer_digest'],x['path']) for x in reviews},files)
-        self.assertEqual(sum(x['disposition']=='REVIEW' for x in reviews),11)
+        self.assertEqual(sum(x['disposition']=='WAIVED' for x in reviews),11)
+        self.assertEqual(sum(x['disposition']=='REVIEW' for x in reviews),0)
+        for row in reviews:
+            if row['disposition']=='WAIVED':
+                self.assertEqual(row['original_disposition'],'REVIEW')
+                self.assertEqual(row['waiver']['authorized_by'],'Ryan')
+                self.assertEqual(row['waiver']['authorized_at'],'2026-11-11T23:58:00-05:00')
         self.assertEqual(sum(x['disposition']=='BENIGN_PATTERN' for x in reviews),31)
 
     def test_fresh_layers_match_transfer_and_runtime_receipts(self):
@@ -137,6 +145,23 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(len(layers),r['layer_count'])
         self.assertEqual(layers,{b['digest'] for b in t['blobs'] if b['digest']!=r['config_digest']})
         self.assertEqual(sum(b['size'] for b in t['blobs'] if b['digest'] in layers),r['compressed_layer_bytes'])
+
+    def test_shared_package_visibility_does_not_expose_original(self):
+        v=json.loads((ROOT/'docs/publication-visibility.json').read_text())
+        self.assertEqual(v['package_visibility'],'private')
+        self.assertTrue(v['repository_private'])
+        self.assertEqual(v['distribution_verdict'],'BLOCKED_SHARED_PACKAGE_VISIBILITY')
+        self.assertFalse(v['visibility_changed'])
+        self.assertFalse(v['production_touched'])
+        r=json.loads((ROOT/'docs/publication-runtime.json').read_text())
+        for key,expected in [('candidate',r['manifest_digest']),('production_mirror',r['original_production_manifest_digest'])]:
+            row=v['tags'][key]
+            self.assertEqual(row['owner_manifest_get_status'],200)
+            self.assertEqual(row['manifest_digest'],expected)
+            self.assertTrue(row['anonymous_access_denied'])
+        q=json.loads((ROOT/'docs/publication-verification.json').read_text())
+        self.assertFalse(q['runtime_smoke']['publication_blocker'])
+        self.assertFalse(q['gpu_acceptance_performed'])
 
     def test_no_retained_history_or_base_layer(self):
         text=(ROOT/'scripts/assemble-runtime.py').read_text()

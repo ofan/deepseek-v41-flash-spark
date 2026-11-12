@@ -1158,9 +1158,9 @@
   ],
   "method": "Every path/link and all non-payload regular-file bytes, including ELF files; overlapping streaming chunks; no extraction or execution",
   "visibility_changed": false,
-  "publication_allowed": false,
+  "publication_allowed": true,
   "finding_file_count": 42,
-  "verdict": "BLOCKED",
+  "verdict": "CLEARED_WITH_OWNER_WAIVERS",
   "adjudications": [
     {
       "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
@@ -1201,8 +1201,15 @@
     {
       "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
       "path": "usr/lib/aarch64-linux-gnu/libksba.so.8.14.6",
-      "disposition": "REVIEW",
-      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+      "disposition": "WAIVED",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established.",
+      "original_disposition": "REVIEW",
+      "waiver": {
+        "authorized_by": "Ryan",
+        "authorized_at": "2026-11-11T23:58:00-05:00",
+        "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
+        "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
+      }
     },
     {
       "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
@@ -1303,50 +1310,106 @@
     {
       "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
       "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn.so.9",
-      "disposition": "REVIEW",
-      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+      "disposition": "WAIVED",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established.",
+      "original_disposition": "REVIEW",
+      "waiver": {
+        "authorized_by": "Ryan",
+        "authorized_at": "2026-11-11T23:58:00-05:00",
+        "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
+        "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
+      }
     },
     {
       "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
       "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_adv.so.9",
-      "disposition": "REVIEW",
-      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+      "disposition": "WAIVED",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established.",
+      "original_disposition": "REVIEW",
+      "waiver": {
+        "authorized_by": "Ryan",
+        "authorized_at": "2026-11-11T23:58:00-05:00",
+        "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
+        "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
+      }
     },
     {
       "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
       "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_engines_precompiled.so.9",
-      "disposition": "REVIEW",
-      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+      "disposition": "WAIVED",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established.",
+      "original_disposition": "REVIEW",
+      "waiver": {
+        "authorized_by": "Ryan",
+        "authorized_at": "2026-11-11T23:58:00-05:00",
+        "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
+        "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
+      }
     },
     {
       "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
       "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_engines_runtime_compiled.so.9",
-      "disposition": "REVIEW",
-      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+      "disposition": "WAIVED",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established.",
+      "original_disposition": "REVIEW",
+      "waiver": {
+        "authorized_by": "Ryan",
+        "authorized_at": "2026-11-11T23:58:00-05:00",
+        "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
+        "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
+      }
     },
     {
       "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
       "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_graph.so.9",
-      "disposition": "REVIEW",
-      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+      "disposition": "WAIVED",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established.",
+      "original_disposition": "REVIEW",
+      "waiver": {
+        "authorized_by": "Ryan",
+        "authorized_at": "2026-11-11T23:58:00-05:00",
+        "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
+        "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
+      }
     },
     {
       "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
       "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_heuristic.so.9",
-      "disposition": "REVIEW",
-      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+      "disposition": "WAIVED",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established.",
+      "original_disposition": "REVIEW",
+      "waiver": {
+        "authorized_by": "Ryan",
+        "authorized_at": "2026-11-11T23:58:00-05:00",
+        "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
+        "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
+      }
     },
     {
       "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
       "path": "usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib/libcudnn_ops.so.9",
-      "disposition": "REVIEW",
-      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+      "disposition": "WAIVED",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established.",
+      "original_disposition": "REVIEW",
+      "waiver": {
+        "authorized_by": "Ryan",
+        "authorized_at": "2026-11-11T23:58:00-05:00",
+        "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
+        "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
+      }
     },
     {
       "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
       "path": "usr/local/lib/python3.12/dist-packages/nvidia/cusparselt/lib/libcusparseLt.so.0",
-      "disposition": "REVIEW",
-      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+      "disposition": "WAIVED",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established.",
+      "original_disposition": "REVIEW",
+      "waiver": {
+        "authorized_by": "Ryan",
+        "authorized_at": "2026-11-11T23:58:00-05:00",
+        "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
+        "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
+      }
     },
     {
       "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
@@ -1387,14 +1450,28 @@
     {
       "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
       "path": "usr/local/lib/python3.12/dist-packages/torch/lib/libnvpl_lapack_core.so.0",
-      "disposition": "REVIEW",
-      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+      "disposition": "WAIVED",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established.",
+      "original_disposition": "REVIEW",
+      "waiver": {
+        "authorized_by": "Ryan",
+        "authorized_at": "2026-11-11T23:58:00-05:00",
+        "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
+        "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
+      }
     },
     {
       "layer_digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
       "path": "usr/local/lib/python3.12/dist-packages/torch/lib/libnvpl_lapack_lp64_gomp.so.0",
-      "disposition": "REVIEW",
-      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established."
+      "disposition": "WAIVED",
+      "reason": "Vendor build/assertion/BOLT provenance with user-like directory components; needs independent publisher-artifact comparison or a safe vendor rebuild. No deployment secret is established.",
+      "original_disposition": "REVIEW",
+      "waiver": {
+        "authorized_by": "Ryan",
+        "authorized_at": "2026-11-11T23:58:00-05:00",
+        "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
+        "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
+      }
     },
     {
       "layer_digest": "sha256:fef66306d1de38329cce405d60cfc7060b5b3c1f91b14b8aa363687cb18c9111",
@@ -1415,6 +1492,17 @@
       "reason": "Quoted example assertion traceback inside a commented test-case annotation; not a deployed operator path."
     }
   ],
-  "unresolved_file_count": 11,
-  "benign_pattern_file_count": 31
+  "unresolved_file_count": 0,
+  "benign_pattern_file_count": 31,
+  "prior_verdict": "BLOCKED",
+  "waiver": {
+    "authorized_by": "Ryan",
+    "authorized_at": "2026-11-11T23:58:00-05:00",
+    "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
+    "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
+  },
+  "waived_file_count": 11,
+  "operator_findings": 0,
+  "publication_audit_cleared": true,
+  "distribution_verdict": "BLOCKED_SHARED_PACKAGE_VISIBILITY"
 }

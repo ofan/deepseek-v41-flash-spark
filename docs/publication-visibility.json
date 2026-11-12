@@ -1,0 +1,35 @@
+{
+  "checked_at": "2026-11-12T05:00:23.666873+00:00",
+  "package": "ofan/deepseek-v41-flash-spark",
+  "package_id": 16805256,
+  "package_visibility": "private",
+  "scope_of_visibility": "package; tags are metadata of package versions, not separate visibility objects",
+  "github_documentation": "https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility",
+  "visibility_changed": false,
+  "production_touched": false,
+  "tags": {
+    "candidate": {
+      "tag": "2026.11.11-native-vision-sanitized-candidate-r4",
+      "manifest_digest": "sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979",
+      "owner_manifest_get_status": 200,
+      "package_version_id": 1547326582,
+      "anonymous_initial_manifest_status": 401,
+      "anonymous_pull_token_status": 401,
+      "anonymous_bearer_manifest_status": null,
+      "anonymous_access_denied": true
+    },
+    "production_mirror": {
+      "tag": "2026.11.08-native-vision-trial-r1",
+      "manifest_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
+      "owner_manifest_get_status": 200,
+      "package_version_id": 1546047572,
+      "anonymous_initial_manifest_status": 401,
+      "anonymous_pull_token_status": 401,
+      "anonymous_bearer_manifest_status": null,
+      "anonymous_access_denied": true
+    }
+  },
+  "repository_private": true,
+  "distribution_verdict": "BLOCKED_SHARED_PACKAGE_VISIBILITY",
+  "reason": "Making this package public would also expose the unwaived production mirror; GHCR does not provide per-tag visibility. No mutation was attempted."
+}
