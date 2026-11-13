@@ -19,17 +19,18 @@
   "core_layer": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
   "supplement_layer": "sha256:fef66306d1de38329cce405d60cfc7060b5b3c1f91b14b8aa363687cb18c9111",
   "screening_file_count": 42,
-  "package_visibility": "private",
-  "repository_private": true,
+  "package_visibility": "public",
+  "repository_private": false,
   "clearance_basis": "OWNER_WAIVER_OF_11_VENDOR_FINDINGS",
   "waived_findings": 11,
   "operator_findings": 0,
   "publication_audit_cleared": true,
-  "distribution_verdict": "HELD_PACKAGE_VISIBILITY_AUTH_REQUIRED",
+  "distribution_verdict": "PUBLIC_ANONYMOUS_READBACK_VERIFIED",
   "waiver": {
     "authorized_by": "Ryan",
     "authorized_at": "2026-11-11T23:58:00-05:00",
     "scope": "Exactly the 11 third-party binary-file adjudications for candidate sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979; not the original production mirror",
     "reason": "Vendor build and assertion paths inside NVIDIA and GNU binaries (libksba, cuDNN, cuSPARSELt, NVPL) are vendor artifacts present in public CUDA images, not operator data or operator disclosures. Waived by the owner; not an independent publisher provenance match."
-  }
+  },
+  "visibility_checked_at": "2026-11-13T21:56:07.278891+00:00"
 }

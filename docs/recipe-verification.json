@@ -1,53 +1,81 @@
 {
-  "verified_at": "2026-11-12T06:21:16.827471+00:00",
-  "scope": "Outside-user preparation and separate-package publication gate; offline tests, current text and reachable Git history; no GPU serving qualification",
-  "base_commit": "3d698275bce001478dffa1f2b63f7a0da90a2d68",
+  "verified_at": "2026-11-13T22:30:47.391567+00:00",
+  "base_commit": "7340829801c0ab6acbc00c5a2d376991363ae7da",
+  "scope": "Public recipe upgrade; bounded live decode measurements and read-only GPU/container inspections, local source and packaging checks; no deployment or runtime-image qualification",
   "unit_tests": {
-    "passed": 87,
+    "passed": 106,
     "failed": 0,
     "command": "python3 -B -m unittest discover -s tests -v",
-    "output_sha256": "38c2b7aa55c6aeac379c187a7873a277d8aeca5782ac25a6149f406c6c3463dc"
+    "output_sha256": "649eab55131d36287dd337c0ee54bd6cf203a560a5e25735408a516bb5606a8c"
+  },
+  "frontend_tests": {
+    "command": "cargo test --locked --lib -j2",
+    "passed": 38,
+    "failed": 0,
+    "output_sha256": "79cf179966b8c958b7e0f2108e8318a5d734dc08d60745749d49839443deedd4"
+  },
+  "host_tests": {
+    "passed": [
+      "glp_test",
+      "glp_math_test",
+      "sample_rng_test"
+    ],
+    "failed": [],
+    "method": "g++ C++20 host build, no GPU. GLP header needs only cudaStream_t; type-only declaration supplied in a temporary host harness because CUDA development headers are absent. Authentic existing vector verified against sources.lock.json. No CUDA runtime operation or GPU equivalence claimed.",
+    "glp_fixed_reference_differences": 0,
+    "fold_values": 798720,
+    "dot_rows": 156,
+    "sampler_uniform_bins": 16777216
+  },
+  "patch_replay": {
+    "status": "pass",
+    "patch_files": 5,
+    "feature_patches": 4,
+    "cache_fidelity_prerequisite_patches": 1,
+    "production_implementation_files": 265,
+    "exact_file_content_and_executable_modes": true
+  },
+  "source_inventory": {
+    "source_commit": "b7c3eb5b12a030725bfb0186d27065bc6e376685",
+    "manifest_sha256": "ef73ac83ee0ebdbbd47704432a55b963ef2203200057b37d28702a0c3f7f93a9",
+    "production_files": 265,
+    "upstream_base_files": 246,
+    "privacy_generalized_production_files": 46
   },
   "scrub": {
-    "text_files": 49,
+    "status": "pass",
     "forbidden_matches": 0,
-    "status": "pass"
+    "scope": "All current non-build text, including every vendored file and patch. Only parser protocol literals are allowed in vendor/patches; no operator/domain/network/credential category exempted."
   },
   "history_scrub": {
-    "objects": 115,
-    "blobs": 87,
-    "commits": 6,
+    "objects": 144,
+    "blobs": 110,
+    "commits": 7,
     "tags": 0,
     "forbidden_matches": 0,
     "status": "pass",
-    "scope": "All refs reachable from the base commit plus a separate current-working-tree scan; final committed history is rechecked after commit"
+    "scope": "Reachable precommit history; public commit is rechecked before push"
   },
   "checks": {
-    "python_ast": {
-      "status": "pass",
-      "files": 15
-    },
-    "json_parse": {
-      "status": "pass",
-      "files": 11
-    },
-    "shell_syntax": {
-      "status": "pass",
-      "files": 6
-    },
-    "diff_whitespace": "pass",
-    "distribution_image_references": "Only separate public-package destination in current README/docs/build/extraction instructions",
-    "source_repository_anonymous_read": "200 metadata and pinned README",
-    "layer_publication_audit": "Historical candidate CLEARED_WITH_OWNER_WAIVERS: 11 waived vendor files, zero unresolved/operator findings; no new image bytes introduced",
-    "runtime_smoke": "Historical INCOMPLETE_TIMEOUT; qualification note, not a publication blocker",
-    "repository_visibility": "private; visibility gate held",
-    "package_visibility": "Separate destination private; anonymous manifest401 and anonymous pull token401",
-    "protected_original_package": "16805256 private and unchanged; anonymous manifest401 and anonymous pull token401",
-    "distribution": "HELD_PACKAGE_VISIBILITY_AUTH_REQUIRED"
+    "python_ast": 168,
+    "json_parse": 20,
+    "shell_syntax": 38
   },
+  "live_decode": {
+    "configurations": 8,
+    "requests": 58,
+    "errors": 0,
+    "completion_tokens": 14848,
+    "gpu_clock_cap_mhz": 2200,
+    "numeric_power_limit_available": false,
+    "receipt": "benchmarks/2026-11-13-decode.json",
+    "gpu_receipt": "benchmarks/2026-11-13-gpu-cap.json"
+  },
+  "public_readback": "public-readback-20261113.json",
   "new_runtime_image_built": false,
-  "text_weights_downloaded": false,
+  "model_weights_downloaded": false,
   "gpu_qualification_performed": false,
-  "production_or_sparks_touched": false,
-  "visibility_changed": false
+  "serving_configuration_changed": false,
+  "visibility_changed": false,
+  "pull_requests_changed": false
 }

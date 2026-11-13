@@ -20,8 +20,9 @@ At 2026-11-12T05:00:23Z the approved candidate and original mirror occupied one
 private package. Package-wide visibility could not safely expose only the candidate.
 `publication-visibility.json` preserves that dated evidence. The owner subsequently
 authorized a separate distribution package; the digest-preserving copy is complete.
-The **current** blocker is owner-authenticated web access for its visibility change,
-not shared-package placement. See `public-release.json` and the completion report.
+The next historical blocker was owner-authenticated access for its visibility change,
+not shared-package placement. Anonymous readback now confirms the separate distribution
+package is public; neither historic blocker is current. See `public-release.json` and the completion report.
 The protected original package remains private; no version was changed or deleted.
 
 Official reference: [GitHub package access control and visibility](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility).

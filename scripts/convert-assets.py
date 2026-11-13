@@ -8,6 +8,9 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
+import sys
+sys.path.insert(0,str(ROOT/'scripts'))
+from source_tree import verify_source
 
 def sha(path):
     h = hashlib.sha256()
@@ -43,11 +46,8 @@ def main():
     if not a.execute:
         print(json.dumps({'mode':'plan-only', 'commands':commands}, indent=2))
         return
-    head = subprocess.check_output(['git','-C',str(a.source),'rev-parse','HEAD'], text=True).strip()
-    if head != lock['engine_commit']:
-        p.error('Converter source is not the production engine commit')
-    if subprocess.check_output(['git','-C',str(a.source),'status','--porcelain'], text=True).strip():
-        p.error('Converter source is dirty')
+    head = verify_source(a.source)
+    if head != lock['engine_commit']:p.error('Wrong pinned converter source')
     prior=None
     if a.reuse:
         if not (out/'asset-hashes.json').is_file():p.error('Reuse requires the original authentic conversion receipt')

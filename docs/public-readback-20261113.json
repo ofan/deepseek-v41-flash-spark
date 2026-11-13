@@ -1,0 +1,18 @@
+{
+  "checked_at": "2026-11-13T21:56:07.278891+00:00",
+  "image": "ghcr.io/ofan/deepseek-v41-flash-spark-public:2026.11.11-native-vision-sanitized-candidate-r4",
+  "anonymous_pull_token_status": 200,
+  "credentials_used": false,
+  "manifest_status": 200,
+  "manifest_digest": "sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979",
+  "repo_page_status": 200,
+  "protected_predecessor": {
+    "package_id": 16805256,
+    "anonymous_pull_token_status": 401,
+    "manifest_status": null,
+    "anonymous_manifest_fetchable": false,
+    "modified": false
+  },
+  "anonymous_https_clone_exit_code": 0,
+  "anonymous_clone_head": "7340829801c0ab6acbc00c5a2d376991363ae7da"
+}

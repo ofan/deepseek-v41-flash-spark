@@ -1,0 +1,77 @@
+{
+  "started_at": "2026-11-12T05:59:00.422337+00:00",
+  "image": "ghcr.io/ofan/deepseek-v41-flash-spark-public:2026.11.11-native-vision-sanitized-candidate-r4",
+  "manifest_digest": "sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979",
+  "method": "Digest-preserving approved OCI manifest; GHCR cross-repository blob mount with individually resumable 4 MiB fallback uploads",
+  "source_package_modified": false,
+  "production_touched": false,
+  "package_visibility_changed": false,
+  "blobs": [
+    {
+      "digest": "sha256:97cfdaafc7d1b5e7e0cd0e1b3b7a2cf787e8948586732089c9a24a334379e1df",
+      "size": 1267,
+      "mounted": true,
+      "already_present": true,
+      "chunks": 0,
+      "retries": 0
+    },
+    {
+      "digest": "sha256:98fb19dceb88f5e70ffb4a2ecd2c4befdcd3da2dd711b2189d9d8122b29ecf97",
+      "size": 4369091181,
+      "mounted": true,
+      "already_present": true,
+      "chunks": 0,
+      "retries": 0
+    },
+    {
+      "digest": "sha256:fef66306d1de38329cce405d60cfc7060b5b3c1f91b14b8aa363687cb18c9111",
+      "size": 212623276,
+      "mounted": true,
+      "already_present": true,
+      "chunks": 0,
+      "retries": 0
+    }
+  ],
+  "events": [],
+  "finished_at": "2026-11-12T05:59:23.137918+00:00",
+  "manifest_tag_and_digest_get_verified": true,
+  "all_blob_heads_verified": true,
+  "target_package_id": 16813664,
+  "target_package_visibility": "private",
+  "original_package_id": 16805256,
+  "original_package_visibility": "private",
+  "public_visibility_pending": true,
+  "checked_at": "2026-11-12T06:13:39.791628+00:00",
+  "anonymous_checks": {
+    "candidate": {
+      "owner_lookup_status": 200,
+      "package_id": 16813664,
+      "visibility": "private",
+      "anonymous_manifest_initial_status": 401,
+      "anonymous_pull_token_status": 401,
+      "anonymous_manifest_fetchable": false
+    },
+    "protected_predecessor": {
+      "owner_lookup_status": 200,
+      "package_id": 16805256,
+      "visibility": "private",
+      "anonymous_manifest_initial_status": 401,
+      "anonymous_pull_token_status": 401,
+      "anonymous_manifest_fetchable": false
+    }
+  },
+  "repository": {
+    "url": "https://github.com/ofan/deepseek-v41-flash-spark",
+    "private": true,
+    "visibility": "private",
+    "default_branch": "main"
+  },
+  "public_release_verdict": "HELD_PACKAGE_VISIBILITY_AUTH_REQUIRED",
+  "blocker": "Copy is complete, but changing package visibility requires the owner-authenticated GitHub package settings UI. Remote browser calls time out; local browser is signed out. No owner web login is available from the checked credential stores. No visibility mutation was attempted.",
+  "package_settings_url": "https://github.com/users/ofan/packages/container/deepseek-v41-flash-spark-public/settings",
+  "repo_visibility_changed": false,
+  "runtime_qualification": "Pending four-rank GPU serving acceptance; import smoke timeout is a qualification note, not a publication blocker.",
+  "protected_original_package_modified": false,
+  "source_repository_anonymous_metadata_status": 200,
+  "pinned_source_readme_anonymous_status": 200
+}

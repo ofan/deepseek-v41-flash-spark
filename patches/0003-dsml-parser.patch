@@ -1,0 +1,826 @@
+diff --git a/ds41f-4xgx10-switchless/frontend/src/encoding.rs b/ds41f-4xgx10-switchless/frontend/src/encoding.rs
+--- a/ds41f-4xgx10-switchless/frontend/src/encoding.rs
++++ b/ds41f-4xgx10-switchless/frontend/src/encoding.rs
+@@ -1117,366 +1117,204 @@
+ }
+ 
+ #[derive(Clone, Copy, PartialEq, Debug)]
+-enum Phase {
+-    Reasoning,
+-    Content,
+-    /// Inside the tool-call block, in the state parse_tool_calls would be in.
+-    ExpectCall,
+-    Name,
+-    Param,
+-    AfterParam,
+-    /// After the block: only EOS may follow.
+-    AfterCalls,
+-    /// Malformed tool calls: everything else is plain content.
+-    Raw,
+-    Done,
+-}
+-
+-const CALLS_END: &str = "</｜DSML｜ calls>";
+-const CALL_START: &str = "<｜DSML｜ invoke";
+-const CALL_END: &str = "</｜DSML｜ invoke";
+-const PARAM_START: &str = "<｜DSML｜ parameter";
+-const PARAM_END: &str = "/｜DSML｜ parameter";
+-const TC_START: &str = "\n\n<｜DSML｜ calls";
+-
+-/// Incremental version of parse_message_from_completion_text for streamed output. Feed decoded text
+-/// as it arrives: reasoning and content come out as soon as they cannot be the start of a marker,
+-/// each tool call once its invoke block has parsed (with the same rules as parse_tool_calls).
+-/// Where the reference parser would raise on malformed tool calls, the rest of the output is passed
+-/// on as plain content instead.
++enum Phase { Reasoning, Content, Calls, Name, Param, AfterParam, Failed, Done }
++
++const DSML_OPEN: &str = "<｜DSML｜";
++const DSML_CLOSE: &str = "</｜DSML｜";
++
++/// Incremental output protocol decoder. Markers are recognized at any position, including
++/// across UTF-8/token/chunk boundaries. Malformed protocol is never downgraded to API text.
++/// Complete calls are atomic; unfinished or ambiguous arguments are not executed.
+ pub struct StreamParser {
+     phase: Phase,
+-    /// Text not yet consumed. In the tool-call phases it starts at the current invoke (or at the `>`
+-    /// that closes the previous one).
+     buf: String,
+-    /// Parse position in `buf` and the offset from which the next stop search may start.
+-    pos: usize,
+-    scan: usize,
+     calls: usize,
+     name: String,
+-    args: Vec<(String, String, String)>,
++    args: Vec<(String,String,String)>,
+     tools: bool,
++    error: Option<&'static str>,
+     pub saw_eos: bool,
+ }
+ 
++/// Remove reserved model-only tokens, not arbitrary XML/code, from a complete parameter.
++fn clean_protocol(s: &str) -> String {
++    let mut out = String::new();
++    let mut rest = s;
++    while !rest.is_empty() {
++        let marks = [THINK_START, THINK_END, "<｜", "<|", "</｜", "</|"];
++        let found = marks.iter().filter_map(|m| rest.find(m).map(|p| (p, *m))).min_by_key(|x| x.0);
++        let Some((p, m)) = found else { out.push_str(rest); break };
++        out.push_str(&rest[..p]); rest = &rest[p..];
++        let end = if m == THINK_START || m == THINK_END { Some(m.len()) }
++            else if let Some(p)=rest.find('>') {
++                if rest[..p].ends_with('｜') || rest[..p].ends_with('|') { Some(p+1) }
++                else { out.push_str(&rest[..p+1]);rest=&rest[p+1..];continue }
++            } else { None };
++        match end { Some(n) => rest = &rest[n..], None => break }
++    }
++    out
++}
++
++/// Find a DSML tag, tolerating both released tag-name spellings. Returned offsets are
++/// UTF-8 boundaries. The payload is never normalized or scanned as markup before its close.
++fn closing(s: &str, name: &str) -> Option<(usize, usize)> {
++    let mut from = 0;
++    while let Some(p) = s[from..].find(DSML_CLOSE) {
++        let start = from + p; let end = s[start..].find('>')? + start + 1;
++        if s[start+DSML_CLOSE.len()..end-1].trim() == name { return Some((start, end)) }
++        from = end;
++    }
++    None
++}
++
++fn opening(s: &str, name: &str) -> Option<(usize,usize)> {
++    let mut from=0;
++    while let Some(p)=s[from..].find(DSML_OPEN) {
++        let start=from+p;let tail=&s[start+DSML_OPEN.len()..];let t=tail.trim_start();
++        if t.starts_with(name) && t[name.len()..].chars().next().map_or(false,|c| c.is_whitespace() || c=='>') {
++            return Some((start,start+DSML_OPEN.len()+tail.len()-t.len()+name.len()))
++        }
++        from=start+DSML_OPEN.len();
++    }
++    None
++}
++
+ impl StreamParser {
+-    pub fn new(mode: ThinkingMode) -> Self {
+-        Self::with_tools(mode, true)
+-    }
+-
+-    /// `tools = false`: DSML in the output is plain content (the request offered no tools).
++    pub fn new(mode: ThinkingMode) -> Self { Self::with_tools(mode, true) }
+     pub fn with_tools(mode: ThinkingMode, tools: bool) -> Self {
+-        StreamParser {
+-            tools,
+-            phase: if mode == ThinkingMode::Thinking {
+-                Phase::Reasoning
+-            } else if tools {
+-                Phase::Content
+-            } else {
+-                Phase::Raw
+-            },
+-            buf: String::new(),
+-            pos: 0,
+-            scan: 0,
+-            calls: 0,
+-            name: String::new(),
+-            args: Vec::new(),
+-            saw_eos: false,
+-        }
+-    }
+-
+-    pub fn tool_calls_seen(&self) -> usize {
+-        self.calls
+-    }
+-
++        Self { phase: if mode == ThinkingMode::Thinking { Phase::Reasoning } else { Phase::Content },
++            buf: String::new(), calls: 0, name: String::new(), args: Vec::new(), tools, error: None, saw_eos: false }
++    }
++    pub fn tool_calls_seen(&self) -> usize { self.calls }
++    pub fn protocol_error(&self) -> Option<&'static str> { self.error }
+     pub fn push(&mut self, text: &str, out: &mut Vec<Delta>) {
+-        if self.phase == Phase::Done {
+-            return;
+-        }
+-        self.buf.push_str(text);
+-        self.advance(out, false);
+-    }
+-
+-    /// End of generation: flush everything that is left.
++        if matches!(self.phase, Phase::Done | Phase::Failed) { return }
++        self.buf.push_str(text); self.advance(out, false);
++    }
+     pub fn finish(&mut self, out: &mut Vec<Delta>) {
+         self.advance(out, true);
+-        let rest = std::mem::take(&mut self.buf);
+-        match self.phase {
+-            Phase::Reasoning if !rest.is_empty() => out.push(Delta::Reasoning(rest)),
+-            Phase::Content | Phase::Raw if !rest.is_empty() => out.push(Delta::Content(rest)),
+-            // Cut off right after a complete call (or the block marker): parse_tool_calls accepts that.
+-            Phase::ExpectCall if self.pos >= rest.len() => {}
+-            Phase::ExpectCall | Phase::Name | Phase::Param | Phase::AfterParam => {
+-                // Cut off inside the block (max_tokens or a stop): show the unfinished call as text.
+-                let raw = self.unparsed(&rest);
+-                if !raw.trim().is_empty() && !CALLS_END.starts_with(raw.trim_start_matches(['>', '\n'])) {
+-                    out.push(Delta::Content(raw));
+-                }
+-            }
+-            _ => {}
+-        }
+-        self.phase = Phase::Done;
+-    }
+-
+-    /// The raw text of the block from the current invoke on, for the fallback.
+-    fn unparsed(&self, rest: &str) -> String {
+-        if self.calls == 0 {
+-            format!("{TC_START}{rest}")
+-        } else {
+-            rest.strip_prefix('>').unwrap_or(rest).to_string()
+-        }
+-    }
+-
+-    /// Length of the longest suffix of `s` that is a proper prefix of one of `markers`.
++        if matches!(self.phase, Phase::Name | Phase::Param | Phase::AfterParam) { self.fail("incomplete tool invocation") }
++        self.buf.clear(); self.phase = Phase::Done;
++    }
++    fn fail(&mut self, message: &'static str) { self.error = Some(message); self.buf.clear(); self.phase = Phase::Failed; }
++    fn consume(&mut self, n: usize) { self.buf.drain(..n); }
++    fn text(&self, s: String, out: &mut Vec<Delta>) {
++        if !s.is_empty() { out.push(if self.phase == Phase::Reasoning { Delta::Reasoning(s) } else { Delta::Content(s) }); }
++    }
++    fn emit_call(&mut self,out:&mut Vec<Delta>) {
++        if clean_protocol(&self.name)!=self.name { self.fail("reserved token in tool name");return }
++        out.push(Delta::ToolCall(self.calls,std::mem::take(&mut self.name),decode_dsml_to_arguments(&self.args)));self.calls+=1;self.args.clear();
++    }
+     fn holdback(s: &str, markers: &[&str]) -> usize {
+-        let mut best = 0;
+-        for m in markers {
+-            let max = m.len().saturating_sub(1).min(s.len());
+-            for k in (1..=max).rev() {
+-                if s.is_char_boundary(s.len() - k) && m.starts_with(&s[s.len() - k..]) {
+-                    best = best.max(k);
+-                    break;
+-                }
+-            }
+-        }
+-        best
+-    }
+-
+-    /// _read_until_stop on the buffer from `pos`, for text that is still arriving: the earliest
+-    /// stop, or None if none has arrived yet. None of the stop sets here has one stop inside another,
+-    /// so an occurrence found now stays the earliest whatever follows.
+-    fn find_stop(&mut self, stops: &[&'static str]) -> Option<(usize, &'static str)> {
+-        let from = self.scan.max(self.pos);
+-        let mut best: Option<(usize, &'static str)> = None;
+-        for s in stops {
+-            if let Some(p) = self.buf[from..].find(s) {
+-                let p = from + p;
+-                if best.map_or(true, |(bp, _)| p < bp) {
+-                    best = Some((p, s));
+-                }
+-            }
+-        }
+-        if best.is_none() {
+-            let longest = stops.iter().map(|s| s.len()).max().unwrap_or(1);
+-            let mut scan = self.buf.len().saturating_sub(longest - 1).max(self.pos);
+-            while !self.buf.is_char_boundary(scan) {
+-                scan -= 1;
+-            }
+-            self.scan = scan;
+-        }
+-        best
+-    }
+-
+-    /// Consume up to `end` (exclusive) of the buffer and reset the parse position.
+-    fn consume(&mut self, end: usize) {
+-        self.buf.drain(..end);
+-        self.pos = 0;
+-        self.scan = 0;
+-    }
+-
+-    /// Text between the parse position and a stop must be exactly ">\n". While the stop has not
+-    /// arrived, false once that can no longer happen.
+-    fn gap_can_be_ok(&self, stops: &[&str]) -> bool {
+-        let gap = &self.buf[self.pos..];
+-        let n = gap.len().min(2);
+-        if gap.as_bytes()[..n] != b">\n"[..n] {
+-            return false;
+-        }
+-        n < 2 || stops.iter().any(|s| s.starts_with(&gap[2..]) || gap[2..].starts_with(s))
+-    }
+-
+-    fn fail(&mut self, out: &mut Vec<Delta>) {
+-        let raw = self.unparsed(&self.buf);
+-        self.buf.clear();
+-        self.pos = 0;
+-        self.scan = 0;
+-        self.phase = Phase::Raw;
+-        out.push(Delta::Content(raw));
+-    }
+-
+-    fn emit_call(&mut self, out: &mut Vec<Delta>) {
+-        let args = decode_dsml_to_arguments(&self.args);
+-        out.push(Delta::ToolCall(self.calls, std::mem::take(&mut self.name), args));
+-        self.args.clear();
+-        self.calls += 1;
+-    }
+-
++        markers.iter().flat_map(|m| (1..m.len().min(s.len()+1)).rev().filter(|&k| s.is_char_boundary(s.len()-k) && m.starts_with(&s[s.len()-k..]))).max().unwrap_or(0)
++    }
+     fn advance(&mut self, out: &mut Vec<Delta>, at_end: bool) {
+         loop {
+             match self.phase {
+-                Phase::Reasoning => {
+-                    let end = self.buf.find(THINK_END);
+-                    let eos = self.buf.find(EOS);
+-                    if let Some(e) = eos.filter(|&e| end.map_or(true, |t| e < t)) {
+-                        if e > 0 {
+-                            out.push(Delta::Reasoning(self.buf[..e].to_string()));
++                Phase::Reasoning | Phase::Content => {
++                    let markers = [EOS, THINK_START, THINK_END, "\n\n<｜DSML｜", DSML_OPEN, DSML_CLOSE, "<｜", "<|", "</｜", "</|", "｜DSML｜"];
++                    let hit = markers.iter().filter_map(|m| self.buf.find(m).map(|p| (p, *m))).min_by_key(|x| x.0);
++                    let Some((p, marker)) = hit else {
++                        let keep = Self::holdback(&self.buf, &markers);
++                        let n = self.buf.len()-keep;
++                        self.text(self.buf[..n].to_string(), out); self.consume(n);
++                        // At EOF a reserved-marker prefix is withheld, never flushed as content.
++                        if at_end {
++                            if !(self.buf.starts_with("<｜") || self.buf.starts_with("<|") || self.buf.starts_with("</｜") || self.buf.starts_with("</|") || self.buf.starts_with("<thi") || self.buf.starts_with("</thi") || self.buf.starts_with("｜DS")) {
++                                self.text(self.buf.clone(), out);
++                            }
++                            self.buf.clear()
+                         }
+-                        self.buf.clear();
+-                        self.saw_eos = true;
+-                        self.phase = Phase::Done;
+-                        return;
+-                    }
+-                    if let Some(p) = end {
+-                        if p > 0 {
+-                            out.push(Delta::Reasoning(self.buf[..p].to_string()));
+-                        }
+-                        self.consume(p + THINK_END.len());
+-                        self.phase = if self.tools { Phase::Content } else { Phase::Raw };
+-                        continue;
+-                    }
+-                    let keep = if at_end { 0 } else { Self::holdback(&self.buf, &[THINK_END, EOS]) };
+-                    let n = self.buf.len() - keep;
+-                    if n > 0 {
+-                        out.push(Delta::Reasoning(self.buf[..n].to_string()));
+-                        self.consume(n);
+-                    }
+-                    return;
+-                }
+-                Phase::Content | Phase::Raw => {
+-                    let eos = self.buf.find(EOS);
+-                    let tc = if self.phase == Phase::Content { self.buf.find(TC_START) } else { None };
+-                    if let Some(e) = eos.filter(|&e| tc.map_or(true, |t| e < t)) {
+-                        if e > 0 {
+-                            out.push(Delta::Content(self.buf[..e].to_string()));
+-                        }
+-                        self.buf.clear();
+-                        self.saw_eos = true;
+-                        self.phase = Phase::Done;
+-                        return;
+-                    }
+-                    if let Some(t) = tc {
+-                        if t > 0 {
+-                            out.push(Delta::Content(self.buf[..t].to_string()));
+-                        }
+-                        self.consume(t + TC_START.len());
+-                        self.phase = Phase::ExpectCall;
+-                        continue;
+-                    }
+-                    let markers: &[&str] = if self.phase == Phase::Content { &[EOS, TC_START] } else { &[EOS] };
+-                    let keep = if at_end { 0 } else { Self::holdback(&self.buf, markers) };
+-                    let n = self.buf.len() - keep;
+-                    if n > 0 {
+-                        out.push(Delta::Content(self.buf[..n].to_string()));
+-                        self.consume(n);
+-                    }
+-                    return;
+-                }
+-                Phase::ExpectCall => {
+-                    let stops = [CALL_START, CALLS_END];
+-                    match self.find_stop(&stops) {
+-                        Some((p, s)) => {
+-                            if &self.buf[self.pos..p] != ">\n" {
+-                                self.fail(out);
+-                                continue;
+-                            }
+-                            if s == CALLS_END {
+-                                self.consume(p + s.len());
+-                                self.phase = Phase::AfterCalls;
+-                            } else {
+-                                // keep the invoke text in the buffer until the call is complete
+-                                self.pos = p + s.len();
+-                                self.scan = self.pos;
+-                                self.phase = Phase::Name;
+-                            }
+-                        }
+-                        None => {
+-                            if !self.gap_can_be_ok(&stops) {
+-                                self.fail(out);
+-                                continue;
+-                            }
+-                            return;
++                        return
++                    };
++                    if !at_end {
++                        let pending = Self::holdback(&self.buf, &markers);
++                        let start = self.buf.len() - pending;
++                        if pending > 0 && start < p {
++                            self.text(self.buf[..start].to_string(), out); self.consume(start); return
+                         }
+                     }
++                    if p > 0 { self.text(self.buf[..p].to_string(), out); self.consume(p); }
++                    if marker == "\n\n<｜DSML｜" { self.consume(2); continue }
++                    if marker == EOS { self.saw_eos = true; self.buf.clear(); self.phase = Phase::Done; return }
++                    if marker == THINK_END { self.consume(marker.len()); self.phase = Phase::Content; continue }
++                    if marker == THINK_START { self.consume(marker.len()); self.phase = Phase::Reasoning; continue }
++                    let Some(e) = self.buf.find('>') else { if at_end { self.buf.clear() } return };
++                    if marker == DSML_OPEN {
++                        let tag = self.buf[DSML_OPEN.len()..e].trim().to_string();
++                        if tag == "calls" || tag == "tool_calls" {
++                            if !self.tools { self.fail("tool protocol without declared tools"); return }
++                            self.consume(e+1); self.phase = Phase::Calls; continue
++                        }
++                        if let Some((0,end))=opening(&self.buf,"invoke") {
++                            if !self.tools { self.fail("tool protocol without declared tools");return }
++                            self.consume(end);self.phase=Phase::Name;continue
++                        }
++                        self.fail("unrecognized tool protocol tag"); return
++                    }
++                    // Reserved model tokens and stray closing protocol tags are not user text.
++                    self.consume(e+1);
+                 }
+-                Phase::Name => match self.find_stop(&[PARAM_START, CALL_END]) {
+-                    Some((p, s)) => {
+-                        let Some(name) = match_tool_name(&self.buf[self.pos..p]) else {
+-                            self.fail(out);
+-                            continue;
+-                        };
+-                        self.name = name;
+-                        if s == PARAM_START {
+-                            self.pos = p + s.len();
+-                            self.scan = self.pos;
+-                            self.phase = Phase::Param;
+-                        } else {
+-                            self.emit_call(out);
+-                            self.consume(p + s.len());
+-                            self.phase = Phase::ExpectCall;
+-                        }
++                Phase::Calls => {
++                    let n = self.buf.len()-self.buf.trim_start().len(); self.consume(n);
++                    if self.buf.is_empty() { return }
++                    if self.buf.starts_with(EOS) { self.saw_eos=true; self.buf.clear(); self.phase=Phase::Done; return }
++                    if let Some((0, end)) = closing(&self.buf, "calls").or_else(|| closing(&self.buf, "tool_calls")) {
++                        self.consume(end); self.phase=Phase::Content; continue
+                     }
+-                    None => return,
+-                },
+-                Phase::Param => match self.find_stop(&[PARAM_END]) {
+-                    Some((p, s)) => {
+-                        let Some((pname, flag, value)) = match_param(&self.buf[self.pos..p]) else {
+-                            self.fail(out);
+-                            continue;
+-                        };
+-                        if self.args.iter().any(|(k, _, _)| *k == pname) {
+-                            self.fail(out);
+-                            continue;
+-                        }
+-                        self.args.push((pname, value, flag));
+-                        self.pos = p + s.len();
+-                        self.scan = self.pos;
+-                        self.phase = Phase::AfterParam;
++                    if self.buf.starts_with(DSML_CLOSE) && !self.buf.contains('>') {
++                        if at_end { self.fail("incomplete closing tool tag") } return
+                     }
+-                    None => return,
+-                },
++                    if self.buf.starts_with(DSML_OPEN) {
++                        if let Some((0,end))=opening(&self.buf,"invoke") { self.consume(end);self.phase=Phase::Name;continue }
++                        if !self.buf.contains('>') && !at_end { return }
++                        self.fail("invalid tool invocation header"); return
++                    }
++                    // Wait for split markers; never return malformed protocol as content.
++                    if !at_end && [DSML_OPEN, DSML_CLOSE, EOS].iter().any(|m| m.starts_with(&self.buf)) { return }
++                    self.fail("invalid tool block framing"); return
++                }
++                Phase::Name => {
++                    let param = opening(&self.buf, "parameter");
++                    let end = closing(&self.buf, "invoke");
++                    let next = match (param, end) {
++                        (Some(a), Some(b)) if a.0 < b.0 => Some((a.0,a.1,false)),
++                        (_,Some(b)) => Some((b.0,b.1,true)),
++                        (Some(a),None) => Some((a.0,a.1,false)),
++                        _ => None,
++                    };
++                    let Some((p, consumed, done)) = next else { if at_end { self.fail("incomplete tool invocation") } return };
++                    let header = self.buf[..p].trim();
++                    let Some(name) = header.strip_prefix("name=\"").and_then(|h| h.strip_suffix("\">")) else { self.fail("invalid tool invocation header"); return };
++                    self.name = name.to_string(); self.args.clear(); self.consume(consumed);
++                    if done { self.emit_call(out); if self.error.is_some() { return } self.phase=Phase::Calls; } else { self.phase=Phase::Param; }
++                }
++                Phase::Param => {
++                    let stops = ["/｜DSML｜ parameter", "/｜DSML｜parameter"];
++                    let hit = stops.iter().filter_map(|m| self.buf.find(m).map(|p| (p,*m))).min_by_key(|x|x.0);
++                    let Some((p,m)) = hit else { if at_end { self.fail("incomplete tool parameter") } return };
++                    let tail = p+m.len();
++                    let Some(extra) = self.buf[tail..].find('>') else { if at_end { self.fail("incomplete parameter close") } return };
++                    let segment = format!(" {}", self.buf[..p].trim_start());
++                    let Some((name,flag,value)) = match_param(&segment) else { self.fail("invalid tool parameter"); return };
++                    if self.args.iter().any(|(n,_,_)| n==&name) { self.fail("duplicate tool parameter"); return }
++                    let value=clean_protocol(&value);
++                    if flag=="false" && serde_json::from_str::<Value>(&value).is_err() { self.fail("invalid JSON tool parameter"); return }
++                    self.args.push((name,value,flag));self.consume(tail+extra+1);self.phase=Phase::AfterParam;
++                }
+                 Phase::AfterParam => {
+-                    let stops = [PARAM_START, CALL_END];
+-                    match self.find_stop(&stops) {
+-                        Some((p, s)) => {
+-                            if &self.buf[self.pos..p] != ">\n" {
+-                                self.fail(out);
+-                                continue;
+-                            }
+-                            if s == PARAM_START {
+-                                self.pos = p + s.len();
+-                                self.scan = self.pos;
+-                                self.phase = Phase::Param;
+-                            } else {
+-                                self.emit_call(out);
+-                                self.consume(p + s.len());
+-                                self.phase = Phase::ExpectCall;
+-                            }
+-                        }
+-                        None => {
+-                            if !self.gap_can_be_ok(&stops) {
+-                                self.fail(out);
+-                                continue;
+-                            }
+-                            return;
+-                        }
++                    let n=self.buf.len()-self.buf.trim_start().len();self.consume(n);
++                    if self.buf.is_empty() { if at_end { self.fail("incomplete tool invocation") } return }
++                    if let Some((0,end))=closing(&self.buf,"invoke") { self.consume(end);self.emit_call(out);if self.error.is_some() { return }self.phase=Phase::Calls;continue }
++                    if let Some((0,end))=opening(&self.buf,"parameter") { self.consume(end);self.phase=Phase::Param;continue }
++                    if self.buf.starts_with("</") {
++                        let Some(end)=self.buf.find('>') else { if at_end { self.fail("incomplete closing tag") } return };
++                        self.consume(end+1);continue
+                     }
++                    if !at_end && [DSML_OPEN,DSML_CLOSE].iter().any(|m| m.starts_with(&self.buf) || self.buf.starts_with(m)) { return }
++                    self.fail("invalid parameter framing");return
+                 }
+-                Phase::AfterCalls => {
+-                    if let Some(e) = self.buf.find(EOS) {
+-                        let before = self.buf[..e].to_string();
+-                        if !before.trim().is_empty() {
+-                            out.push(Delta::Content(before));
+-                        }
+-                        self.buf.clear();
+-                        self.saw_eos = true;
+-                        self.phase = Phase::Done;
+-                        return;
+-                    }
+-                    let keep = if at_end { 0 } else { Self::holdback(&self.buf, &[EOS]) };
+-                    let n = self.buf.len() - keep;
+-                    if n > 0 && !self.buf[..n].trim().is_empty() {
+-                        // text after the block, which the reference rejects: pass it on
+-                        out.push(Delta::Content(self.buf[..n].to_string()));
+-                    }
+-                    if n > 0 {
+-                        self.consume(n);
+-                    }
+-                    return;
+-                }
+-                Phase::Done => {
+-                    self.buf.clear();
+-                    return;
+-                }
++                Phase::Failed | Phase::Done => { self.buf.clear(); return }
+             }
+         }
+     }
+@@ -1587,4 +1425,83 @@
+         assert_eq!(calls[0].1, "{\"path\": \"a.txt\", \"n\": 3}");
+         assert!(p.saw_eos);
+     }
+-}
++    fn wire_run(text: &str, width: usize, tools: bool) -> (String, String, Vec<(String, String)>, Option<&'static str>) {
++        let mut p = StreamParser::with_tools(ThinkingMode::Chat, tools);
++        let mut ds = Vec::new();
++        for chunk in text.chars().collect::<Vec<_>>().chunks(width) { p.push(&chunk.iter().collect::<String>(), &mut ds) }
++        p.finish(&mut ds);
++        let (mut r, mut c, mut calls) = (String::new(), String::new(), Vec::new());
++        for d in ds { match d { Delta::Reasoning(s)=>r.push_str(&s), Delta::Content(s)=>c.push_str(&s), Delta::ToolCall(_,n,a)=>calls.push((n,a)) } }
++        assert!(!c.contains("DSML") && !c.contains("place_holder_mm_span") && !c.contains("<think>") && !c.contains("</think>"), "{c:?}");
++        (r,c,calls,p.protocol_error())
++    }
++    const WIRE_CALL: &str = "<｜DSML｜ calls>\n<｜DSML｜ invoke name=\"exec_command\">\n<｜DSML｜ parameter name=\"cmd\" string=\"true\">pwd</｜DSML｜ parameter>\n</｜DSML｜ invoke>\n</｜DSML｜ calls>";
++    #[test]
++    fn wire_anywhere_all_chunk_widths() {
++        for prefix in ["", "Prose", "Prose\n", "Prose\n\n"] {
++            let text = format!("{prefix}{WIRE_CALL}{EOS}");
++            for w in 1..=text.chars().count() {
++                let (_, c, calls, e)=wire_run(&text,w,true);
++                assert_eq!(c,prefix.strip_suffix("\n\n").unwrap_or(prefix));
++                assert_eq!(calls,vec![("exec_command".into(), "{\"cmd\": \"pwd\"}".into())]); assert!(e.is_none());
++            }
++        }
++    }
++    #[test]
++    fn wire_captured_r4_redundant_closes() {
++        let text=WIRE_CALL.replace("</｜DSML｜ invoke>", "</ Chapters>\n</｜DSML｜ parameter>\n</｜DSML｜ invoke>");
++        for w in 1..=text.chars().count() { let (_,_,calls,e)=wire_run(&text,w,true); assert_eq!(calls.len(),1); assert!(e.is_none()); }
++    }
++    #[test]
++    fn wire_multiple_blocks_and_trailing_prose() {
++        let text=format!("First{WIRE_CALL}After{WIRE_CALL}Done{EOS}");
++        for w in 1..=text.chars().count() { let (_,c,calls,e)=wire_run(&text,w,true); assert_eq!(c,"FirstAfterDone");assert_eq!(calls.len(),2);assert!(e.is_none()); }
++    }
++    #[test]
++    fn wire_both_spellings_and_whitespace() {
++        let text=WIRE_CALL.replace(" calls", "tool_calls").replace(" invoke", "invoke").replace(" parameter", "parameter").replace('\n',"\r\n  ");
++        for w in 1..=text.chars().count() { let (_,_,calls,e)=wire_run(&text,w,true);assert_eq!(calls.len(),1);assert!(e.is_none()); }
++    }
++    #[test]
++    fn wire_special_tokens_and_stray_think() {
++        let text=format!("a</think>b<｜place_holder_mm_span_0｜>c<|place_holder_mm_span|>d{EOS}");
++        for w in 1..=text.chars().count() { let (_,c,_,e)=wire_run(&text,w,false);assert_eq!(c,"abcd");assert!(e.is_none()); }
++    }
++    #[test]
++    fn wire_special_tokens_in_argument() {
++        let text=WIRE_CALL.replace(">pwd<", ">p<｜place_holder_mm_span_0｜>wd<");
++        for w in 1..=text.chars().count() { let (_,_,calls,e)=wire_run(&text,w,true);assert_eq!(calls[0].1,"{\"cmd\": \"pwd\"}");assert!(e.is_none()); }
++    }
++    #[test]
++    fn wire_truncated_never_raw() {
++        let chars:Vec<_>=WIRE_CALL.chars().collect();
++        for n in 1..chars.len() { let text:String=chars[..n].iter().collect();let _=wire_run(&text,1,true); }
++    }
++    #[test]
++    fn wire_corruption_fails_closed() {
++        for text in [WIRE_CALL.replace("parameter name", "hicles name"), WIRE_CALL.replace("string=\"true\"", "string=\"false\""), WIRE_CALL.replace("</｜DSML｜ parameter>", "") ] {
++            for w in 1..=text.chars().count() { let (_,_,calls,e)=wire_run(&text,w,true);assert!(calls.is_empty());assert!(e.is_some()); }
++        }
++    }
++    #[test]
++    fn wire_no_tools_never_passes_protocol() { let (_,_,calls,e)=wire_run(WIRE_CALL,1,false);assert!(calls.is_empty());assert!(e.is_some()); }
++    #[test]
++    fn wire_plain_text_identity() {
++        for text in ["hello\n\n", "x < 5", "x <", "こんにちは\n", "compact JSON: {\"a\":1}"] { for w in 1..=text.chars().count() { let (_,c,_,e)=wire_run(text,w,false);assert_eq!(c,text);assert!(e.is_none()); } }
++    }
++
++    #[test]
++    fn wire_quoted_names_and_literal_close_in_value() {
++        let text=WIRE_CALL.replace("name=\"cmd\"", "name=\"a\"b\"").replace(">pwd<", ">x</｜DSML｜ invoke>y<<");
++        for w in 1..=text.chars().count() {
++            let (_,_,calls,e)=wire_run(&text,w,true);assert!(e.is_none());
++            assert_eq!(calls[0].1,"{\"a\\\"b\": \"x</｜DSML｜ invoke>y<\"}");
++        }
++    }
++    #[test]
++    fn wire_nested_protocol_in_tool_name_rejected() {
++        let text=WIRE_CALL.replace("exec_command", "read\">\n\n\n<｜DSML｜ invoke name=\"a b");
++        for w in 1..=text.chars().count() { let (_,_,calls,e)=wire_run(&text,w,true);assert!(calls.is_empty());assert_eq!(e,Some("reserved token in tool name")); }
++    }
++
++}
+diff --git a/ds41f-4xgx10-switchless/frontend/src/main.rs b/ds41f-4xgx10-switchless/frontend/src/main.rs
+--- a/ds41f-4xgx10-switchless/frontend/src/main.rs
++++ b/ds41f-4xgx10-switchless/frontend/src/main.rs
+@@ -22,13 +22,15 @@
+       --temperature T --top-p P sampling defaults: 1.0 and 0.95
+       --no-loop-guard           do not stop repetition loops
+       --dump-dir DIR            write each request, prompt and ids to DIR, and at its end the output's
+-                                ids (N.out.json; debugging and bench traces)
++                                ids and exact pre-parser bytes (N.out.json/.bin; also DSFRONT_DUMP_DIR)
++      --protocol-error-dir DIR  opt-in private raw bytes and token ids on parser errors only;\n                                also DSFRONT_PROTOCOL_ERROR_DIR (off by default, may contain sensitive text)
+       --hold-s N                while the engine is down (the ring lent, or a restart), a request
+                                 waits this long (600), then is answered 503 with Retry-After: 60
+       --admin-socket PATH       commands from service.sh (mode 600): status, hold IDLE_S, release
+       --table-file PATH         the session table, saved here at a stop and taken back at the next
+                                 start (mode 600, in a directory of mode 700; it holds the
+                                 conversations' text), so that the engine's kept sessions are found again
++      --session-cache-tokens N   retained history token budget, default 16777216 (not active KV)
+       --table-days N            sessions unused for longer are not kept: 7
+   dsfront admin --socket PATH <command>               one command to a server's admin socket; prints
+                                                       the answer (docs/engine.md, \"Launch and stop\")
+@@ -115,9 +117,17 @@
+         default_top_p: parse_opt(args, "--top-p", 0.95f32),
+         loop_guard: if args.iter().any(|a| a == "--no-loop-guard") { None } else { Some(Default::default()) },
+         tokenize_threads: parse_opt(args, "--tokenize-threads", 8usize).max(1),
+-        dump_dir: opt(args, "--dump-dir").map(Into::into),
++        dump_dir: opt(args, "--dump-dir").map(Into::into)
++            .or_else(|| std::env::var_os("DSFRONT_DUMP_DIR").map(Into::into)),
++        protocol_error_dir: opt(args, "--protocol-error-dir").map(Into::into)
++            .or_else(|| std::env::var_os("DSFRONT_PROTOCOL_ERROR_DIR").map(Into::into)),
+         hold: std::time::Duration::from_secs(parse_opt(args, "--hold-s", 600u64)),
+     };
++    let session_tokens = parse_opt(args, "--session-cache-tokens", 16usize << 20);
++    if session_tokens == 0 {
++        eprintln!("--session-cache-tokens must be positive");
++        std::process::exit(2);
++    }
+     let admin = opt(args, "--admin-socket");
+     let table = opt(args, "--table-file").map(std::path::PathBuf::from);
+     let table_age_s = (parse_opt(args, "--table-days", 7f64) * 86400.0) as u64;
+@@ -125,7 +135,7 @@
+     let socket = opt(args, "--engine-socket").unwrap_or_else(|| dsfront::protocol::DEFAULT_SOCKET.into());
+     runtime().block_on(async move {
+         let engine = dsfront::engine::EngineClient::start(socket.into());
+-        let app = App::new(cfg, tok, engine);
++        let app = App::new_with_session_capacity(cfg, tok, engine, session_tokens);
+         if let Some(t) = &table {
+             eprintln!("{}", app.load_sessions(t, table_age_s));
+         }
+diff --git a/ds41f-4xgx10-switchless/frontend/src/server.rs b/ds41f-4xgx10-switchless/frontend/src/server.rs
+--- a/ds41f-4xgx10-switchless/frontend/src/server.rs
++++ b/ds41f-4xgx10-switchless/frontend/src/server.rs
+@@ -45,6 +45,8 @@
+     /// Write each request, its prompt and its ids here, and at its end the output's ids (debugging and
+     /// bench traces; holds conversation text).
+     pub dump_dir: Option<std::path::PathBuf>,
++    /// Opt-in private raw generation evidence on protocol errors only; never sent to clients.
++    pub protocol_error_dir: Option<std::path::PathBuf>,
+     /// How long a request waits while the engine is down (the ring lent, or a restart) before it is
+     /// answered 503 with Retry-After.
+     pub hold: Duration,
+@@ -62,9 +64,16 @@
+ 
+ impl App {
+     pub fn new(cfg: ServerConfig, tok: Arc<Tokenizer>, engine: EngineClient) -> Arc<App> {
++        Self::new_with_session_capacity(cfg, tok, engine, 16 << 20)
++    }
++
++    /// Configured retained-history budget, independent of active inference slots.
++    pub fn new_with_session_capacity(cfg: ServerConfig, tok: Arc<Tokenizer>, engine: EngineClient, session_tokens: usize) -> Arc<App> {
++        assert!(session_tokens > 0, "session token budget must be positive");
++        eprintln!("session table: retained-token budget {session_tokens}, sessions 256");
+         let think_end_id = tok.token_id("</think>");
+         let gate = Gate::new(cfg.hold);
+-        Arc::new(App { cfg, tok, engine, gate, sessions: Mutex::new(SessionTable::new(256, 16 << 20)), think_end_id, counter: AtomicU64::new(0) })
++        Arc::new(App { cfg, tok, engine, gate, sessions: Mutex::new(SessionTable::new(256, session_tokens)), think_end_id, counter: AtomicU64::new(0) })
+     }
+ 
+     /// The session table an earlier run saved (session.rs `load`), for the next turns of its
+@@ -472,6 +481,40 @@
+                "prompt_tokens_details": {"cached_tokens": self.cached},
+                "completion_tokens_details": {"reasoning_tokens": self.reasoning}})
+     }
++}
++
++/// Capture token bytes before decoding/stopping/parsing. Call only for an opt-in protocol-error
++/// diagnostic. No prompts, authorization headers or raw bytes are put in ordinary logs or SSE.
++/// Every error gets a new private directory, so process restarts cannot overwrite prior evidence.
++fn capture_protocol_error(
++    base: &std::path::Path, req_id: u64, session_id: u64, ids: &[u32], kept: usize,
++    raw: &[u8], error: &str,
++) -> std::io::Result<std::path::PathBuf> {
++    use std::io::Write;
++    use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt, PermissionsExt};
++    std::fs::DirBuilder::new().recursive(true).mode(0o700).create(base)?;
++    let meta = std::fs::symlink_metadata(base)?;
++    if !meta.is_dir() || meta.permissions().mode() & 0o077 != 0 {
++        return Err(std::io::Error::new(std::io::ErrorKind::PermissionDenied,
++            "protocol error directory must be a private real directory (0700)"));
++    }
++    let stamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos();
++    let dir = base.join(format!("{}-{req_id:06}-{stamp}", std::process::id()));
++    std::fs::DirBuilder::new().mode(0o700).create(&dir)?;
++    let mut bytes = std::fs::OpenOptions::new().write(true).create_new(true).mode(0o600)
++        .open(dir.join("generation.bin"))?;
++    bytes.write_all(raw)?;
++    bytes.sync_all()?;
++    let record = json!({"schema_version": 1, "req_id": req_id, "session_id": session_id,
++        "protocol_error": error, "token_ids": ids, "kept_tokens": kept,
++        "generated_tokens": ids.len(), "raw_file": "generation.bin", "raw_bytes": raw.len(),
++        "raw_utf8": std::str::from_utf8(raw).ok(),
++        "capture_point": "concatenated tokenizer token_bytes of every engine output id, before parser/stop filtering"});
++    let mut index = std::fs::OpenOptions::new().write(true).create_new(true).mode(0o600)
++        .open(dir.join("record.json"))?;
++    index.write_all(serde_json::to_string_pretty(&record)?.as_bytes())?;
++    index.sync_all()?;
++    Ok(dir)
+ }
+ 
+ /// One request in flight on the engine: decodes, stops, guards and parses its token stream.
+@@ -564,6 +607,18 @@
+                         self.flush(out);
+                     }
+                     self.parser.finish(out);
++                    if let Some(e) = self.parser.protocol_error() {
++                        if let Some(base) = &self.app.cfg.protocol_error_dir {
++                            let raw: Vec<u8> = self.ids.iter().flat_map(|&id| self.app.tok.token_bytes(id).iter().copied()).collect();
++                            match capture_protocol_error(base, self.req_id, self.session_id, &self.ids, self.kept, &raw, e) {
++                                Ok(path) => eprintln!("req {}: protocol error evidence saved to {}", self.req_id, path.display()),
++                                Err(err) => eprintln!("req {}: protocol error evidence capture FAILED: {err}", self.req_id),
++                            }
++                        }
++                        self.app.sessions.lock().unwrap().abandon(self.session_id);
++                        self.app.engine.release(self.session_id);
++                        return Some(Err(format!("malformed model output protocol: {e}")));
++                    }
+                     let finish = if self.parser.tool_calls_seen() > 0 {
+                         Finish::ToolCalls
+                     } else if let Some(f) = self.stopped {
+@@ -584,6 +639,15 @@
+                     let total = self.t0.elapsed().as_secs_f64();
+                     let ttft = self.first_token.map_or(total, |t| (t - self.t0).as_secs_f64());
+                     if let Some(dir) = &self.app.cfg.dump_dir {
++                        // Debug-only exact pre-parser output for successful parses too: a trial can
++                        // diagnose a content leak even if its parser did not report an error.
++                        let raw: Vec<u8> = self.ids.iter().flat_map(|&id| self.app.tok.token_bytes(id).iter().copied()).collect();
++                        use std::io::Write;
++                        use std::os::unix::fs::OpenOptionsExt;
++                        let bytes = std::fs::OpenOptions::new().write(true).create_new(true).mode(0o600)
++                            .open(dir.join(format!("{:06}.out.bin", self.req_id)))
++                            .and_then(|mut f| { f.write_all(&raw)?; f.sync_all() });
++                        if let Err(e) = bytes { eprintln!("dump raw output: {e}"); }
+                         // the output's ids: the first `kept` count as output, the rest came after a stop
+                         let rec = json!({"req_id": self.req_id, "ids": self.ids, "kept": self.kept, "finish": finish.as_str(),
+                             "usage": usage.json(), "ttft_s": ttft, "total_s": total});
+@@ -897,8 +961,45 @@
+             loop_guard: None,
+             tokenize_threads: 1,
+             dump_dir: None,
++            protocol_error_dir: None,
+             hold: Duration::from_secs(600),
+         }
++    }
++
++    #[test]
++    fn protocol_error_capture_is_exact_private_and_non_overwriting() {
++        use std::os::unix::fs::PermissionsExt;
++        let base = std::env::temp_dir().join(format!("dsfront-capture-{}-{}", std::process::id(),
++            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
++        let raw = b"prose <\xef\xbd\x9cDSML\xef\xbd\x9c parameter>\xff</think>";
++        let ids = [41, 42, 43];
++        let a = capture_protocol_error(&base, 7, 8, &ids, 2, raw, "invalid tool parameter").unwrap();
++        let b = capture_protocol_error(&base, 7, 8, &ids, 2, raw, "invalid tool parameter").unwrap();
++        assert_ne!(a, b);
++        assert_eq!(std::fs::read(a.join("generation.bin")).unwrap(), raw);
++        let record: Value = serde_json::from_slice(&std::fs::read(a.join("record.json")).unwrap()).unwrap();
++        assert_eq!(record["token_ids"], json!(ids));
++        assert_eq!(record["kept_tokens"], 2);
++        assert_eq!(record["raw_bytes"], raw.len());
++        assert!(record["raw_utf8"].is_null()); // Never use lossy UTF-8 as the authoritative bytes.
++        for path in [&base, &a, &b] { assert_eq!(std::fs::metadata(path).unwrap().permissions().mode() & 0o777, 0o700); }
++        for name in ["generation.bin", "record.json"] { assert_eq!(std::fs::metadata(a.join(name)).unwrap().permissions().mode() & 0o777, 0o600); }
++        std::fs::remove_dir_all(base).unwrap();
++    }
++
++    #[test]
++    fn protocol_error_capture_refuses_public_or_symlink_directory() {
++        use std::os::unix::fs::PermissionsExt;
++        let base = std::env::temp_dir().join(format!("dsfront-capture-mode-{}", std::process::id()));
++        std::fs::create_dir(&base).unwrap();
++        std::fs::set_permissions(&base, std::fs::Permissions::from_mode(0o755)).unwrap();
++        assert!(capture_protocol_error(&base, 1, 1, &[], 0, b"secret", "error").is_err());
++        let link = base.with_extension("link");
++        std::os::unix::fs::symlink(&base, &link).unwrap();
++        assert!(capture_protocol_error(&link, 1, 1, &[], 0, b"secret", "error").is_err());
++        assert_eq!(std::fs::read_dir(&base).unwrap().count(), 0);
++        std::fs::remove_file(link).unwrap();
++        std::fs::remove_dir(base).unwrap();
+     }
+ 
+     #[test]

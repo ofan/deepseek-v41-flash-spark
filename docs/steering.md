@@ -2,6 +2,12 @@
 
 **Default: OFF.** Stock DeepSeek-V4.1-Flash-1017 is usable without a vector. Packaging a direction file does not activate it and does not modify model weights.
 
+Implementation is included in `vendor/engine/`; its consolidated change is
+`patches/0002-glp-steering.patch`, applied in the documented series. Building does
+not need an external engine checkout. The fresh decode rates in [benchmarks](benchmarks.md)
+were measured with GLP-39 on; the recipe default stays OFF. Stock fidelity and image
+answers below are accepted production checks, not qualification of the public twin.
+
 ## What it does
 
 msuiche's GLP-39 is a **spec-v1** projective direction file for the `residual_stream_post_layer` hook. At selected layer boundaries, the engine folds the layer write into the four residual streams using a rounded multiply followed by four FP32 FMAs, rounds to BF16, and projects each stream independently:

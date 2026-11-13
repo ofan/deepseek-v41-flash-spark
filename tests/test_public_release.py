@@ -27,13 +27,14 @@ class PublicReleaseTests(unittest.TestCase):
         self.assertFalse(old['anonymous_manifest_fetchable'])
         self.assertFalse(p['protected_original_package_modified'])
         self.assertFalse(p['production_touched'])
-    def test_publication_hold_is_not_claimed_success(self):
+    def test_publication_verified_without_new_visibility_change(self):
         p=data('docs/public-release.json')
-        self.assertEqual(p['public_release_verdict'],'HELD_PACKAGE_VISIBILITY_AUTH_REQUIRED')
-        self.assertTrue(p['repository']['private'])
-        self.assertFalse(p['repo_visibility_changed'])
-        self.assertFalse(p['anonymous_checks']['candidate']['anonymous_manifest_fetchable'])
-        self.assertIn('Publication is currently held',read('README.md'))
+        self.assertEqual(p['public_release_verdict'],'PUBLIC_ANONYMOUS_READBACK_VERIFIED')
+        self.assertFalse(p['repository']['private'])
+        self.assertFalse(p['visibility_changed_this_update'])
+        self.assertTrue(p['anonymous_checks']['candidate']['anonymous_manifest_fetchable'])
+        self.assertEqual(p['anonymous_https_clone_exit_code'],0)
+        self.assertNotIn('Publication is currently held',read('README.md'))
     def test_every_doc_image_url_is_distribution_only(self):
         import re
         for path in [ROOT/'README.md',*list((ROOT/'docs').glob('*'))]:

@@ -22,6 +22,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--bundle', type=Path, default=ROOT/'bundle')
     p.add_argument('--publication-runtime',type=Path,help='Audited source-rebuilt runtime receipt; never changes production locks')
+    p.add_argument('--source-build-receipt',type=Path,help='Local unqualified source build; overrides binary hashes only with matching vendored provenance')
     a=p.parse_args(); b=a.bundle.resolve()
     lock=json.loads((ROOT/'sources.lock.json').read_text())
     if a.publication_runtime:
@@ -31,6 +32,13 @@ def main():
         if runtime['source_engine_commit']!=lock['engine_commit']:
             raise ValueError('Publication runtime source mismatch')
         lock['engine_binary_sha256']=runtime['engine_binary_sha256']
+    if a.source_build_receipt:
+        built=json.loads(a.source_build_receipt.read_text())
+        expected=hashlib.sha256((ROOT/'vendor/engine/SOURCE.json').read_bytes()).hexdigest()
+        if built.get('source_commit')!=lock['engine_commit'] or built.get('source_manifest_sha256')!=expected:
+            raise ValueError('Local source build has incorrect provenance')
+        for key in ('engine_binary_sha256','frontend_binary_sha256'):
+            lock[key]=built[key]
     checked(b/'bin/dsgb10_rank',lock['engine_binary_sha256'])
     checked(b/'bin/dsfront',lock['frontend_binary_sha256'])
     receipt=json.loads((b/'model/asset-hashes.json').read_text())
@@ -68,6 +76,7 @@ def main():
                    steering_default='off', vision_pack_sha256=lock['vision_pack_sha256'], vision_files_sha256=vr['sha256'])
     if a.publication_runtime:
         profile.update(runtime_manifest_digest=runtime['manifest_digest'],qualification='source rebuilt; new GPU acceptance required')
+    if a.source_build_receipt:profile['qualification']='LOCAL SOURCE BUILD; new GPU qualification and privacy audit required'
     (b/'profile.json').write_text(json.dumps(profile,indent=2)+'\n')
     print('Profile written only after qualified binary and asset hash checks; no image built.')
 

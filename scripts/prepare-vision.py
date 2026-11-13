@@ -13,6 +13,9 @@ import struct
 import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
+import sys
+sys.path.insert(0,str(ROOT/'scripts'))
+from source_tree import verify_source
 
 def sha(p):
     with p.open('rb') as f:return hashlib.file_digest(f,'sha256').hexdigest()
@@ -62,9 +65,7 @@ def main():
             'stages':['verify source','read checkpoint headers only','run exact pinned public range extractor if pack absent',
                       'verify full pack hash','stage publisher modules and fork helpers','write complete file-hash receipt']},indent=2))
         return
-    if subprocess.check_output(['git','-C',str(source),'rev-parse','HEAD'],text=True).strip()!=lock['engine_commit']:
-        p.error('Wrong engine source commit')
-    if subprocess.check_output(['git','-C',str(source),'status','--porcelain'],text=True).strip():p.error('Dirty source')
+    if verify_source(source)!=lock['engine_commit']:p.error('Wrong pinned vision source')
     # Pre-obtained snapshot acquisition at pinned revision remains operator responsibility.
     out.mkdir(parents=True,exist_ok=True)
     receipt=out/'asset-hashes.json'

@@ -1,4 +1,4 @@
-# Optional DGX Spark host preparation
+# Host and fabric setup
 
 **Optional guidance, not an installer.** This repository does not configure hosts. Apply site-specific tuning only after reviewing vendor documentation and arranging a recovery window. Do not execute these examples on a serving machine merely to follow this README.
 
@@ -6,18 +6,34 @@
 
 Target four GB10 systems with 128 GB unified memory each, ARM64 Linux and local NVMe, joined by a qualified ConnectX-7 RoCE fabric. Host documentation records NVIDIA DGX OS / Ubuntu 24.04.4 LTS, aarch64. The later fleet qualification records **kernel 7.0.0-1019-nvidia-64k**, **65,536-byte pages**, **driver 580.178.04** and CX-7 firmware **28.45.4028**. Those are historical compatibility facts, not an instruction to downgrade or cross-flash another vendor's firmware. Validate the exact kernel, driver, RDMA devices and page size as a set.
 
-Build requirements from the pinned Pico serving documentation: CUDA **13.0**, CMake **3.28+**, g++ **13.3 / C++20**, rdma-core / libibverbs development libraries, Python **3.12**, and a locked Rust toolchain (documented Cargo **1.97**). All builds should run on an appropriate **off-serving build host**. This package does not install compilers on serving nodes.
+Build requirements from the pinned Pico serving documentation: CUDA **13.0**, CMake **3.28+**, g++ **13.3 / C++20**, rdma-core / libibverbs development libraries, Python **3.12**, and a Rust toolchain (documented Cargo **1.97**; crate versions use the included `Cargo.lock`, the compiler itself is not vendored). All builds should run on an appropriate **off-serving build host**. This package does not install compilers on serving nodes.
+
+## Host prerequisites before launch
+
+On each of four **idle** ARM64 nodes, install supported NVIDIA DGX OS/driver and
+Docker Engine using their vendor instructions, then configure [NVIDIA Container
+Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+for Docker. Review the vendor's daemon-reload instructions for your machine; this
+repository does not execute them. Confirm `uname -m` is `aarch64`, `nvidia-smi`
+works on the host, Docker can enumerate the GPU, and `/dev/infiniband` exists with
+appropriate ownership. Install matching rdma-core userspace and verify active
+HCA ports with `ibv_devinfo` / `rdma link` before attempting native ring tests.
+
+Use an off-serving build host with CUDA13, CMake, C++20, libibverbs development
+headers, Python and the locked Rust dependencies for building/conversion. Read
+[the included-source build instructions](build.md), not an external fork's local
+operations scripts. CPU or network metadata checks alone cannot qualify the ring.
 
 ## Optional GPU clock cap
 
-The recorded fleet uses a **2,200 MHz maximum graphics clock**, command shape:
+Fresh read-only inspection on 2026-11-13 found an active persistent **2,200 MHz maximum graphics-clock cap on all four GPUs**, command shape:
 
 ```sh
 # Administrative example, NOT run by any script in this recipe:
 sudo nvidia-smi -lgc 0,2200
 ```
 
-A single persistent policy owns the cap; do not stack competing clock controllers. The report sampled roughly 2,190 MHz while the advertised maximum remained higher. Monitor thermals/power and re-qualify throughput after changing clock policy; a cap is not a guarantee of constant frequency.
+Receipt: [four-GPU cap inspection](benchmarks/2026-11-13-gpu-cap.json). The GPUs report power limit `N/A`; no numeric wattage is inferred. A single persistent policy owns the cap; do not stack competing clock controllers. The report sampled roughly 2,190 MHz while the advertised maximum remained higher. Monitor thermals/power and re-qualify throughput after changing clock policy; a cap is not a guarantee of constant frequency.
 
 ## Optional TCP / management NIC tuning
 
@@ -51,7 +67,7 @@ Homeinfra branch `glp/pico-glp-steer-20261106`:
 - `docs/operations/evidence/pico-session-cache-fix-20261106/README.md`: spill and free-space guard.
 - Pinned engine `ds41f-4xgx10-switchless/README.md`: compiler/runtime prerequisites and fleet-file keys.
 
-These documents describe the declarative fleet configuration without publishing fleet addresses, device identities, access instructions or credentials. No host was inspected or changed to finish this recipe.
+These documents describe the declarative fleet configuration without publishing fleet addresses, device identities, access instructions or credentials. The fresh benchmark run inspected clocks and container counters read-only; no host setting was changed.
 
 Current-serving authority: homeinfra `cf6e8b67c`, `docs/operations/evidence/pico-image-support-20261111/retrial-spark-only/REPORT.md`. The older host facts above remain historical compatibility evidence, not a fresh host audit.
 
@@ -77,7 +93,7 @@ It is not a ready-to-run network configuration. No site addresses are shipped.
   launcher flags override these with the README's fixed model/spill paths.
 - `BIN_DIR/LOG_DIR/SERVICE_DIR/RING_LOCK`: paths used by native helper scripts.
 
-Validate cabling, links, device registration and the pinned engine's `ring_test` on
+Validate cabling, links, device registration and the included engine's `ring_test` on
 an idle ring before loading the model. On the recorded kernel, `kho=off` was needed
 for RDMA memory registration; confirm with your vendor/kernel rather than copying
 boot changes blindly. Never run the upstream example's host-specific fleet unchanged.

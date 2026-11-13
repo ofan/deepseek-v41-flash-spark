@@ -1,9 +1,70 @@
-# Current vision production benchmarks
+# Production benchmarks and measurement receipts
 
-Recorded results, **not new measurements of this recipe build**. Hardware: four GB10 / DGX Spark, TP4; stock DeepSeek-V4.1-Flash-1017, engine **b7c3eb5**, the **qualified private predecessor**. Source revisions and the historical production digest are in `sources.lock.json`.
+Fresh decode results and retained acceptance results are separated below. Neither qualifies a new recipe build. Hardware: four GB10 / DGX Spark, TP4; stock DeepSeek-V4.1-Flash-1017, engine **b7c3eb5**, the **qualified private predecessor**. Source revisions and the historical production digest are in `sources.lock.json`.
 These rates do not qualify the sanitized distribution candidate; its GPU serving qualification is pending. Steering was GLP-39 alpha0.75, layers1–39, except labeled OFF/alpha-zero arms. The recipe default remains OFF.
 
-## Current rates
+
+## Fresh decode battery (2026-11-13)
+
+Read-only requests against the live production vision image `2026.11.08-native-vision-trial-r1`,
+engine **b7c3eb5**, stock 1017 + GLP-39 alpha0.75, layers1–39, TP4,16 slots,1M context.
+Every GPU has an **active configured 2,200 MHz graphics-clock cap**. Post-run samples
+were 2,184–2,190 MHz; the numeric power limit is unavailable (`N/A`). This is a clock
+cap, not a claimed wattage setting. No serving setting was changed.
+
+| Streams | Prose decode tok/s | Code decode tok/s | Prose end-to-end tok/s | Code end-to-end tok/s |
+|---:|---:|---:|---:|---:|
+| 1 | 72.297 | 73.187 | 68.530 | 69.160 |
+| 4 | 107.232 | 161.501 | 105.263 | 156.611 |
+| 8 | 156.079 | 261.548 | 58.594 | 259.196 |
+| 16 | 236.405 | 320.541 | 234.320 | 252.712 |
+
+**58/58 requests succeeded**, each 256 output tokens, total14,848; zero request
+errors and no observed container restarts/OOM. One bounded wave per cell, with
+2seconds between waves, not a sustained-load or statistically repeated benchmark.
+The server was shared production, not a reserved otherwise-idle test ring.
+
+### Method and reproducibility
+
+- Used the existing `bench.py` built-in **prose** and **code** prompts verbatim,
+  filtered by their original dictionary keys; no authored/generated eval prompts.
+  Each wave repeats that arm's prompt across its streams. It is **not a distinct-user
+  prompt mix**, and cached/repeated input can affect first-token timings.
+- Reused `multistream.http_streams` and `multistream.report`. Requests go directly
+  to the rank0 frontend, streaming, temperature0, thinking disabled, max_tokens256,
+ 60-second HTTP timeout; stop on the first failing configuration.
+- **Decode aggregate** = sum of `(completion_tokens - 1)` divided by
+  `(latest completion time - earliest first-output-token time)` across the wave.
+  At c1 this is per-stream decode; c4/c8/c16 are aggregate ring throughput.
+- **End-to-end aggregate** = sum of completion tokens divided by
+  `(latest completion time - earliest submission time)`. This includes first-token
+  delay. It is distinct from decode throughput and from prefill throughput.
+- The eight-stream prose wave had **21.882–23.619 seconds TTFT**; code at16 had
+  **3.478–4.446 seconds TTFT**. The receipt does not attribute these delays. Decode
+  throughput alone hides them. No latency or capacity guarantee follows from this run.
+- Historical c1/c4/c16 rates below use different prompt mixtures/denominators;
+  do **not** report the new prose/code numbers as a percentage regression against them.
+
+Reproduce on your own idle/authorized server (no endpoint is embedded):
+
+```sh
+python3 scripts/benchmark-decode.py --url http://127.0.0.1:8888/v1 \
+  --max-tokens 256 --timeout 60 --out decode.json
+```
+
+The wrapper imports this repository's included benchmark implementation. Measurement
+receipts contain **timings, token counts, prompt/tool hashes and configuration only**,
+not request text, generated text, endpoints or deployment identifiers:
+
+- [Every configuration and request timing](benchmarks/2026-11-13-decode.json).
+- [All four live GPU caps and restart/OOM counters](benchmarks/2026-11-13-gpu-cap.json).
+- Vendored `bench.py` matches the measurement tool hash exactly. `multistream.py`
+  differs only in a disclosed generic default data path; the source manifest records
+  both hashes. Prompt hashes match the included built-ins. This documents the
+  actual measured original tool rather than pretending the sanitized file was run.
+
+
+## Retained accepted-production rates (2026-11-11)
 
 | Measurement | tok/s (rounded) | Evidence |
 |---|---:|---|
@@ -17,7 +78,7 @@ These rates do not qualify the sanitized distribution candidate; its GPU serving
 
 Prefill = server-counted prompt tokens / client time-to-first-token, with a one-token completion, unchanged adoption generator/calibration/suffix. Long targets were 500,025 / 1,048,025 text tokens; candidate actual prompt counts were 499,972 / 1,047,987. These are near-500K/1M measurements, **not exact maximum-context throughput**. Decode concurrency rate is aggregate completion tokens / full-wave wall time, not per-user rate. Workload-specific; no hardware guarantee.
 
-## Current correctness and capacity
+## Accepted production correctness and capacity
 
 | Check | Result | Evidence |
 |---|---|---|

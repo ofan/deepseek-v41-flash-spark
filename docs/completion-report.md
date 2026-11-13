@@ -1,97 +1,111 @@
-# Recipe publication — 2026-11-12
+# Public recipe upgrade — 2026-11-13
 
-## Verdict: HELD — separate package visibility requires owner web authentication
+## Verdict: documentation, source and measured decode battery complete
 
-The recipe is prepared for outside users, but **neither the repository nor the
-separate distribution package is public**. No successful anonymous readback is
-claimed. The repository visibility gate remains closed because publication step1
-has not passed. No visibility mutation, production access, Spark operation, route
-change or pull-request operation occurred.
+The repository and separate runtime package are **public**, verified without owner
+credentials. This unit did not change visibility, deploy an image, alter serving
+settings or operate a pull request. It issued bounded decode requests and read-only
+GPU/container/vector-hash inspections. Production remained on its existing vision build.
 
-## Image copy and access proof
+## Performance measured in this unit
 
-Intended public artifact:
+Four GB10 GPUs, TP4, **2,200 MHz configured graphics-clock cap on every rank**;
+power limit reported **N/A**. Live image version `2026.11.08-native-vision-trial-r1`.
+All four running ranks use the authentic GLP-39 hash with no alpha/layer overrides;
+the file supplies alpha0.75 and layers1–39. Clock/vector and restart/OOM proof is in
+[the generic four-rank receipt](benchmarks/2026-11-13-gpu-cap.json).
+
+| Streams | Prose decode tok/s | Code decode tok/s | Prose end-to-end tok/s | Code end-to-end tok/s |
+|---:|---:|---:|---:|---:|
+| 1 | 72.297 | 73.187 | 68.530 | 69.160 |
+| 4 | 107.232 | 161.501 | 105.263 | 156.611 |
+| 8 | 156.079 | 261.548 | 58.594 | 259.196 |
+| 16 | 236.405 | 320.541 | 234.320 | 252.712 |
+
+**58/58 successful requests**,256 output tokens each; zero request errors. Existing
+built-in prose/code prompts and original multi-stream measurement functions, no new
+eval prompts. One wave per cell, shared production, repeated same-arm input; not a
+sustained or statistically repeated capacity test. Decode excludes first-token delay.
+Eight-stream prose TTFT was21.882–23.619s and16-stream code TTFT3.478–4.446s; no cause
+is attributed. [Complete method and per-request timing](benchmarks.md#fresh-decode-battery-2026-11-13).
+
+Accepted-production prefill is retained unchanged: **8,951 /9,259 /9,076 /8,598 tok/s**
+at32K/131K/near500K/near1M. The vision check is88/88 correct off and88/88 on across six
+fixtures and their repeat/streaming/concurrency combinations. Stock fidelity is9/9
+bit-identical off and9/9alpha-zero including the1M-token needle. These historical
+production checks are attributed in [benchmarks](benchmarks.md), not represented as
+fresh model acceptance of the sanitized public runtime.
+
+## Included implementation and build path
+
+- `vendor/engine/`: **265 files** from the production implementation at **b7c3eb5**,
+  including engine, frontend, vision tools, existing prose/code benchmarks, notices
+  and a generic fleet template needed by CMake.
+- `vendor/upstream/`: **246 files** from the corresponding Pico base **4e70b2ab**.
+- **46 production files generalized** for privacy: deployment paths, addresses,
+  local reference names and fleet configuration; per-file original/sanitized hashes
+  and categories are retained. Source is deliberately not claimed byte-identical
+  after these disclosed substitutions. Engine arithmetic/protocol literals are retained.
+- `patches/`: four separate feature patches—GLP steering, DSML parser hardening,
+  sampler clamp, native vision—plus one separate production cache-fidelity prerequisite.
+  This is an ordered five-patch series, not four independent pristine-base diffs.
+  Replay matches all265 final files and executable modes exactly.
+- Source staging, native compilation, lossless conversion, compact vision extraction
+  and optional cross-build now consume **in-repository artifacts**, not external fork
+  checkouts. The source-build receipt binds actual local binary hashes to the included
+  source manifest and labels the assembled result unqualified.
+- README/setup cover requirements, model preparation, public image pull, completed
+  user-specific fleet config, per-rank launch, health/text/image requests and troubleshooting.
+  Steering defaults OFF. No private mirror acquisition is required or instructed.
+
+## Public access readback
+
+Public artifact:
 
 ```text
 ghcr.io/ofan/deepseek-v41-flash-spark-public:2026.11.11-native-vision-sanitized-candidate-r4
 sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979
 ```
 
-- Separate package ID **16813664**, currently **private**.
-- Exact approved manifest copied without rewriting config/layers. Owner-authenticated
-  GET by tag and digest matches the expected raw-manifest SHA256. All three referenced
-  blobs pass digest/size HEAD checks. GHCR mounted the config and two existing layers;
-  no failed blob had to be retransferred.
-- Config `sha256:97cfdaafc7d1b5e7e0cd0e1b3b7a2cf787e8948586732089c9a24a334379e1df`.
-  Two layers; **4,581,714,457 compressed bytes**. This is runtime/vision/vector only,
-  not the hundreds-of-GB external text assets.
-- Fresh anonymous checks at **2026-11-12T06:13:39Z**: candidate manifest **401**,
-  anonymous pull-token request **401**. It is **not publicly fetchable**.
-- Protected original package ID **16805256** remains **private** and unchanged;
-  its production-mirror manifest and anonymous pull-token requests also return **401**.
-  No pull instruction for that package is published here.
-- Machine-readable copy and readback evidence: [public-release.json](public-release.json).
+Anonymous registry pull-token exchange200, manifest GET200 and raw-manifest SHA256
+match; repository page200 and HTTPS clone exit0 with an empty temporary home, no
+credential helper or owner credentials. [Readback receipt](public-readback-20261113.json).
+The protected predecessor's anonymous pull-token request still returns401; it is
+not a distribution input and was not modified. No new package or visibility action
+occurred here. Historical copy/audit receipts remain dated provenance; the current
+state is in `public-release.json`.
 
-**Exact blocker:** GitHub documents package visibility changes through the package
-settings web UI. Remote browser calls timed out; the isolated local browser reached
-GitHub but was signed out. The checked credential stores provide package API/registry
-credentials, not an available owner web login. Those credentials successfully copy
-and verify the package; that does not establish access to the visibility UI. No
-undocumented visibility endpoint or shared-service restart was attempted. The local
-task browser was closed gracefully.
+## Verification and limits
 
-To finish: authenticate as the owner in the separate package's settings, change
-**only that package** to public, then fetch the manifest using an anonymous registry
-pull token and hash the raw bytes to the digest above. Recheck the protected original
-package is private/anonymous-denied. Then rerun the recipe/scrub gates before changing
-repository visibility. An initial registry401 challenge alone is not proof of privacy;
-the recorded anonymous token request also failed.
+- **106/106 recipe tests**, including source-tamper/mode rejection, staging, exact
+  patch replay, source-build receipt validation, unchanged default OFF, benchmark
+  provenance and disclosure-detector regressions.
+- **38/38 Rust frontend tests** (`cargo test --locked --lib -j2`).
+- Host GLP reader test passes with the authentic vector; arithmetic comparison has
+  **0 fixed/reference differences** across798,720 fold values/156dot rows. Sampler
+  host test passes its16,777,216-bin exhaustive check. GLP host compilation used a
+  temporary type-only `cudaStream_t` declaration, not a CUDA runtime or GPU test.
+- Python AST, JSON and shell syntax checks pass across included source. Working-tree
+  and reachable-history scrub: **zero forbidden disclosures**. Actual parser literals
+  necessarily remain in parser/test/patch source; the narrowly scoped protocol-literal
+  allowance does not exempt operator, network or credential findings.
+- Patch replay and source hashes/modes pass. Text/vision planning commands pass
+  without downloading weights or executing conversion. Whitespace checks pass.
 
-## Repository and usability
+[Machine-readable verification](recipe-verification.json). Final commit/push IDs
+are reported in the turn result; the resulting reachable history is rechecked before push.
 
-Repository: <https://github.com/ofan/deepseek-v41-flash-spark>, branch **main**,
-currently **private**. The repository was not flipped and anonymous HTTPS cloning
-was not represented as passing. That verification must run after the package gate
-passes and the authorized repository flip occurs.
+## Residual qualification / reproduction gaps
 
-The README now leads with purpose, 4×GB10/TP4 hardware, a digest-pinned pull/run
-example, exact external-text-asset prerequisites, optional steering OFF, benchmark
-provenance and MIT credits. The fleet template follows the pinned source's documented
-schema and ships placeholders, not deployment addresses. Every distribution-image
-reference points only to the separate public-package destination. Historical
-private-predecessor audit/transfer records are retained as provenance, not downloads.
+1. The public image remains a **sanitized twin with GPU serving qualification pending**:
+   same source, byte-identical frontend/vision assets, generic-path rebuilt engine and
+   new runtime/launcher. The previous incomplete import smoke is a qualification note,
+   not a claim of a passed runtime test. No full-ring GPU qualification occurred here.
+2. Public-source checkpoint acquisition, full lossless text conversion, compact extraction
+   and all-in-one image assembly have not been executed end to end in this unit.
+   These remain explicit build-host tasks; the public runtime intentionally lacks text assets.
+3. The exact original cross-toolchain/sysroot is not distributed. Native ARM64 commands
+   and source provenance are supplied; independent byte-identical binaries are not promised.
 
-The fork metadata and pinned source README are accessible **without credentials**
-(HTTP200), so obtaining converter source does not require a private repository.
-No checkpoint or tensor payload was downloaded for this preparation.
-
-## Qualification and residual gaps
-
-- The candidate is a **sanitized twin**, not a bit-identical production executable:
-  unchanged engine source **b7c3eb5**, byte-identical frontend and vision assets, engine
-  rebuilt under generic paths. **GPU serving qualification is pending.** Production
-  itself runs the private exact mirror. Recorded production benchmarks are labeled
-  reference results, not candidate measurements.
-- Candidate audit: operator findings0, unresolved findings0; **11 vendor binary
-  findings WAIVED by Ryan** on 2026-11-11 at23:58EST. Full finding/adjudication evidence
-  remains in `publication-audit.json` and [remediation](publication-remediation.md).
-- Incomplete PyTorch import smoke remains a **qualification note, not a publication
-  blocker**. No new GPU/model tests were performed here.
-- The public-source text conversion/compact extraction/full all-in-one image pipeline
-  has offline checks but has not been executed end to end. Text ranks/Engram/tokenizer
-  are external prerequisites, not silently bundled model weights.
-- Exact independent cross-toolchain/sysroot reproduction is not published. Native
-  build commands are provided, without claiming byte-identical rebuilt binaries.
-
-## Verification
-
-**87/87 offline tests pass**; **49 current text files** have **zero forbidden matches**.
-Python AST (15 files), JSON parsing (11 files), shell syntax (6 files) and diff
-whitespace checks pass. The precommit reachable-history scan covered **87 blobs /
-6 commits**, zero forbidden matches; a final committed-history scan follows the source
-commit. Full results are recorded in `recipe-verification.json`. These test recipe consistency and safety,
-not model behavior or GPU qualification. A source commit is made before publication;
-final commit/push identifiers are given in the turn result to avoid self-reference.
-
-Historical receipt status/visibility fields describe their dated transactions, not
-current publication. The authoritative current publication receipt is `public-release.json`.
+The repository's MIT notices credit Andy Shu and Picom, DeepSeek and msuiche;
+dependencies keep their own terms. This is an unofficial recipe, not a vendor endorsement.

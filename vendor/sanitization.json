@@ -1,0 +1,147 @@
+{
+  "scope": "Selected production source only",
+  "files_changed": 46,
+  "changes": {
+    "ds41f-4xgx10-switchless/bench/multistream.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/attn/README.md": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/attn/tests/gen.sh": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/attn/tools/moe_sweep.sh": {
+      "generic-data-location": 2
+    },
+    "ds41f-4xgx10-switchless/engine/attn/tools/run_hash.sh": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/attn/tools/turns.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/dspark/README.md": {
+      "generic-data-location": 4
+    },
+    "ds41f-4xgx10-switchless/engine/dspark/ref/dp_study.py": {
+      "generic-data-location": 2
+    },
+    "ds41f-4xgx10-switchless/engine/dspark/ref/dspark_ref.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/dspark/ref/pld_inputs.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/dspark/ref/verify_policy.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/dspark/ref/vocab_study.py": {
+      "generic-data-location": 3
+    },
+    "ds41f-4xgx10-switchless/engine/dspark/tests/bench_dspark.cu": {
+      "generic-data-location": 2
+    },
+    "ds41f-4xgx10-switchless/engine/dspark/tests/dspark_tests.cu": {
+      "generic-data-location": 4
+    },
+    "ds41f-4xgx10-switchless/engine/dspark/tests/lite_tests.cu": {
+      "generic-data-location": 2
+    },
+    "ds41f-4xgx10-switchless/engine/kernels/README.md": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/kernels/tests/abload.py": {
+      "generic-data-location": 3
+    },
+    "ds41f-4xgx10-switchless/engine/kernels/tests/bench_chain.cu": {
+      "generic-data-location": 2
+    },
+    "ds41f-4xgx10-switchless/engine/kernels/tests/bench_kernels.cu": {
+      "generic-data-location": 2
+    },
+    "ds41f-4xgx10-switchless/engine/model/CMakeLists.txt": {
+      "generic-reference-name": 1
+    },
+    "ds41f-4xgx10-switchless/engine/model/glp.cpp": {
+      "generic-reference-name": 3
+    },
+    "ds41f-4xgx10-switchless/engine/model/glp.cu": {
+      "generic-reference-name": 2
+    },
+    "ds41f-4xgx10-switchless/engine/model/glp.h": {
+      "generic-reference-name": 4
+    },
+    "ds41f-4xgx10-switchless/engine/model/glp_math.h": {
+      "generic-reference-name": 2
+    },
+    "ds41f-4xgx10-switchless/engine/model/tests/glp_math_test.cpp": {
+      "generic-reference-name": 16
+    },
+    "ds41f-4xgx10-switchless/engine/server/main.cpp": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/server/run4.sh": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/server/service.sh": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/server/tests/batch_test.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/server/tests/disk_test.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/server/tests/kept_test.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/server/tests/serve_test.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/server/tests/slice_test.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/server/tests/snap_test.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/server/tests/soak.py": {
+      "generic-data-location": 1,
+      "documentation-address": 3
+    },
+    "ds41f-4xgx10-switchless/engine/server/tools/evict_cache.py": {
+      "generic-data-location": 3
+    },
+    "ds41f-4xgx10-switchless/engine/server/tools/ttft_breakdown.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/server/tools/ttft_part.sh": {
+      "documentation-address": 3
+    },
+    "ds41f-4xgx10-switchless/engine/server/tools/ttft_turns.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/engine/weights/wcomp/README.md": {
+      "generic-data-location": 3
+    },
+    "ds41f-4xgx10-switchless/frontend/src/main.rs": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/frontend/src/session.rs": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/frontend/tools/check_against_sglang.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/frontend/tools/gen_tokenizer_cases.py": {
+      "generic-data-location": 1
+    },
+    "ds41f-4xgx10-switchless/tools/vision/test_image_io.py": {
+      "documentation-address": 1
+    },
+    "ds41f-4xgx10-switchless/fleet/homelab.conf": {
+      "generic-fleet-template": 1
+    }
+  },
+  "patch_replay": "PASS; byte-for-byte final implementation match",
+  "protocol_literals_retained": true
+}

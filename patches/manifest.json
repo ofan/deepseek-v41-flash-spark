@@ -1,0 +1,107 @@
+{
+  "upstream_base": "4e70b2ab",
+  "target_commit": "b7c3eb5b12a030725bfb0186d27065bc6e376685",
+  "scope": "Sanitized implementation subset in vendor/upstream -> vendor/engine; apply in series order",
+  "patches": [
+    {
+      "file": "0001-cache-fidelity-prerequisite.patch",
+      "sha256": "921cc37a9be9e24d916740156d9bd62b335999b7acffcb2f70df19e3cc419a66",
+      "source_commits": [
+        "ae7a6c3",
+        "d333ee3",
+        "56f66b9"
+      ],
+      "changed_files": [
+        "ds41f-4xgx10-switchless/engine/server/cmd.cpp",
+        "ds41f-4xgx10-switchless/engine/server/serve.cpp",
+        "ds41f-4xgx10-switchless/engine/server/snapshot_policy.h"
+      ]
+    },
+    {
+      "file": "0002-glp-steering.patch",
+      "sha256": "42a123f664542a6b2406a62a0cca57f382f911e7bbbdc479a9d5b6c225ba2e9b",
+      "source_commits": [
+        "a491d12",
+        "339aed7"
+      ],
+      "changed_files": [
+        "ds41f-4xgx10-switchless/engine/model/CMakeLists.txt",
+        "ds41f-4xgx10-switchless/engine/model/glp.cpp",
+        "ds41f-4xgx10-switchless/engine/model/glp.cu",
+        "ds41f-4xgx10-switchless/engine/model/glp.h",
+        "ds41f-4xgx10-switchless/engine/model/glp_math.h",
+        "ds41f-4xgx10-switchless/engine/model/impl.h",
+        "ds41f-4xgx10-switchless/engine/model/model.cu",
+        "ds41f-4xgx10-switchless/engine/model/prefill.cu",
+        "ds41f-4xgx10-switchless/engine/model/tests/glp_math_test.cpp",
+        "ds41f-4xgx10-switchless/engine/model/tests/glp_test.cpp"
+      ]
+    },
+    {
+      "file": "0003-dsml-parser.patch",
+      "sha256": "76a0161b42caf2819aa2658fc48a929bb94b1850a8c300ca815edb9b49829ab7",
+      "source_commits": [
+        "7549821",
+        "e15ced0",
+        "5559a1a"
+      ],
+      "changed_files": [
+        "ds41f-4xgx10-switchless/frontend/src/encoding.rs",
+        "ds41f-4xgx10-switchless/frontend/src/main.rs",
+        "ds41f-4xgx10-switchless/frontend/src/server.rs"
+      ]
+    },
+    {
+      "file": "0004-sampler-clamp.patch",
+      "sha256": "a3e4a385271bec48cc7737b0ac0b789a24d738701042f09889adba0b61e7ee70",
+      "source_commits": [
+        "d04020c"
+      ],
+      "changed_files": [
+        "ds41f-4xgx10-switchless/engine/model/CMakeLists.txt",
+        "ds41f-4xgx10-switchless/engine/model/sample.cu",
+        "ds41f-4xgx10-switchless/engine/model/sample_rng.h",
+        "ds41f-4xgx10-switchless/engine/model/tests/sample_rng_test.cpp"
+      ]
+    },
+    {
+      "file": "0005-native-vision.patch",
+      "sha256": "40263787de3a45b71390a8b1873ca50a7b8ed97c5441006133f72a05381cec23",
+      "source_commits": [
+        "15494ce",
+        "614484c",
+        "b7c3eb5"
+      ],
+      "changed_files": [
+        "ds41f-4xgx10-switchless/engine/common/frontend_protocol.h",
+        "ds41f-4xgx10-switchless/engine/engram/CMakeLists.txt",
+        "ds41f-4xgx10-switchless/engine/engram/engram.h",
+        "ds41f-4xgx10-switchless/engine/engram/hash.cpp",
+        "ds41f-4xgx10-switchless/engine/engram/tools/vision_hash_test.cpp",
+        "ds41f-4xgx10-switchless/engine/model/impl.h",
+        "ds41f-4xgx10-switchless/engine/model/model.cu",
+        "ds41f-4xgx10-switchless/engine/model/model.h",
+        "ds41f-4xgx10-switchless/engine/model/ops.cu",
+        "ds41f-4xgx10-switchless/engine/model/ops.h",
+        "ds41f-4xgx10-switchless/engine/model/prefill.cu",
+        "ds41f-4xgx10-switchless/engine/model/prefill.h",
+        "ds41f-4xgx10-switchless/engine/server/cmd.cpp",
+        "ds41f-4xgx10-switchless/engine/server/cmd.h",
+        "ds41f-4xgx10-switchless/engine/server/serve.cpp",
+        "ds41f-4xgx10-switchless/frontend/src/lib.rs",
+        "ds41f-4xgx10-switchless/frontend/src/main.rs",
+        "ds41f-4xgx10-switchless/frontend/src/protocol.rs",
+        "ds41f-4xgx10-switchless/frontend/src/server.rs",
+        "ds41f-4xgx10-switchless/frontend/src/vision.rs",
+        "ds41f-4xgx10-switchless/tools/vision/cases.json",
+        "ds41f-4xgx10-switchless/tools/vision/conc_img.py",
+        "ds41f-4xgx10-switchless/tools/vision/extract_pack.py",
+        "ds41f-4xgx10-switchless/tools/vision/image_io.py",
+        "ds41f-4xgx10-switchless/tools/vision/imgtest.py",
+        "ds41f-4xgx10-switchless/tools/vision/test_image_io.py",
+        "ds41f-4xgx10-switchless/tools/vision/test_reference.py",
+        "ds41f-4xgx10-switchless/tools/vision/vision_encoder.py"
+      ]
+    }
+  ]
+}

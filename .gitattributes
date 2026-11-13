@@ -1,0 +1,2 @@
+# Unified-diff context lines are literal patch data; never auto-fix their whitespace.
+patches/*.patch -whitespace

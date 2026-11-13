@@ -1,0 +1,59 @@
+{
+  "checked_at": "2026-11-13T21:58:30.405797+00:00",
+  "method": "Read-only live NVIDIA query, active persistent clock-cap unit and configured command, immutable container config identity and restart/OOM counters; identifying host data omitted",
+  "production_image_version": "2026.11.08-native-vision-trial-r1",
+  "image_config_digest": "sha256:979ff212061ffe5d43ecd14e2c8a3d32d9cfceedf1b3e350008b7cdcf3226382",
+  "nodes": [
+    {
+      "rank": 0,
+      "configured_graphics_clock_cap_mhz": 2200,
+      "cap_unit_active": true,
+      "observed_graphics_clock_mhz": 2184,
+      "power_limit_reported": "N/A",
+      "restarts": 0,
+      "oom_killed": false,
+      "steering_vector_sha256": "9c66d47701e0ceb42c33906f2d3789c0f1f16b21e7d97185f20f7f3f09fbf5cf",
+      "alpha_override": null,
+      "layers_override": null
+    },
+    {
+      "rank": 1,
+      "configured_graphics_clock_cap_mhz": 2200,
+      "cap_unit_active": true,
+      "observed_graphics_clock_mhz": 2190,
+      "power_limit_reported": "N/A",
+      "restarts": 0,
+      "oom_killed": false,
+      "steering_vector_sha256": "9c66d47701e0ceb42c33906f2d3789c0f1f16b21e7d97185f20f7f3f09fbf5cf",
+      "alpha_override": null,
+      "layers_override": null
+    },
+    {
+      "rank": 2,
+      "configured_graphics_clock_cap_mhz": 2200,
+      "cap_unit_active": true,
+      "observed_graphics_clock_mhz": 2184,
+      "power_limit_reported": "N/A",
+      "restarts": 0,
+      "oom_killed": false,
+      "steering_vector_sha256": "9c66d47701e0ceb42c33906f2d3789c0f1f16b21e7d97185f20f7f3f09fbf5cf",
+      "alpha_override": null,
+      "layers_override": null
+    },
+    {
+      "rank": 3,
+      "configured_graphics_clock_cap_mhz": 2200,
+      "cap_unit_active": true,
+      "observed_graphics_clock_mhz": 2190,
+      "power_limit_reported": "N/A",
+      "restarts": 0,
+      "oom_killed": false,
+      "steering_vector_sha256": "9c66d47701e0ceb42c33906f2d3789c0f1f16b21e7d97185f20f7f3f09fbf5cf",
+      "alpha_override": null,
+      "layers_override": null
+    }
+  ],
+  "production_configuration_changed": false,
+  "steering_checked_at": "2026-11-13T22:19:54.572935+00:00",
+  "steering_configuration": "Authentic GLP-39 metadata supplies alpha0.75 and layers1..39; no environment overrides"
+}

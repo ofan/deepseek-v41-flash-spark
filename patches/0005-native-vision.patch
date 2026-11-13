@@ -1,0 +1,1759 @@
+diff --git a/ds41f-4xgx10-switchless/engine/common/frontend_protocol.h b/ds41f-4xgx10-switchless/engine/common/frontend_protocol.h
+--- a/ds41f-4xgx10-switchless/engine/common/frontend_protocol.h
++++ b/ds41f-4xgx10-switchless/engine/common/frontend_protocol.h
+@@ -7,7 +7,7 @@
+ 
+ namespace fe {
+ 
+-constexpr uint32_t kVersion = 1;
++constexpr uint32_t kVersion = 2;
+ constexpr const char* kDefaultSocket = "/tmp/dsgb10-engine.sock";
+ 
+ enum MsgType : uint16_t {
+@@ -37,7 +37,21 @@
+   kFlagSeed = 1,      // use SubmitHeader::seed
+   kFlagKeep = 2,      // keep the session's state after DONE
+   kFlagLogprobs = 4,  // send logprobs in TOKENS
++  // vision (docs/vision.md): after prompt[], uint32 n_images, ImageSpan spans[n_images], then the spans' rows,
++  // bf16 [sum rows][5120] in span order. Only image requests set it; a text SUBMIT is unchanged.
++  kFlagImages = 8,
+ };
++
++// An image's span of the prompt: positions [start, start + rows), every id 129264 (<｜deepseek_image｜>);
++// its rows (the encoder's: IMAGE_START, the aligner rows with IMAGE_NEW_LINE after each grid row,
++// IMAGE_END) replace the token embeddings there, the span routes with ffn.gate.bias_vl and is dead to Engram.
++struct ImageSpan {
++  uint32_t start;
++  uint32_t rows;
++  uint64_t hash;  // of the image's bytes (logs)
++};
++constexpr int kImageDim = 5120;
++constexpr uint32_t kImageTokenId = 129264;
+ 
+ struct SubmitHeader {
+   uint64_t req_id;           // unique per connection
+@@ -118,6 +132,7 @@
+ static_assert(sizeof(HelloEngine) == 24);
+ static_assert(sizeof(TokensHeader) == 16);
+ static_assert(sizeof(TopLogprob) == 8);
++static_assert(sizeof(ImageSpan) == 16);
+ static_assert(sizeof(DoneHeader) == 56);
+ static_assert(offsetof(DoneHeader, queue_us) == 24);
+ 
+diff --git a/ds41f-4xgx10-switchless/engine/engram/CMakeLists.txt b/ds41f-4xgx10-switchless/engine/engram/CMakeLists.txt
+--- a/ds41f-4xgx10-switchless/engine/engram/CMakeLists.txt
++++ b/ds41f-4xgx10-switchless/engine/engram/CMakeLists.txt
+@@ -10,3 +10,7 @@
+   add_executable(engram_${tool} tools/${tool}.cpp)
+   target_link_libraries(engram_${tool} PRIVATE engram)
+ endforeach()
++
++# Host-only negative image ID / publisher live-mask equivalence.
++add_executable(vision_hash_test tools/vision_hash_test.cpp)
++target_link_libraries(vision_hash_test PRIVATE engram)
+diff --git a/ds41f-4xgx10-switchless/engine/engram/engram.h b/ds41f-4xgx10-switchless/engine/engram/engram.h
+--- a/ds41f-4xgx10-switchless/engine/engram/engram.h
++++ b/ds41f-4xgx10-switchless/engine/engram/engram.h
+@@ -42,7 +42,8 @@
+ 
+ // Row ids for positions [first, first + n) of a sequence whose raw token ids are tokens[0 ..
+ // first + n). Only tokens[first - 3 ..] are read. `live` may be null; a position with live == 0
+-// (an image span; never for text) blocks look-back, as in the reference.
++// (an image span; never for text) blocks look-back, as in the reference; so does a negative token id
++// (the engine's history marks image spans with -1, docs/vision.md).
+ // out: [n][kLayers][kCols], each id within its layer's table.
+ void hash_positions(const HashMap& m, const int32_t* tokens, const uint8_t* live, int64_t first, int n,
+                     uint32_t* out);
+diff --git a/ds41f-4xgx10-switchless/engine/engram/hash.cpp b/ds41f-4xgx10-switchless/engine/engram/hash.cpp
+--- a/ds41f-4xgx10-switchless/engine/engram/hash.cpp
++++ b/ds41f-4xgx10-switchless/engine/engram/hash.cpp
+@@ -80,7 +80,7 @@
+     bool blocked = false;
+     for (int s = 0; s < kMaxNgram; s++) {
+       const int64_t src = pos - s < 0 ? 0 : pos - s;
+-      blocked = blocked || pos < s || (live && !live[src]);
++      blocked = blocked || pos < s || (live && !live[src]) || tokens[src] < 0;  // < 0: an image span (vision)
+       t[s] = blocked ? m.pad : m.token_map[tokens[src]];
+     }
+     for (int l = 0; l < kLayers; l++) {
+diff --git a/ds41f-4xgx10-switchless/engine/engram/tools/vision_hash_test.cpp b/ds41f-4xgx10-switchless/engine/engram/tools/vision_hash_test.cpp
+new file mode 100644
+--- /dev/null
++++ b/ds41f-4xgx10-switchless/engine/engram/tools/vision_hash_test.cpp
+@@ -0,0 +1,27 @@
++// Host contract: negative image IDs must exactly match the reference's live=0 mask,
++// including every crossing n-gram and chunk start. No CUDA execution claimed.
++#include "engram/engram.h"
++#include <cassert>
++#include <cstdio>
++#include <vector>
++int main() {
++ using namespace engram;
++ HashMap m; m.pad=0;m.n_tokens=m.vocab=32;
++ for(int i=0;i<32;++i)m.token_map.push_back(i);
++ for(int l=0;l<kLayers;++l){
++  for(int s=0;s<kMaxNgram;++s)m.mult[l][s]=3+2*(s+l);
++  for(int o=0;o<kOrders;++o)for(int h=0;h<kHeads;++h){m.prime[l][o][h]=101+2*h+o*20;m.offset[l][o*kHeads+h]=o*1000+h*200;}
++ }
++ size_t checks=0;
++ for(int len=1;len<64;++len)for(int lo=0;lo<len;++lo) {
++  std::vector<int32_t> ids(len),neg(len);std::vector<uint8_t> live(len,1);
++  for(int i=0;i<len;++i)ids[i]=neg[i]=i%31+1;
++  for(int i=lo;i<std::min(len,lo+5);++i){live[i]=0;neg[i]=-1;}
++  for(int start=0;start<len;++start){
++   std::vector<uint32_t>a((len-start)*kLayers*kCols),b(a.size());
++   hash_positions(m,ids.data(),live.data(),start,len-start,a.data());
++   hash_positions(m,neg.data(),nullptr,start,len-start,b.data());assert(a==b);++checks;
++  }
++ }
++ printf("PASS: %zu image-mask/crossing-ngram/chunk-start comparisons; host only\n",checks);
++}
+diff --git a/ds41f-4xgx10-switchless/engine/model/impl.h b/ds41f-4xgx10-switchless/engine/model/impl.h
+--- a/ds41f-4xgx10-switchless/engine/model/impl.h
++++ b/ds41f-4xgx10-switchless/engine/model/impl.h
+@@ -62,6 +62,7 @@
+   // FFN
+   uint8_t* gate = nullptr;  // bf16 [384][5120], tile_fp8 layout: every rank's 96 rows, all-gathered at bind
+   const float* gate_bias = nullptr;
++  const float* gate_bias_vl = nullptr;  // vision: image-span rows' selection bias (nullptr: the file lacks it)
+   dsk::MoeWeights moe{};
+   // mHC: the full projections [24][20480] (all-gathered at bind), base [24], scale [3]
+   float* hc_fn[2] = {};
+@@ -194,6 +195,20 @@
+   std::vector<int32_t> hists[kMaxUnits];  // the other slots' by unit (use_slot swaps them in and out)
+   std::vector<int32_t>& hist_of(int u) { return u == cur_unit ? hist : hists[u]; }
+   std::vector<uint32_t> ids;  // [R][2][24]
++  // vision (docs/vision.md, set_images): the spans of the prefill in progress and their rows (pinned,
++  // mapped: the inject kernel reads them in place); empty for every text request
++  std::vector<std::pair<int, int>> img_span;
++  std::vector<size_t> img_row0;  // span i's first row in img_rows
++  uint16_t* img_rows = nullptr;
++  size_t img_cap = 0;  // rows img_rows holds
++  // this rank's rows [i0, i1) of the current chunk (absolute first position a) inside span k, clipped to [0, n)
++  template <class F>
++  void img_runs(int a, int n, F&& f) const {
++    for (size_t k = 0; k < img_span.size(); ++k) {
++      const int i0 = std::max(0, img_span[k].first - a), i1 = std::min(n, img_span[k].second - a);
++      if (i0 < i1) f(k, i0, i1);
++    }
++  }
+   uint8_t* e_send[2];         // pinned: this rank's packed records per Engram layer
+   uint32_t* e_off[2];         // pinned: [R][24] offsets into the gathered segments
+   uint64_t* e_done;           // pinned: the store's completion flags [2]
+diff --git a/ds41f-4xgx10-switchless/engine/model/model.cu b/ds41f-4xgx10-switchless/engine/model/model.cu
+--- a/ds41f-4xgx10-switchless/engine/model/model.cu
++++ b/ds41f-4xgx10-switchless/engine/model/model.cu
+@@ -348,6 +348,9 @@
+       w.gate = dalloc<uint8_t>((size_t)kExperts * kDim * 2);
+       comm::allgather(ch, g, w.gate, (size_t)kGatePart * kDim * 2, st);
+       w.gate_bias = reinterpret_cast<const float*>(need(p + "ffn.gate.bias", DType::F32, {kExperts}));
++      if (const dsw::DeviceTensor* vl = wf.find(p + "ffn.gate.bias_vl"))  // vision (prefill of image spans only)
++        if (vl->dtype == DType::F32 && vl->ndim == 1 && vl->shape[0] == kExperts)
++          w.gate_bias_vl = reinterpret_cast<const float*>(vl->data);
+     }
+     {
+       dsk::MoeWeights& m = w.moe;
+@@ -1076,6 +1079,30 @@
+   for (int r = 0; r < c.rows; ++r) sampled[r] = o.row[r].token;
+ }
+ void Model::reset() { d_->hist.clear(); }
++void Model::set_images(int n, const int32_t* lo, const int32_t* hi, const uint16_t* rows) {
++  Impl& I = *d_;
++  I.img_span.clear(), I.img_row0.clear();
++  size_t total = 0;
++  for (int i = 0; i < n; ++i) {
++    if (hi[i] <= lo[i] || lo[i] < 0 || (i && lo[i] < hi[i - 1])) die("model: image span %d [%d, %d)", i, lo[i], hi[i]);
++    I.img_span.emplace_back(lo[i], hi[i]), I.img_row0.push_back(total), total += hi[i] - lo[i];
++  }
++  if (!n) {
++    I.drain();  // no consumer may retain a pointer to the request's image rows
++    if (I.img_rows) CUDA_CHECK(cudaFreeHost(I.img_rows));
++    I.img_rows = nullptr;
++    I.img_cap = 0;
++    return;
++  }
++  if (total > I.img_cap) {
++    I.drain();  // a chunk in flight may still read the old buffer
++    if (I.img_rows) CUDA_CHECK(cudaFreeHost(I.img_rows));
++    I.img_cap = std::max(total, (size_t)2048);
++    I.img_rows = detail::halloc<uint16_t>(I.img_cap * kDim);
++  }
++  I.drain();
++  std::memcpy(I.img_rows, rows, total * kDim * 2);
++}
+ void Model::set_pos_stride(int stride, int group) {
+   d_->pos_stride = std::max(1, stride);
+   d_->pos_group = std::max(1, group);
+diff --git a/ds41f-4xgx10-switchless/engine/model/model.h b/ds41f-4xgx10-switchless/engine/model/model.h
+--- a/ds41f-4xgx10-switchless/engine/model/model.h
++++ b/ds41f-4xgx10-switchless/engine/model/model.h
+@@ -235,6 +235,11 @@
+   // CED chunks of one run (each chunk starting where the one before ended), P >= 128. Of the snapshots
+   // only one at P covers the decoder layers; the others hold the encoder layers' rings only.
+   void set_tokens(int pos0, int n, const int32_t* tokens);
++  // Vision (docs/vision.md): image spans [lo[i], hi[i]) of the current slot's sequence and their rows
++  // (bf16 [sum (hi - lo)][kDim], copied), used by the prefill chunks that follow until set_images(0, ...):
++  // the rows replace the embeddings there, the span routes with ffn.gate.bias_vl and Engram leaves it
++  // alone. The history (set_tokens) must hold -1 at those positions. Text requests never call it.
++  void set_images(int n, const int32_t* lo, const int32_t* hi, const uint16_t* rows);
+   void prefill_lookup(int a, int M);
+   // The prefill path's buffers and the weights it gathers, made now instead of by the first prefill:
+   // every rank at the same point, after set_engram(). This rank's allocations come before ring's host
+diff --git a/ds41f-4xgx10-switchless/engine/model/ops.cu b/ds41f-4xgx10-switchless/engine/model/ops.cu
+--- a/ds41f-4xgx10-switchless/engine/model/ops.cu
++++ b/ds41f-4xgx10-switchless/engine/model/ops.cu
+@@ -40,6 +40,17 @@
+     for (int c = 0; c < kHc; ++c) dst[c * (kDim / 8) + i] = v;
+   }
+   if (threadIdx.x < kHc) pre_mix[r * kHc + threadIdx.x] = threadIdx.x == 0 ? 1.f : 0.f;
++}
++
++__global__ void k_inject_rows(const bf16* rows, bf16* x) {
++  const int r = blockIdx.x;
++  const uint4* src = reinterpret_cast<const uint4*>(rows + (size_t)r * kDim);
++  uint4* dst = reinterpret_cast<uint4*>(x + (size_t)r * kHcDim);
++  for (int i = threadIdx.x; i < kDim / 8; i += blockDim.x) {
++    const uint4 v = src[i];
++#pragma unroll
++    for (int c = 0; c < kHc; ++c) dst[c * (kDim / 8) + i] = v;
++  }
+ }
+ 
+ __global__ void k_unpack_attn(const uint8_t* gath, int R, int ncomp, size_t per_rank, bf16* qa, bf16* kv, float* ckv,
+@@ -191,6 +202,12 @@
+   CUDA_CHECK(cudaGetLastError());
+ }
+ 
++void inject_rows(const bf16* rows, int R, bf16* x, cudaStream_t s) {
++  if (R <= 0) return;
++  k_inject_rows<<<R, 256, 0, s>>>(rows, x);
++  CUDA_CHECK(cudaGetLastError());
++}
++
+ size_t attn_pack_bytes(int R, int ncomp) { return (size_t)R * ((kQaPart + kKvPart) * 2 + (size_t)ncomp * kCompPart * 4); }
+ 
+ void unpack_attn(const uint8_t* gath, int R, int ncomp, bf16* qa, bf16* kv, float* ckv, float* csc, cudaStream_t s) {
+diff --git a/ds41f-4xgx10-switchless/engine/model/ops.h b/ds41f-4xgx10-switchless/engine/model/ops.h
+--- a/ds41f-4xgx10-switchless/engine/model/ops.h
++++ b/ds41f-4xgx10-switchless/engine/model/ops.h
+@@ -157,6 +157,8 @@
+ 
+ // x [R][4][5120] = embed[tokens[r]] in every copy; pre_mix [R][4] = (1, 0, 0, 0).
+ void embed(const bf16* table, const int* tokens, int R, bf16* x, float* pre_mix, cudaStream_t s);
++// vision: rows [R][kDim] (bf16, may be pinned host memory) into the 4 hc copies of x's first R rows
++void inject_rows(const bf16* rows, int R, bf16* x, cudaStream_t s);
+ 
+ // The attention input projections' all-gather. Each rank's block (bytes_per_rank) is
+ // [qa R x 320 bf16 | kv R x 128 bf16 | ckv R x 128 f32 | csc R x 128 f32]; ncomp = 0 (no compressor),
+diff --git a/ds41f-4xgx10-switchless/engine/model/prefill.cu b/ds41f-4xgx10-switchless/engine/model/prefill.cu
+--- a/ds41f-4xgx10-switchless/engine/model/prefill.cu
++++ b/ds41f-4xgx10-switchless/engine/model/prefill.cu
+@@ -256,6 +256,12 @@
+   for (int r = 0; r < kRanks; ++r)
+     ops::engram_partial(p.x, p.e_kv + (size_t)r * p.Q * kEngramN, w.e_w, r, n, p.e_part + (size_t)r * n * kEngramPartBytes,
+                         st);
++  if (!img_span.empty())  // vision: image rows pass through (gate * 0), as model.py's token_mask
++    img_runs(p.a_cur + p.r0, n, [&](size_t, int i0, int i1) {
++      for (int r = 0; r < kRanks; ++r)
++        CUDA_CHECK(cudaMemset2DAsync(p.e_part + ((size_t)r * n + i0) * kEngramPartBytes + 32, kEngramPartBytes, 0,
++                                     (size_t)kEngramSeg * 2, i1 - i0, st));
++    });
+   ops::engram_combine(p.x, p.e_part, n, p.x, st);
+   (void)M;
+ }
+@@ -447,6 +453,11 @@
+     dsk::gemm_bf16_p(p.y, n, w.gate, kExperts, kDim, p.gl, st);
+     dsk::router_topk(p.gl, w.gate_bias, n, kExperts, p.ridx + (size_t)r0 * kTopK, p.rwts + (size_t)r0 * kTopK,
+                      kRouteScale, st);
++    if (!img_span.empty() && w.gate_bias_vl)  // vision: image-span rows route with the VL bias (model.py Gate)
++      img_runs(p.a_cur + r0, n, [&](size_t, int i0, int i1) {
++        dsk::router_topk(p.gl + (size_t)i0 * kExperts, w.gate_bias_vl, i1 - i0, kExperts,
++                         p.ridx + (size_t)(r0 + i0) * kTopK, p.rwts + (size_t)(r0 + i0) * kTopK, kRouteScale, st);
++      });
+   }
+   // every row's act_quant and routes for the MoE
+   const comm::AgSeg ag[4] = {{p.yq + (size_t)r0 * kDim, p.yq, (size_t)Q * kDim},
+@@ -566,6 +577,7 @@
+   for (int q = s; q < P; ++q)
+     if (p.ced_pos[q % kReplay] != q) die("model: CED replay of [%d, %d) without the encoder's position %d", s, P, q);
+   p.rq = q_rows(M), p.r0 = rank * p.rq, p.n = std::max(0, std::min(p.rq, M - p.r0));
++  p.a_cur = s;
+   comm::allgather(ch, p.ced_rows, p.ced_gath, (size_t)kReplay * kCedRow, st);
+   for (int i = 0; i < p.n;) {  // runs of consecutive slots from one rank
+     const int slot = (s + p.r0 + i) % kReplay, src = p.ced_src[slot];
+@@ -616,9 +628,18 @@
+   CUDA_CHECK(cudaEventRecord(ev_beg[slot], st));
+   CUDA_CHECK(cudaEventRecord(ev_pf[0], st));
+   std::memcpy(p.tok_h, hist.data() + a, (size_t)M * 4);
++  p.a_cur = a;
++  if (!img_span.empty())  // vision: the spans' ids are -1 in the history (Engram); embed a real id, then the rows
++    for (int i = 0; i < M; ++i)
++      if (p.tok_h[i] < 0) p.tok_h[i] = 129264;
+   CUDA_CHECK(cudaMemcpyAsync(p.tok, p.tok_h, (size_t)M * 4, cudaMemcpyHostToDevice, st));
+   ops::iota(p.pos, a, M, st);
+   if (p.n > 0) ops::embed(embed, p.tok + p.r0, p.n, p.x, p.pm, st);
++  if (!img_span.empty() && p.n > 0)
++    img_runs(a + p.r0, p.n, [&](size_t k, int i0, int i1) {
++      const size_t row = img_row0[k] + (size_t)(a + p.r0 + i0 - img_span[k].first);
++      ops::inject_rows(reinterpret_cast<const bf16*>(img_rows) + row * kDim, i1 - i0, p.x + (size_t)i0 * kHcDim, st);
++    });
+   if (ced && a != p.ced_end) std::fill(p.ced_pos, p.ced_pos + kReplay, -1);  // a new run of positions
+   p.ced_end = ced ? a + M : -1;
+ #ifdef DSGB10_NVTX
+@@ -660,7 +681,7 @@
+     const bf16* last = reinterpret_cast<const bf16*>(p.gath) + (size_t)((Mh - 1) / p.rq) * kDim;
+     n = n_steps;
+     if (n >= (uint64_t)ops::kInSlots) wait_done(n - ops::kInSlots);
+-    const int32_t t = hist[a + M - 1];
++    const int32_t t = hist[a + M - 1] < 0 ? 129264 : hist[a + M - 1];  // vision: -1 marks an image position
+     next_in(n, 1, a + M - 1, &t, *sp);
+     ops::step_in(in_h, in_ctr, fb, in_d, st);
+     if (head_coded) dsk::gemv_bf16x_norm(last, norm_w, kNormEps, 1, head, kVocabPart, kDim, logits, nullptr, chead, st);
+diff --git a/ds41f-4xgx10-switchless/engine/model/prefill.h b/ds41f-4xgx10-switchless/engine/model/prefill.h
+--- a/ds41f-4xgx10-switchless/engine/model/prefill.h
++++ b/ds41f-4xgx10-switchless/engine/model/prefill.h
+@@ -45,6 +45,7 @@
+ struct Prefill {
+   int cap = 0, Q = 0;        // Q = q_rows(cap)
+   int rq = 0, r0 = 0, n = 0;  // the chunk in progress: rows per rank, this rank's first row and count
++  int a_cur = 0;              // vision: the chunk's (or the replay's) first position
+   // this rank's rows (row 0 = the chunk's row r0)
+   bf16 *x, *mid, *y, *yraw, *sub;
+   // the mixes: the attention's own (post, comb) and the FFN's pre (from x), the FFN's own and the next
+diff --git a/ds41f-4xgx10-switchless/engine/server/cmd.cpp b/ds41f-4xgx10-switchless/engine/server/cmd.cpp
+--- a/ds41f-4xgx10-switchless/engine/server/cmd.cpp
++++ b/ds41f-4xgx10-switchless/engine/server/cmd.cpp
+@@ -762,6 +762,18 @@
+       std::vector<int32_t> t(c.n);
+       bcast_payload(ring, t.data(), t.size() * 4, rank);
+       m.set_tokens(c.pos0, c.n, t.data());
++    } else if (c.op == kCmdImages) {
++      if (c.n <= 0) {
++        m.set_images(0, nullptr, nullptr, nullptr);
++      } else {
++        std::vector<int32_t> lh(2 * c.n);
++        bcast_payload(ring, lh.data(), lh.size() * 4, rank);
++        size_t rows = 0;
++        for (int i = 0; i < c.n; ++i) rows += lh[c.n + i] - lh[i];
++        std::vector<uint16_t> img(rows * 5120);
++        bcast_payload(ring, img.data(), img.size() * 2, rank);
++        m.set_images(c.n, lh.data(), lh.data() + c.n, img.data());
++      }
+     } else if (c.op == kCmdPrefill) {
+       wd.started = now_s();
+       const uint64_t n = run_prefill(m, c);
+diff --git a/ds41f-4xgx10-switchless/engine/server/cmd.h b/ds41f-4xgx10-switchless/engine/server/cmd.h
+--- a/ds41f-4xgx10-switchless/engine/server/cmd.h
++++ b/ds41f-4xgx10-switchless/engine/server/cmd.h
+@@ -65,6 +65,9 @@
+   // BatchEntry's and then their tokens follow as payloads. (20: clear of the batch commands added beside it.)
+   kCmdBatchTf = 20,
+   kCmdSpecBatch = 8,  // spec_batch_loop (B3): the same with drafts; the Cmd's spec_* fields as kCmdDecode's
++  // vision (docs/vision.md): n image spans for the prefill chunks that follow (Model::set_images; n = 0 clears
++  // them); their bounds (int32 lo[n], hi[n]) and rows (bf16 [rows][5120]) follow as payloads
++  kCmdImages = 21,
+ };
+ enum : uint32_t { kPfSample = 1, kPfCed = 2 };  // kPfCed: a CED chunk (Model::prefill's ced, docs/ced.md)
+ struct Cmd {
+diff --git a/ds41f-4xgx10-switchless/engine/server/serve.cpp b/ds41f-4xgx10-switchless/engine/server/serve.cpp
+--- a/ds41f-4xgx10-switchless/engine/server/serve.cpp
++++ b/ds41f-4xgx10-switchless/engine/server/serve.cpp
+@@ -81,7 +81,7 @@
+ namespace srv {
+ namespace {
+ 
+-constexpr uint32_t kMaxFrame = 64u << 20;
++constexpr uint32_t kMaxFrame = 192u << 20;  // a SUBMIT with images carries ~10.5 MB per 1024-token image
+ constexpr int kIoCpu = 12;
+ 
+ std::atomic<bool> g_stop{false};
+@@ -136,6 +136,9 @@
+   fe::SubmitHeader h{};
+   std::vector<int32_t> stop, prompt;
+   double t_recv = 0;
++  // vision (fe::kFlagImages): the image spans and their rows, bf16 [sum rows][kImageDim]; empty for text
++  std::vector<fe::ImageSpan> spans;
++  std::vector<uint16_t> img;
+ };
+ 
+ struct Event {
+@@ -261,12 +264,35 @@
+       Request& r = e.rq;
+       if (p.size() < sizeof r.h) return false;
+       std::memcpy(&r.h, p.data(), sizeof r.h);
+-      if (p.size() != sizeof r.h + 4 * (size_t(r.h.n_stop_ids) + r.h.n_prompt)) return false;
++      if (r.h.n_prompt > 1048576 || r.h.n_stop_ids > kMaxStop ||
++          (r.h.flags & ~(fe::kFlagSeed | fe::kFlagKeep | fe::kFlagLogprobs | fe::kFlagImages))) return false;
++      const size_t base = sizeof r.h + 4 * (size_t(r.h.n_stop_ids) + r.h.n_prompt);
++      if (!(r.h.flags & fe::kFlagImages) ? p.size() != base : p.size() < base + 4) return false;
+       r.stop.resize(r.h.n_stop_ids);
+       r.prompt.resize(r.h.n_prompt);
+       const char* a = p.data() + sizeof r.h;
+       if (!r.stop.empty()) std::memcpy(r.stop.data(), a, r.stop.size() * 4);
+       if (!r.prompt.empty()) std::memcpy(r.prompt.data(), a + r.stop.size() * 4, r.prompt.size() * 4);
++      if (r.h.flags & fe::kFlagImages) {  // vision: n, the spans, their rows
++        uint32_t ni = 0;
++        std::memcpy(&ni, p.data() + base, 4);
++        if (ni < 1 || ni > 16 || p.size() < base + 4 + ni * sizeof(fe::ImageSpan)) return false;
++        r.spans.resize(ni);
++        std::memcpy(r.spans.data(), p.data() + base + 4, ni * sizeof(fe::ImageSpan));
++        size_t rows = 0;
++        size_t end = 0;
++        for (const auto& s : r.spans) {
++          if (s.rows < 3 || s.rows > 1024 || s.start < end || (size_t)s.start + s.rows > r.h.n_prompt) return false;
++          rows += s.rows;
++          end = (size_t)s.start + s.rows;
++        }
++        if (r.h.base_session_id || r.h.prefix_hint || (r.h.flags & fe::kFlagKeep)) return false;
++        const size_t off = base + 4 + ni * sizeof(fe::ImageSpan);
++        if (p.size() != off + rows * fe::kImageDim * 2) return false;
++        r.img.resize(rows * fe::kImageDim);
++        std::memcpy(r.img.data(), p.data() + off, r.img.size() * 2);
++        for (uint16_t x : r.img) if ((x & 0x7f80u) == 0x7f80u) return false;  // finite BF16 only
++      }
+       r.conn = c;
+       r.t_recv = now_s();
+       push(std::move(e));
+@@ -873,6 +899,13 @@
+     else if (!(h.temperature >= 0.f) || !(h.top_p > 0.f && h.top_p <= 1.f)) err = "bad sampling parameters";
+     for (const int32_t t : f.rq.prompt)
+       if (err.empty() && (t < 0 || t >= model::kVocab)) err = "token id out of range";
++    for (size_t i = 0, end = 0; err.empty() && i < f.rq.spans.size(); ++i) {  // vision: spans in order, all image ids
++      const fe::ImageSpan& s = f.rq.spans[i];
++      if (s.rows < 3 || s.rows > 1024 || s.start < end || (size_t)s.start + s.rows >= (size_t)n) err = "bad image span";
++      for (uint32_t k = 0; err.empty() && k < s.rows; ++k)
++        if ((uint32_t)f.rq.prompt[s.start + k] != fe::kImageTokenId) err = "image span over a text token";
++      end = (size_t)s.start + s.rows;
++    }
+     if (!err.empty() || Io::cancelled(f.rq)) {
+       done(f.rq, err.empty() ? fe::kCancelled : fe::kError, 0, 0, f.t_start, 0, err);
+       return Io::forget(f.rq);
+@@ -1023,8 +1056,11 @@
+       issue(c);
+       m_.mark(1);
+       std::vector<int32_t> t(prompt.begin() + c.pos0, prompt.end());
++      for (const fe::ImageSpan& sp : f.rq.spans)  // vision: image positions are dead to Engram (-1)
++        for (int k = std::max<int>(sp.start, c.pos0); k < (int)(sp.start + sp.rows); ++k) t[k - c.pos0] = -1;
+       bcast_payload(ring_, t.data(), t.size() * 4, 0);
+       m_.set_tokens(c.pos0, c.n, t.data());
++      if (!f.rq.spans.empty()) images(f.rq);
+       tu.ops_ms = 1e3 * (now_s() - (resume ? t0 : f.t_start));
+     }
+     // ---- prefill [q, n): chunks of prefill_rows; a short remainder as one step
+@@ -1061,7 +1097,9 @@
+         c.snaps[c.n_snaps++] = pe;
+       }
+       wd_.started = now_s();
+-      if (R <= o_.small_rows && !chunk_ced) {
++      bool img = false;  // image spans require chunk injection, including short tails
++      for (const fe::ImageSpan& sp : f.rq.spans) img = img || (int)(sp.start + sp.rows) > pos;
++      if (R <= o_.small_rows && !chunk_ced && !img) {
+         c.op = kCmdRows;
+         std::copy(prompt.begin() + pos, prompt.begin() + pos + R, c.tokens);
+         issue(c);
+@@ -1095,6 +1133,13 @@
+       S->hist.insert(S->hist.end(), prompt.begin() + pos, prompt.begin() + pos + R);
+       pos += R;
+     }
++    if (!f.rq.spans.empty()) {  // vision: the spans are for this prompt's chunks only
++      Cmd c{};
++      c.op = kCmdImages;
++      c.n = 0;
++      issue(c);
++      m_.set_images(0, nullptr, nullptr, nullptr);
++    }
+     const double t_first = now_s();
+     if (resume) f.resume_s += t_first - t0;
+     else f.t_first = t_first;
+@@ -1132,6 +1177,24 @@
+     if (stop_id(f, tok0)) return ended(f, fe::kStop);
+     if ((int)f.out.size() >= (int)h.max_new_tokens) return ended(f, fe::kLength);
+     return true;
++  }
++
++  // Vision: rq's spans and rows to every rank (kCmdImages), for the prefill chunks that follow.
++  void images(const Request& rq) {
++    const double t0 = now_s();
++    Cmd c{};
++    c.op = kCmdImages;
++    c.n = (int)rq.spans.size();
++    issue(c);
++    std::vector<int32_t> lh(2 * rq.spans.size());
++    for (size_t i = 0; i < rq.spans.size(); ++i)
++      lh[i] = (int32_t)rq.spans[i].start, lh[rq.spans.size() + i] = (int32_t)(rq.spans[i].start + rq.spans[i].rows);
++    bcast_payload(ring_, lh.data(), lh.size() * 4, 0);
++    std::vector<uint16_t> rows(rq.img);
++    bcast_payload(ring_, rows.data(), rows.size() * 2, 0);
++    m_.set_images(c.n, lh.data(), lh.data() + c.n, rows.data());
++    std::printf("serve: req %llu images: %d spans, %zu rows, sent to every rank in %.1f ms\n",
++                (unsigned long long)rq.h.req_id, c.n, rows.size() / fe::kImageDim, 1e3 * (now_s() - t0));
+   }
+ 
+   bool ended(Flight& f, uint32_t why) {
+diff --git a/ds41f-4xgx10-switchless/frontend/src/lib.rs b/ds41f-4xgx10-switchless/frontend/src/lib.rs
+--- a/ds41f-4xgx10-switchless/frontend/src/lib.rs
++++ b/ds41f-4xgx10-switchless/frontend/src/lib.rs
+@@ -10,3 +10,4 @@
+ pub mod server;
+ pub mod session;
+ pub mod tokenizer;
++pub mod vision;
+diff --git a/ds41f-4xgx10-switchless/frontend/src/main.rs b/ds41f-4xgx10-switchless/frontend/src/main.rs
+--- a/ds41f-4xgx10-switchless/frontend/src/main.rs
++++ b/ds41f-4xgx10-switchless/frontend/src/main.rs
+@@ -32,6 +32,8 @@
+                                 conversations' text), so that the engine's kept sessions are found again
+       --session-cache-tokens N   retained history token budget, default 16777216 (not active KV)
+       --table-days N            sessions unused for longer are not kept: 7
++      --vision-addr HOST:PORT   accept image_url / image parts: the image encoder (tools/vision) turns
++                                them into embedding rows (docs/vision.md); without it images are refused
+   dsfront admin --socket PATH <command>               one command to a server's admin socket; prints
+                                                       the answer (docs/engine.md, \"Launch and stop\")
+   dsfront mock-engine [options]                       a rank-0 stand-in (docs/protocol.md)
+@@ -122,6 +124,7 @@
+         protocol_error_dir: opt(args, "--protocol-error-dir").map(Into::into)
+             .or_else(|| std::env::var_os("DSFRONT_PROTOCOL_ERROR_DIR").map(Into::into)),
+         hold: std::time::Duration::from_secs(parse_opt(args, "--hold-s", 600u64)),
++        vision_addr: opt(args, "--vision-addr"),
+     };
+     let session_tokens = parse_opt(args, "--session-cache-tokens", 16usize << 20);
+     if session_tokens == 0 {
+diff --git a/ds41f-4xgx10-switchless/frontend/src/protocol.rs b/ds41f-4xgx10-switchless/frontend/src/protocol.rs
+--- a/ds41f-4xgx10-switchless/frontend/src/protocol.rs
++++ b/ds41f-4xgx10-switchless/frontend/src/protocol.rs
+@@ -4,10 +4,10 @@
+ 
+ use tokio::io::{AsyncRead, AsyncReadExt};
+ 
+-pub const VERSION: u32 = 1;
++pub const VERSION: u32 = 2;
+ pub const DEFAULT_SOCKET: &str = "/tmp/dsgb10-engine.sock";
+ /// Larger frames are a protocol error (a 1M-token prompt is 4 MB).
+-pub const MAX_FRAME: usize = 64 << 20;
++pub const MAX_FRAME: usize = 192 << 20;
+ 
+ pub const T_HELLO: u16 = 0x01;
+ pub const T_SUBMIT: u16 = 0x02;
+@@ -20,6 +20,8 @@
+ pub const FLAG_SEED: u32 = 1;
+ pub const FLAG_KEEP: u32 = 2;
+ pub const FLAG_LOGPROBS: u32 = 4;
++/// vision: the image part (vision::payload) follows prompt[]
++pub const FLAG_IMAGES: u32 = 8;
+ 
+ pub const TOK_LOGPROBS: u32 = 1;
+ pub const TOK_TOP: u32 = 2;
+@@ -60,6 +62,8 @@
+     pub prefix_hint: u32,
+     pub stop_ids: Vec<u32>,
+     pub prompt: Vec<u32>,
++    /// vision: the image part after prompt[] (with FLAG_IMAGES); None for text
++    pub images: Option<Vec<u8>>,
+ }
+ 
+ #[derive(Clone, Debug, PartialEq)]
+@@ -159,6 +163,9 @@
+                 w.u32(s.flags).u32(s.n_top_logprobs).u32(s.prefix_hint);
+                 w.u32(s.stop_ids.len() as u32).u32(s.prompt.len() as u32).u32(0);
+                 w.u32s(&s.stop_ids).u32s(&s.prompt);
++                if let Some(img) = &s.images {
++                    w.0.extend_from_slice(img);
++                }
+                 w.finish()
+             }
+             Frame::Cancel { req_id } => {
+@@ -229,8 +236,39 @@
+                 let n_stop = r.u32()? as usize;
+                 let n_prompt = r.u32()? as usize;
+                 r.u32()?;
++                if n_prompt > 1048576 || n_stop > 32 || flags & !(FLAG_SEED | FLAG_KEEP | FLAG_LOGPROBS | FLAG_IMAGES) != 0 {
++                    return Err("invalid SUBMIT limits/flags".into());
++                }
+                 let stop_ids = r.u32s(n_stop)?;
+                 let prompt = r.u32s(n_prompt)?;
++                let images = if flags & FLAG_IMAGES != 0 {
++                    if base_session_id != 0 || prefix_hint != 0 || flags & FLAG_KEEP != 0 {
++                        return Err("image histories must be uncached".into());
++                    }
++                    let start = r.i;
++                    let n = r.u32()? as usize;
++                    if !(1..=16).contains(&n) { return Err("invalid image count".into()); }
++                    let mut end = 0usize;
++                    let mut rows_total = 0usize;
++                    for _ in 0..n {
++                        let pos = r.u32()? as usize;
++                        let rows = r.u32()? as usize;
++                        r.u64()?;
++                        if !(3..=1024).contains(&rows) || pos < end || pos + rows > prompt.len() {
++                            return Err("invalid image span".into());
++                        }
++                        if !prompt[pos..pos + rows].iter().all(|&id| id == crate::vision::IMAGE_TOKEN_ID) {
++                            return Err("image span placeholder mismatch".into());
++                        }
++                        end = pos + rows;
++                        rows_total += rows;
++                    }
++                    let data = r.bytes(rows_total * crate::vision::IMAGE_DIM * 2)?;
++                    if data.chunks_exact(2).any(|b| u16::from_le_bytes([b[0],b[1]]) & 0x7f80 == 0x7f80) {
++                        return Err("nonfinite image embedding".into());
++                    }
++                    Some(p[start..r.i].to_vec())
++                } else { None };
+                 Frame::Submit(Submit {
+                     req_id,
+                     session_id,
+@@ -245,6 +283,7 @@
+                     prefix_hint,
+                     stop_ids,
+                     prompt,
++                    images,
+                 })
+             }
+             T_CANCEL => Frame::Cancel { req_id: r.u64()? },
+@@ -347,6 +386,41 @@
+ mod tests {
+     use super::*;
+ 
++    fn image_submit() -> Submit {
++        let e = crate::vision::Encoded { rows: vec![3], hashes: vec![1], data: vec![0; 3 * 5120 * 2], ms: 0.0 };
++        Submit { req_id: 1, session_id: 1 << 63, base_session_id: 0, seed: 0, temperature: 0.0,
++            top_p: 1.0, top_k: 0, max_new_tokens: 2, flags: FLAG_IMAGES, n_top_logprobs: 0,
++            prefix_hint: 0, stop_ids: vec![], prompt: vec![5,129264,129264,129264,6],
++            images: Some(crate::vision::payload(&[1], &e)) }
++    }
++    fn dec(s: Submit) -> Result<Frame, String> {
++        let b = Frame::Submit(s).encode(); Frame::decode(T_SUBMIT, &b[8..], |_| 0)
++    }
++    #[test]
++    fn images_roundtrip() { let s = image_submit(); assert_eq!(dec(s.clone()).unwrap(), Frame::Submit(s)); }
++    #[test]
++    fn images_cannot_use_text_cache() {
++        let mut s = image_submit(); s.flags |= FLAG_KEEP; assert!(dec(s).is_err());
++        let mut s = image_submit(); s.prefix_hint = 1; assert!(dec(s).is_err());
++        let mut s = image_submit(); s.base_session_id = 7; assert!(dec(s).is_err());
++    }
++    #[test]
++    fn images_validate_exact_rows_and_finite() {
++        let mut s = image_submit(); s.images.as_mut().unwrap().pop(); assert!(dec(s).is_err());
++        let mut s = image_submit(); s.images.as_mut().unwrap().extend_from_slice(&[0]); assert!(dec(s).is_err());
++        let mut s = image_submit(); s.images.as_mut().unwrap()[20..22].copy_from_slice(&0x7fc0u16.to_le_bytes()); assert!(dec(s).is_err());
++        let mut s = image_submit(); s.prompt[2] = 1; assert!(dec(s).is_err());
++    }
++    #[test]
++    fn images_validate_count_and_span_bounds() {
++        for count in [0u32,17,u32::MAX] {
++            let mut s = image_submit(); s.images.as_mut().unwrap()[..4].copy_from_slice(&count.to_le_bytes()); assert!(dec(s).is_err());
++        }
++        for rows in [0u32,1,1025,u32::MAX] {
++            let mut s = image_submit(); s.images.as_mut().unwrap()[8..12].copy_from_slice(&rows.to_le_bytes()); assert!(dec(s).is_err());
++        }
++        let mut s = image_submit(); s.images.as_mut().unwrap()[4..8].copy_from_slice(&u32::MAX.to_le_bytes()); assert!(dec(s).is_err());
++    }
+     #[test]
+     fn roundtrip_and_layout() {
+         let s = Submit {
+@@ -363,6 +437,7 @@
+             prefix_hint: 5,
+             stop_ids: vec![1],
+             prompt: vec![0, 10, 20],
++            images: None,
+         };
+         let b = Frame::Submit(s.clone()).encode();
+         assert_eq!(b.len(), 8 + 72 + 4 + 12); // header, SubmitHeader, stop id, prompt
+diff --git a/ds41f-4xgx10-switchless/frontend/src/server.rs b/ds41f-4xgx10-switchless/frontend/src/server.rs
+--- a/ds41f-4xgx10-switchless/frontend/src/server.rs
++++ b/ds41f-4xgx10-switchless/frontend/src/server.rs
+@@ -50,6 +50,8 @@
+     /// How long a request waits while the engine is down (the ring lent, or a restart) before it is
+     /// answered 503 with Retry-After.
+     pub hold: Duration,
++    /// vision: the image encoder's address (host:port); None: image input is refused as before
++    pub vision_addr: Option<String>,
+ }
+ 
+ pub struct App {
+@@ -60,6 +62,7 @@
+     sessions: Mutex<SessionTable>,
+     think_end_id: Option<u32>,
+     counter: AtomicU64,
++    image_slots: Arc<tokio::sync::Semaphore>,
+ }
+ 
+ impl App {
+@@ -73,7 +76,7 @@
+         eprintln!("session table: retained-token budget {session_tokens}, sessions 256");
+         let think_end_id = tok.token_id("</think>");
+         let gate = Gate::new(cfg.hold);
+-        Arc::new(App { cfg, tok, engine, gate, sessions: Mutex::new(SessionTable::new(256, session_tokens)), think_end_id, counter: AtomicU64::new(0) })
++        Arc::new(App { cfg, tok, engine, gate, sessions: Mutex::new(SessionTable::new(256, session_tokens)), think_end_id, counter: AtomicU64::new(0), image_slots: Arc::new(tokio::sync::Semaphore::new(16)) })
+     }
+ 
+     /// The session table an earlier run saved (session.rs `load`), for the next turns of its
+@@ -216,6 +219,8 @@
+     /// besides EOS, unless ignore_eos
+     pub stop_ids: Vec<u32>,
+     pub ignore_eos: bool,
++    /// vision: the image records in prompt order (encoding.py's), one per placeholder; empty for text
++    pub images: Vec<Value>,
+ }
+ 
+ fn num_f64(v: &Value) -> Option<f64> {
+@@ -300,7 +305,7 @@
+ }
+ 
+ /// Messages for the encoder: OpenAI fields only, developer → system, null content → "".
+-fn convert_messages(msgs: &[Value]) -> Result<Vec<Value>, String> {
++fn convert_messages(msgs: &[Value], vision: bool) -> Result<Vec<Value>, String> {
+     let mut out = Vec::with_capacity(msgs.len());
+     for (i, m) in msgs.iter().enumerate() {
+         let o = m.as_object().ok_or(format!("messages[{i}] is not an object"))?;
+@@ -317,6 +322,10 @@
+             Some(Value::Array(parts)) => {
+                 for p in parts {
+                     match p.get("type").and_then(Value::as_str) {
++                        Some("image_url" | "image") if vision => {}
++                        Some("input_image" | "video_url" | "input_audio" | "audio_url") if vision => {
++                            return Err("audio and video input are not supported; images go in image_url parts".into())
++                        }
+                         Some("image_url" | "image" | "input_image" | "video_url" | "input_audio" | "audio_url") => {
+                             return Err("image, audio and video input are not supported".into())
+                         }
+@@ -356,7 +365,7 @@
+             return Err("only n = 1 is supported".into());
+         }
+     }
+-    let mut messages = convert_messages(msgs)?;
++    let mut messages = convert_messages(msgs, cfg.vision_addr.is_some())?;
+ 
+     // tools, hosted on a leading system message
+     let tool_choice_none = r.get("tool_choice").and_then(Value::as_str) == Some("none");
+@@ -396,7 +405,10 @@
+     let mut o = EncodeOptions::new(mode);
+     o.reasoning_effort = Some(&budget);
+     o.encoding = cfg.encoding;
+-    let (prompt, _) = encode_messages(&messages, &o).map_err(|e| format!("cannot encode messages: {e}"))?;
++    let (prompt, images) = encode_messages(&messages, &o).map_err(|e| format!("cannot encode messages: {e}"))?;
++    if images.len() > crate::vision::MAX_IMAGES {
++        return Err(format!("at most {} images per request", crate::vision::MAX_IMAGES));
++    }
+ 
+     // sampling and limits
+     let max_tokens = match r.get("max_completion_tokens").filter(|v| !v.is_null()).or(r.get("max_tokens").filter(|v| !v.is_null())) {
+@@ -445,6 +457,7 @@
+         stops,
+         stop_ids,
+         ignore_eos,
++        images,
+     })
+ }
+ 
+@@ -522,6 +535,7 @@
+     app: Arc<App>,
+     /// counts the request in flight at the gate until it ends (or its client goes away)
+     _pass: Pass,
++    _image_pass: Option<tokio::sync::OwnedSemaphorePermit>,
+     req_id: u64,
+     session_id: u64,
+     prompt_text: String,
+@@ -705,6 +719,9 @@
+     let Some(info) = app.engine.info() else {
+         return Err(unavailable("engine not connected".into()));
+     };
++    if !p.images.is_empty() {
++        return start_images(app, p, pass, info).await;
++    }
+     let (plan, released) = {
+         let app2 = app.clone();
+         let text = p.prompt.clone();
+@@ -746,6 +763,7 @@
+         prefix_hint: plan.reused as u32,
+         stop_ids: stop_ids.clone(),
+         prompt: plan.ids.clone(),
++        images: None,
+     };
+     let (req_id, rx) = match app.engine.submit(submit) {
+         Ok(x) => x,
+@@ -759,10 +777,88 @@
+     Ok(Gen {
+         app: app.clone(),
+         _pass: pass,
++        _image_pass: None,
+         req_id,
+         session_id: plan.session_id,
+         prompt_text: p.prompt.clone(),
+         prompt_ids: plan.ids,
++        rx,
++        stop_ids,
++        stopper: StopMatcher::new(p.stops.clone()),
++        parser: StreamParser::with_tools(p.mode, p.tools),
++        dec: StreamDecoder::default(),
++        ids: Vec::new(),
++        kept: 0,
++        gen_bytes: Vec::new(),
++        gen_ends: Vec::new(),
++        stopped: None,
++        done: false,
++        t0: Instant::now(),
++        first_token: None,
++    })
++}
++
++/// A request with images (docs/vision.md): its images through the encoder, the placeholders expanded into
++/// their spans, and a session of its own that the engine frees at the end (no KEEP) and the text table
++/// never sees, so text requests' prefix reuse is untouched.
++async fn start_images(app: &Arc<App>, p: &Prepared, pass: Pass, info: crate::protocol::HelloEngine) -> Result<Gen, ApiError> {
++    let bad = |msg: String| ApiError(StatusCode::BAD_REQUEST, "invalid_request_error".into(), msg);
++    let Some(addr) = app.cfg.vision_addr.clone() else {
++        return Err(bad("image, audio and video input are not supported".into()));
++    };
++    let image_pass = app.image_slots.clone().try_acquire_owned().map_err(|_| ApiError(StatusCode::SERVICE_UNAVAILABLE, "server_error".into(), "image request queue full".into()))?;
++    let enc = crate::vision::encode(&addr, &p.images, Duration::from_secs(90)).await.map_err(|e| {
++        if e.starts_with("cannot read") { bad(e) } else { ApiError(StatusCode::SERVICE_UNAVAILABLE, "server_error".into(), e) }
++    })?;
++    let ids = {
++        let (app2, text) = (app.clone(), p.prompt.clone());
++        tokio::task::spawn_blocking(move || app2.tok.encode_parallel(&text, app2.cfg.tokenize_threads))
++            .await
++            .map_err(|e| ApiError(StatusCode::INTERNAL_SERVER_ERROR, "server_error".into(), e.to_string()))?
++    };
++    let (ids, starts) = crate::vision::expand(&ids, &enc.rows).map_err(bad)?;
++    let ctx = info.max_context as usize;
++    if ids.len() >= ctx {
++        return Err(bad(format!("the prompt is {} tokens with its images; the context window is {ctx}", ids.len())));
++    }
++    let max_new = (p.max_tokens as usize).min(ctx - ids.len()) as u32;
++    let mut stop_ids = p.stop_ids.clone();
++    if !p.ignore_eos {
++        stop_ids.push(info.eos_id);
++    }
++    let session_id = (1u64 << 63) | u64::from_str_radix(&app.random_hex(15), 16).unwrap_or(1);
++    let submit = Submit {
++        req_id: 0,
++        session_id,
++        base_session_id: 0,
++        seed: p.seed.unwrap_or(0),
++        temperature: p.temperature,
++        top_p: p.top_p,
++        top_k: p.top_k,
++        max_new_tokens: max_new,
++        flags: crate::protocol::FLAG_IMAGES | if p.seed.is_some() { FLAG_SEED } else { 0 },
++        n_top_logprobs: 0,
++        prefix_hint: 0,
++        stop_ids: stop_ids.clone(),
++        prompt: ids.clone(),
++        images: Some(crate::vision::payload(&starts, &enc)),
++    };
++    let (req_id, rx) = app.engine.submit(submit).map_err(|e| ApiError(StatusCode::SERVICE_UNAVAILABLE, "server_error".into(), e))?;
++    eprintln!(
++        "req {req_id} images: {} ({} rows), encoder {:.0} ms; prompt {} ids; session {session_id} (not kept)",
++        enc.rows.len(),
++        enc.rows.iter().sum::<u32>(),
++        enc.ms,
++        ids.len()
++    );
++    Ok(Gen {
++        app: app.clone(),
++        _pass: pass,
++        _image_pass: Some(image_pass),
++        req_id,
++        session_id,
++        prompt_text: p.prompt.clone(),
++        prompt_ids: ids,
+         rx,
+         stop_ids,
+         stopper: StopMatcher::new(p.stops.clone()),
+@@ -963,6 +1059,7 @@
+             dump_dir: None,
+             protocol_error_dir: None,
+             hold: Duration::from_secs(600),
++            vision_addr: None,
+         }
+     }
+ 
+diff --git a/ds41f-4xgx10-switchless/frontend/src/vision.rs b/ds41f-4xgx10-switchless/frontend/src/vision.rs
+new file mode 100644
+--- /dev/null
++++ b/ds41f-4xgx10-switchless/frontend/src/vision.rs
+@@ -0,0 +1,141 @@
++//! Vision (docs/vision.md): the image encoder's client. The encoder (tools/vision/vision_encoder.py, the
++//! checkpoint's own ViT + aligner) turns each image record of a request into its span's rows: bf16
++//! [rows][5120] for `[IMAGE_START] + ([IMAGE] * w + [IMAGE_NEW_LINE]) * h + [IMAGE_END]`. The prompt's
++//! placeholder ids are expanded into that many image ids, and the rows go to the engine with the SUBMIT
++//! (protocol FLAG_IMAGES). Text requests never come here.
++//!
++//! Wire format (TCP, loopback): request u32 len + JSON {"images": [record, ...]}; reply u32 len + JSON
++//! {"ok", "error", "images": [{"rows", "hash", "grid", "ms", "bytes"}]}, then u64 len + the rows.
++
++use serde_json::{json, Value};
++use std::time::{Duration, Instant};
++use tokio::io::{AsyncReadExt, AsyncWriteExt};
++use tokio::net::TcpStream;
++
++/// `<｜deepseek_image｜>`: the placeholder the chat encoding writes, and the id of every span position.
++pub const IMAGE_TOKEN_ID: u32 = 129264;
++pub const IMAGE_DIM: usize = 5120;
++pub const MAX_IMAGES: usize = 16;
++
++#[derive(Debug, Clone)]
++pub struct Encoded {
++    /// rows per image, in prompt order
++    pub rows: Vec<u32>,
++    pub hashes: Vec<u64>,
++    /// every image's rows, bf16 little-endian, in order
++    pub data: Vec<u8>,
++    pub ms: f64,
++}
++
++pub async fn encode(addr: &str, records: &[Value], timeout: Duration) -> Result<Encoded, String> {
++    if records.is_empty() || records.len() > MAX_IMAGES {
++        return Err(format!("at most {MAX_IMAGES} images per request"));
++    }
++    let t0 = Instant::now();
++    let fut = async {
++        let mut s = TcpStream::connect(addr).await.map_err(|e| format!("the image encoder is not reachable: {e}"))?;
++        let body = json!({ "images": records }).to_string().into_bytes();
++        if body.len() > (64 << 20) { return Err("image request too large".into()); }
++        s.write_all(&(body.len() as u32).to_le_bytes()).await.map_err(|e| e.to_string())?;
++        s.write_all(&body).await.map_err(|e| e.to_string())?;
++        let mut n4 = [0u8; 4];
++        s.read_exact(&mut n4).await.map_err(|e| format!("image encoder: {e}"))?;
++        let header_len = u32::from_le_bytes(n4) as usize;
++        if header_len > (64 << 10) { return Err("image encoder: header too large".into()); }
++        let mut h = vec![0u8; header_len];
++        s.read_exact(&mut h).await.map_err(|e| format!("image encoder: {e}"))?;
++        let mut n8 = [0u8; 8];
++        s.read_exact(&mut n8).await.map_err(|e| format!("image encoder: {e}"))?;
++        let n = u64::from_le_bytes(n8) as usize;
++        if n > (MAX_IMAGES * 1024 * IMAGE_DIM * 2) {
++            return Err("image encoder: reply too large".to_string());
++        }
++        let mut data = vec![0u8; n];
++        s.read_exact(&mut data).await.map_err(|e| format!("image encoder: {e}"))?;
++        let h: Value = serde_json::from_slice(&h).map_err(|e| format!("image encoder: {e}"))?;
++        Ok::<_, String>((h, data))
++    };
++    let (h, data) = tokio::time::timeout(timeout, fut).await.map_err(|_| "the image encoder timed out".to_string())??;
++    if h.get("ok").and_then(Value::as_bool) != Some(true) {
++        let e = h.get("error").and_then(Value::as_str).unwrap_or("unknown error");
++        return Err(format!("cannot read the image: {e}"));
++    }
++    let imgs = h.get("images").and_then(Value::as_array).ok_or("image encoder: no images in its reply")?;
++    if imgs.len() != records.len() {
++        return Err("image encoder: wrong number of images".into());
++    }
++    let mut rows = Vec::new();
++    let mut hashes = Vec::new();
++    for i in imgs {
++        let r = i.get("rows").and_then(Value::as_u64).ok_or("image encoder: rows")?;
++        if !(3..=1024).contains(&r) {
++            return Err("image encoder: bad span".into());
++        }
++        rows.push(r as u32);
++        hashes.push(i.get("hash").and_then(Value::as_u64).unwrap_or(0));
++    }
++    let total: usize = rows.iter().map(|&r| r as usize).sum();
++    if data.len() != total * IMAGE_DIM * 2 {
++        return Err("image encoder: the rows do not match the spans".into());
++    }
++    Ok(Encoded { rows, hashes, data, ms: t0.elapsed().as_secs_f64() * 1e3 })
++}
++
++/// The prompt's ids with each placeholder expanded into its image's span, and the spans' starts.
++pub fn expand(ids: &[u32], rows: &[u32]) -> Result<(Vec<u32>, Vec<u32>), String> {
++    if rows.iter().any(|&r| !(3..=1024).contains(&r)) || rows.len() > MAX_IMAGES {
++        return Err("invalid image span size/count".into());
++    }
++    let n = ids.iter().filter(|&&t| t == IMAGE_TOKEN_ID).count();
++    if n != rows.len() {
++        return Err(format!("the prompt has {n} image placeholders for {} images", rows.len()));
++    }
++    let extra: usize = rows.iter().map(|&r| r as usize - 1).sum();
++    let mut out = Vec::with_capacity(ids.len() + extra);
++    let mut starts = Vec::with_capacity(rows.len());
++    let mut k = 0;
++    for &t in ids {
++        if t == IMAGE_TOKEN_ID {
++            starts.push(out.len() as u32);
++            out.extend(std::iter::repeat(IMAGE_TOKEN_ID).take(rows[k] as usize));
++            k += 1;
++        } else {
++            out.push(t);
++        }
++    }
++    Ok((out, starts))
++}
++
++/// The SUBMIT's image part (after prompt[]): u32 n, {u32 start, u32 rows, u64 hash} per image, the rows.
++pub fn payload(starts: &[u32], e: &Encoded) -> Vec<u8> {
++    let mut v = Vec::with_capacity(4 + 16 * starts.len() + e.data.len());
++    v.extend_from_slice(&(starts.len() as u32).to_le_bytes());
++    for i in 0..starts.len() {
++        v.extend_from_slice(&starts[i].to_le_bytes());
++        v.extend_from_slice(&e.rows[i].to_le_bytes());
++        v.extend_from_slice(&e.hashes[i].to_le_bytes());
++    }
++    v.extend_from_slice(&e.data);
++    v
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn bounded_spans() {
++        for rows in [0, 1, 2, 1025, u32::MAX] { assert!(expand(&[IMAGE_TOKEN_ID], &[rows]).is_err()); }
++        assert!(expand(&vec![IMAGE_TOKEN_ID;17], &vec![3;17]).is_err());
++        let (ids, starts) = expand(&[1, IMAGE_TOKEN_ID, 2], &[1024]).unwrap();
++        assert_eq!(ids.len(),1026); assert_eq!(starts,vec![1]);
++    }
++    #[test]
++    fn expands_placeholders() {
++        let (ids, st) = expand(&[0, 5, IMAGE_TOKEN_ID, 6, IMAGE_TOKEN_ID], &[3, 4]).unwrap();
++        assert_eq!(ids.len(), 3 + 3 + 4);
++        assert_eq!(st, vec![2, 6]);
++        assert!(ids[2..5].iter().all(|&t| t == IMAGE_TOKEN_ID) && ids[5] == 6);
++        assert!(expand(&[IMAGE_TOKEN_ID], &[3, 3]).is_err());
++    }
++}
+diff --git a/ds41f-4xgx10-switchless/tools/vision/cases.json b/ds41f-4xgx10-switchless/tools/vision/cases.json
+new file mode 100644
+--- /dev/null
++++ b/ds41f-4xgx10-switchless/tools/vision/cases.json
+@@ -0,0 +1,81 @@
++[
++ [
++  "01_ocr_sign.png",
++  "What gate number and what city are shown on this sign? Answer as 'gate, city'.",
++  [
++   "47B",
++   "Lisbon"
++  ]
++ ],
++ [
++  "02_ocr_receipt.png",
++  "What is the TOTAL on this receipt, and what is the name of the shop? Answer briefly.",
++  [
++   "10.50",
++   "CORNER CAFE"
++  ]
++ ],
++ [
++  "03_count_red.png",
++  "How many red circles are in this image? Answer with just the number.",
++  [
++   "7"
++  ]
++ ],
++ [
++  "04_count_shapes.png",
++  "How many blue squares and how many green triangles are there? Answer as 'squares: N, triangles: M'.",
++  [
++   "4",
++   "5"
++  ]
++ ],
++ [
++  "05_bar_chart.png",
++  "In this bar chart, which day has the most orders and roughly how many? Answer as 'day, number'.",
++  [
++   "Thu",
++   "45"
++  ]
++ ],
++ [
++  "06_table.png",
++  "According to this table, which city has the largest population? Answer with the city name.",
++  [
++   "Osaka"
++  ]
++ ],
++ [
++  "07_code.png",
++  "This is a screenshot of Python code. What does it print? Answer with just the number.",
++  [
++   "18"
++  ]
++ ],
++ [
++  "08_flag.png",
++  "Name the three colours of the vertical stripes from left to right.",
++  [
++   "green",
++   "white",
++   "red"
++  ]
++ ],
++ [
++  "09_math.png",
++  "Solve the arithmetic problem written in the image. Answer with just the number.",
++  [
++   "395"
++  ]
++ ],
++ [
++  "10_position.png",
++  "There is a yellow circle and a purple square. In which corner of the image is the yellow circle (top-left, top-right, bottom-left, bottom-right)?",
++  [
++   [
++    "top-right",
++    "top right"
++   ]
++  ]
++ ]
++]
+\ No newline at end of file
+diff --git a/ds41f-4xgx10-switchless/tools/vision/conc_img.py b/ds41f-4xgx10-switchless/tools/vision/conc_img.py
+new file mode 100644
+--- /dev/null
++++ b/ds41f-4xgx10-switchless/tools/vision/conc_img.py
+@@ -0,0 +1,63 @@
++#!/usr/bin/env python3
++"""conc_img.py URL OUT.json [with_image 0|1] : 8 distinct text users (512 tok, temp 0, streamed); with_image=1 fires one
++image request 4 s in. Reports each text user's tok/s overall and in windows outside / inside the image's prefill."""
++import base64, json, os, sys, threading, time, urllib.request
++URL, OUT = sys.argv[1], sys.argv[2]; MODE = sys.argv[3] if len(sys.argv) > 3 else "0"  # 0 none, 1 image, 2 text control
++WITH = MODE in ("1", "2")
++KEY = open(os.environ["KEYFILE"]).read().strip()
++P = ["Write a Python LRU cache class with get/put, type hints, docstrings and unit tests.",
++ "Write a Rust function that parses a CSV line with quoted fields, plus tests.",
++ "Implement Dijkstra's algorithm in TypeScript with a binary heap, with comments.",
++ "Write a Go HTTP server with graceful shutdown, a /health route and middleware for request logging.",
++ "Implement a thread-safe bounded blocking queue in Java with put/take and timeouts.",
++ "Write a C function that reverses a singly linked list in place, plus a small test harness.",
++ "Write a SQL schema for a library system (books, members, loans) with indexes and three example queries.",
++ "Implement a trie in C++ with insert, search, prefix count and delete."]
++def post(content, mt):
++    b = {"model": "deepseek-v4.1-flash", "messages": [{"role": "user", "content": content}], "max_tokens": mt, "temperature": 0.0,
++         "stream": True, "stream_options": {"include_usage": True}, "chat_template_kwargs": {"thinking": False}}
++    return urllib.request.Request(URL, json.dumps(b).encode(), {"Content-Type": "application/json", "Authorization": "Bearer " + KEY})
++T = [[] for _ in P]; img = {}
++def user(i):
++    with urllib.request.urlopen(post("[%d] " % i + P[i], 512), timeout=600) as r:
++        for line in r:
++            if line.startswith(b"data:") and b'"content"' in line:
++                d = json.loads(line[5:]); c = (d.get("choices") or [{}])[0].get("delta", {}).get("content") or ""
++                if c: T[i].append(time.time())
++def image():
++    d = "data:image/png;base64," + base64.b64encode(open(os.path.join(os.environ.get("IMGDIR", "."), "05_bar_chart.png"), "rb").read()).decode()
++    q = "Which day has the most orders? Answer as 'day, number'."
++    if MODE == "2":  # a text request of the same length (~455 prompt tokens) at the same moment: the control
++        content = " ".join("Day %d had %d orders." % (i, (i * 37) % 50) for i in range(64)) + " " + q
++    else:
++        content = [{"type": "image_url", "image_url": {"url": d}}, {"type": "text", "text": q}]
++    t0 = time.time(); first = None; txt = ""
++    with urllib.request.urlopen(post(content, 40), timeout=600) as r:
++        for line in r:
++            if line.startswith(b"data:") and b'"content"' in line:
++                d = json.loads(line[5:]); c = (d.get("choices") or [{}])[0].get("delta", {}).get("content") or ""
++                if c: first = first or time.time(); txt += c
++    img.update(t0=t0, first=first, end=time.time(), text=txt)
++th = [threading.Thread(target=user, args=(i,)) for i in range(len(P))]; t0 = time.time(); [t.start() for t in th]
++if WITH:
++    time.sleep(4); ti = threading.Thread(target=image); ti.start(); ti.join()
++[t.join() for t in th]
++def rate(ts, a, b):
++    n = sum(1 for t in ts if a <= t < b); return n / max(1e-6, b - a)
++res = {"mode": {"0": "none", "1": "image", "2": "text_control"}[MODE], "users": []}
++for ts in T:
++    u = {"tokens": len(ts), "tps": round((len(ts) - 1) / max(1e-6, ts[-1] - ts[0]), 1)}
++    if WITH and img.get("first"):
++        a, b = img["t0"], img["first"]
++        u["tps_before"] = round(rate(ts, ts[0], a), 1); u["tps_during_image_prefill"] = round(rate(ts, a, b), 1)
++        u["tps_after"] = round(rate(ts, b, min(ts[-1], b + 6)), 1)
++    else:
++        mid = (ts[0] + ts[-1]) / 2; u["tps_steady_mid6s"] = round(rate(ts, mid - 3, mid + 3), 1)
++    res["users"].append(u)
++res["mean_tps"] = round(sum(u["tps"] for u in res["users"]) / len(P), 2)
++res["total_tps"] = round(sum(u["tokens"] for u in res["users"]) / (max(max(t) for t in T) - t0), 1)
++if WITH:
++    res["image"] = {"ttft": round(img["first"] - img["t0"], 3), "text": img["text"]}
++    for k in ("tps_before", "tps_during_image_prefill", "tps_after"):
++        res["mean_" + k] = round(sum(u[k] for u in res["users"]) / len(P), 2)
++print(json.dumps(res)); json.dump(res, open(OUT, "w"), indent=1)
+diff --git a/ds41f-4xgx10-switchless/tools/vision/extract_pack.py b/ds41f-4xgx10-switchless/tools/vision/extract_pack.py
+new file mode 100644
+--- /dev/null
++++ b/ds41f-4xgx10-switchless/tools/vision/extract_pack.py
+@@ -0,0 +1,78 @@
++#!/usr/bin/env python3
++"""Extract only native vision tensors from a pinned HF revision via bounded ranges.
++No text checkpoint conversion. Requires independently retained shard headers.
++"""
++import argparse, hashlib, json, pathlib, struct, time, urllib.request
++REV = '1bae0e1088993b9b82de08f59de5be5a34e42170'
++MODEL = 'deepseek-ai/DeepSeek-V4.1-Flash-1017'
++
++def fetch(shard, start, end):
++    url = f'https://huggingface.co/{MODEL}/resolve/{REV}/{shard}?download=true&vision_range={start}-{end}'
++    for attempt in range(4):
++        try:
++            req = urllib.request.Request(url, headers={'Range': f'bytes={start}-{end}', 'Accept-Encoding':'identity'})
++            with urllib.request.urlopen(req, timeout=180) as r:
++                if r.status != 206 or not r.headers.get('Content-Range','').startswith(f'bytes {start}-{end}/'):
++                    raise ValueError('server did not honor exact range')
++                data = r.read(end-start+2)
++                if len(data) != end-start+1: raise ValueError('short/oversized range')
++                return data
++        except Exception as e:
++            if attempt == 3: raise RuntimeError(f'range failure {shard} {start}:{end}: {type(e).__name__}') from None
++            time.sleep(2**attempt)
++
++def main():
++    ap=argparse.ArgumentParser();ap.add_argument('--inventory',type=pathlib.Path,required=True)
++    ap.add_argument('--headers',type=pathlib.Path,required=True);ap.add_argument('--out',type=pathlib.Path,required=True)
++    args=ap.parse_args();args.out.mkdir(parents=True,exist_ok=True)
++    inv=json.loads(args.inventory.read_text())['tensors']
++    assert len(inv)==266 and sum(t['data_offsets'][1]-t['data_offsets'][0] for t in inv)==970536960
++    starts={}; receipts=[]
++    for shard in sorted({t['shard'] for t in inv}):
++        n=struct.unpack('<Q',fetch(shard,0,7))[0];assert 0<n<16<<20
++        raw=fetch(shard,8,7+n)
++        expected=(args.headers/(shard+'.header.json')).read_bytes()
++        assert raw==expected, 'published header differs from pinned investigation'
++        hdr=json.loads(raw);starts[shard]=8+n
++        for t in inv:
++            if t['shard']==shard:
++                assert hdr[t['name']]=={k:t[k] for k in ('dtype','shape','data_offsets')}
++        receipts.append({'shard':shard,'header_sha256':hashlib.sha256(raw).hexdigest(),'header_bytes':n,'data_start':8+n})
++    ordered=sorted(inv,key=lambda t:(t['shard'],t['data_offsets'][0]))
++    h={};offset=0;groups=[]
++    for t in ordered:
++        lo,hi=t['data_offsets'];size=hi-lo
++        h[t['name']]={'dtype':t['dtype'],'shape':t['shape'],'data_offsets':[offset,offset+size]}
++        if groups and groups[-1]['shard']==t['shard'] and groups[-1]['end']==lo:
++            groups[-1]['end']=hi
++        else:groups.append({'shard':t['shard'],'start':lo,'end':hi,'out_start':offset})
++        offset+=size
++    h['__metadata__']={'source_model':MODEL,'source_revision':REV,'scope':'native vision only; text ranks unchanged'}
++    hb=json.dumps(h,separators=(',',':')).encode();hb+=b' '*((-len(hb))%8)
++    out=args.out/'vision.safetensors';partial=args.out/'vision.safetensors.partial'
++    with partial.open('wb') as f:
++        f.write(struct.pack('<Q',len(hb)));f.write(hb)
++        for g in groups:
++            for lo in range(g['start'],g['end'],16<<20):
++                hi=min(lo+(16<<20),g['end'])
++                f.seek(8+len(hb)+g['out_start']+lo-g['start'])
++                data=fetch(g['shard'],starts[g['shard']]+lo,starts[g['shard']]+hi-1)
++                f.write(data);f.flush()
++                print(f'{g["shard"]}: {hi-g["start"]}/{g["end"]-g["start"]}',flush=True)
++    hashes=[]
++    with partial.open('rb') as f:
++        for t in ordered:
++            lo,hi=h[t['name']]['data_offsets'];f.seek(8+len(hb)+lo)
++            sha=hashlib.sha256();remaining=hi-lo
++            while remaining:
++                b=f.read(min(1<<20,remaining));assert b;sha.update(b);remaining-=len(b)
++            hashes.append(dict(name=t['name'],dtype=t['dtype'],shape=t['shape'],bytes=hi-lo,sha256=sha.hexdigest(),source_shard=t['shard'],source_data_offsets=t['data_offsets']))
++    partial.rename(out)
++    sha=hashlib.sha256()
++    with out.open('rb') as f:
++        for b in iter(lambda:f.read(1<<20),b''):sha.update(b)
++    index={'metadata':{'total_size':offset},'weight_map':{t['name']:'vision.safetensors' for t in inv}}
++    (args.out/'model.safetensors.index.json').write_text(json.dumps(index,indent=2)+'\n')
++    (args.out/'vision-pack-manifest.json').write_text(json.dumps(dict(model=MODEL,revision=REV,file='vision.safetensors',sha256=sha.hexdigest(),bytes=out.stat().st_size,payload_bytes=offset,tensors=hashes,source_headers=receipts,method='Exact206 pinned-revision tensor ranges; byte-identical source headers; no text payload downloaded'),indent=2)+'\n')
++    print('pack complete',sha.hexdigest(),flush=True)
++if __name__=='__main__':main()
+diff --git a/ds41f-4xgx10-switchless/tools/vision/image_io.py b/ds41f-4xgx10-switchless/tools/vision/image_io.py
+new file mode 100644
+--- /dev/null
++++ b/ds41f-4xgx10-switchless/tools/vision/image_io.py
+@@ -0,0 +1,79 @@
++"""Bounded image ingress. Connections use the validated literal IP, not a second DNS lookup."""
++import base64
++import http.client
++import ipaddress
++import socket
++from urllib.parse import urljoin, urlsplit
++
++MAX_BYTES = 32 << 20
++MAX_REQUEST_BYTES = 64 << 20
++MAX_PIXELS = 40_000_000
++TYPES = {'image/png': 'PNG', 'image/jpeg': 'JPEG', 'image/webp': 'WEBP'}
++
++def _connection_socket(address, timeout=20, source_address=None):
++    host, port = address
++    answers = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
++    if not answers: raise ValueError('image host has no addresses')
++    if any(not ipaddress.ip_address(a[4][0]).is_global or ipaddress.ip_address(a[4][0]).is_multicast for a in answers):
++        raise ValueError('image URL destination is not public')
++    # No hostname is given to create_connection: DNS cannot rebind after this check.
++    return socket.create_connection((answers[0][4][0], port), timeout, source_address)
++
++def _url_bytes(url):
++    for redirect in range(4):
++        u = urlsplit(url)
++        if u.scheme not in ('http', 'https') or not u.hostname or u.username is not None or u.password is not None:
++            raise ValueError('only public HTTP(S) image URLs without credentials are supported')
++        conn_cls = http.client.HTTPSConnection if u.scheme == 'https' else http.client.HTTPConnection
++        conn = conn_cls(u.hostname, u.port, timeout=20)
++        conn._create_connection = _connection_socket
++        try:
++            conn.request('GET', (u.path or '/') + ('?'+u.query if u.query else ''), headers={'User-Agent':'pico-vision/1','Accept-Encoding':'identity'})
++            r = conn.getresponse()
++            if r.status in (301,302,303,307,308):
++                loc = r.getheader('Location')
++                if redirect == 3 or not loc: raise ValueError('too many or invalid image redirects')
++                url = urljoin(url, loc);continue
++            if r.status != 200: raise ValueError('image URL returned non-200 status')
++            if r.getheader('Content-Encoding', 'identity') != 'identity': raise ValueError('encoded image responses are unsupported')
++            mime = r.getheader('Content-Type','').split(';')[0].strip().lower()
++            if mime not in TYPES: raise ValueError('unsupported image MIME type')
++            n = r.getheader('Content-Length')
++            if n is not None and (int(n)<1 or int(n)>MAX_BYTES): raise ValueError('image body exceeds limit')
++            raw=r.read(MAX_BYTES+1)
++            if len(raw)>MAX_BYTES:raise ValueError('image body exceeds limit')
++            return raw,mime
++        finally:conn.close()
++    raise ValueError('redirect limit')
++
++def fetch(record):
++    if not isinstance(record,dict):raise ValueError('image record must be an object')
++    url=record.get('url');data=record.get('data');mime=None
++    src=record.get('source')
++    if isinstance(src,dict):
++        if src.get('url'):url=src['url']
++        elif src.get('type')=='base64':data=src.get('data');mime=src.get('media_type')
++    if isinstance(url,str) and url.startswith(('http://','https://')):
++        raw,mime=_url_bytes(url)
++    else:
++        if isinstance(url,str) and url.startswith('data:'):
++            meta,sep,data=url.partition(',')
++            if not sep or not meta.endswith(';base64'):raise ValueError('image data URL must be base64')
++            mime=meta[5:-7].lower()
++        elif url is not None:raise ValueError('image URL must be data: or public HTTP(S); no file paths')
++        if not isinstance(data,str) or len(data)>4*((MAX_BYTES+2)//3):raise ValueError('invalid or oversized image base64')
++        if mime is not None and mime not in TYPES:raise ValueError('unsupported image MIME type')
++        try:raw=base64.b64decode(data,validate=True)
++        except Exception:raise ValueError('invalid image base64') from None
++    if not raw or len(raw)>MAX_BYTES:raise ValueError('empty or oversized image')
++    # Decode limits apply to URL and data: input alike, before the publisher's processor allocates patches.
++    from PIL import Image
++    import io, warnings
++    with warnings.catch_warnings():
++        warnings.simplefilter('error',Image.DecompressionBombWarning)
++        with Image.open(io.BytesIO(raw)) as im:
++            if im.width*im.height>MAX_PIXELS or im.width<1 or im.height<1:raise ValueError('image pixel limit')
++            if im.format not in TYPES.values() or (mime is not None and TYPES[mime]!=im.format):raise ValueError('image MIME does not match bytes')
++            if getattr(im,'n_frames',1)!=1:raise ValueError('animated images are unsupported')
++            im.verify()
++    return raw
+diff --git a/ds41f-4xgx10-switchless/tools/vision/imgtest.py b/ds41f-4xgx10-switchless/tools/vision/imgtest.py
+new file mode 100644
+--- /dev/null
++++ b/ds41f-4xgx10-switchless/tools/vision/imgtest.py
+@@ -0,0 +1,97 @@
++#!/usr/bin/env python3
++"""imgtest.py URL IMGDIR OUT.json : image correctness + TTFT through the OpenAI API (base64 data URLs and an
++http URL). For every case also the same request without its image, so that the TTFT an image adds is measured."""
++import base64, json, os, sys, time, urllib.request
++
++URL, DIR, OUT = sys.argv[1], sys.argv[2], sys.argv[3]  # KEYFILE=<file with the API key>
++KEY = open(os.environ["KEYFILE"]).read().strip()
++MODEL = os.environ.get("MODEL", "deepseek-v4.1-flash")
++HTTP_IMG = os.environ.get("HTTP_IMG", "https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png")
++
++
++def b64(name):
++    ext = name.rsplit(".", 1)[1].replace("jpg", "jpeg")
++    return "data:image/%s;base64,%s" % (ext, base64.b64encode(open(os.path.join(DIR, name), "rb").read()).decode())
++
++
++def chat(content, max_tokens=80, stream=True):
++    body = {"model": MODEL, "messages": [{"role": "user", "content": content}], "max_tokens": max_tokens,
++            "temperature": 0.0, "stream": stream, "stream_options": {"include_usage": True},
++            "chat_template_kwargs": {"thinking": False}}
++    r = urllib.request.Request(URL, json.dumps(body).encode(), {"Content-Type": "application/json", "Authorization": "Bearer " + KEY})
++    t0 = time.time(); first = None; text = ""; usage = None
++    try:
++        with urllib.request.urlopen(r, timeout=600) as resp:
++            for line in resp:
++                line = line.strip()
++                if not line.startswith(b"data:") or line.endswith(b"[DONE]"):
++                    continue
++                d = json.loads(line[5:])
++                if d.get("usage"):
++                    usage = d["usage"]
++                if "error" in d:
++                    text += "[ERROR %s]" % d["error"]
++                for c in d.get("choices", []):
++                    s = c.get("delta", {}).get("content") or ""
++                    if s and first is None:
++                        first = time.time()
++                    text += s
++    except urllib.error.HTTPError as e:
++        return {"error": "HTTP %d %s" % (e.code, e.read()[:300].decode(errors="replace")), "ttft": None, "text": ""}
++    t1 = time.time()
++    return {"ttft": round((first or t1) - t0, 3), "total": round(t1 - t0, 3), "text": text.strip(),
++            "prompt_tokens": (usage or {}).get("prompt_tokens")}
++
++
++def ok(text, want):
++    t = text.lower().replace(",", "").replace("$", "")
++    return all(any(w2.lower().replace(",", "") in t for w2 in (w if isinstance(w, list) else [w])) for w in want)
++
++
++cases = json.load(open(os.path.join(DIR, "cases.json")))
++res = []
++chat([{"type": "text", "text": "hi"}], 4)  # warm
++for name, q, want in cases:
++    img = chat([{"type": "image_url", "image_url": {"url": b64(name)}}, {"type": "text", "text": q}])
++    txt = chat([{"type": "text", "text": q}])
++    r = {"case": name, "q": q, "want": want, "answer": img.get("text"), "ok": ok(img.get("text", ""), want),
++         "ttft": img.get("ttft"), "ttft_text_only": txt.get("ttft"), "prompt_tokens": img.get("prompt_tokens"),
++         "error": img.get("error")}
++    r["ttft_added"] = round(r["ttft"] - r["ttft_text_only"], 3) if r["ttft"] is not None and r["ttft_text_only"] is not None else None
++    print(json.dumps(r), flush=True)
++    res.append(r)
++
++# multi-image in one request
++m = chat([{"type": "text", "text": "First image:"}, {"type": "image_url", "image_url": {"url": b64("01_ocr_sign.png")}},
++          {"type": "text", "text": "Second image:"}, {"type": "image_url", "image_url": {"url": b64("02_ocr_receipt.png")}},
++          {"type": "text", "text": "What gate is on the first image, and what is the TOTAL on the second? Answer as 'gate, total'."}])
++r = {"case": "multi_image(01+02)", "answer": m.get("text"), "ok": ok(m.get("text", ""), ["47B", "10.50"]), "ttft": m.get("ttft"),
++     "prompt_tokens": m.get("prompt_tokens"), "error": m.get("error")}
++print(json.dumps(r), flush=True); res.append(r)
++
++# image + long text context (~30K tokens of filler with a fact in the middle)
++filler = " ".join("The committee reviewed item %d of the quarterly maintenance log and found nothing unusual." % i for i in range(1700))
++mid = len(filler) // 2
++doc = filler[:mid] + " IMPORTANT: the storage room access code is 6619. " + filler[mid:]
++lt = chat([{"type": "text", "text": doc}, {"type": "image_url", "image_url": {"url": b64("03_count_red.png")}},
++           {"type": "text", "text": "Two questions: (1) what is the storage room access code in the text above? (2) how many red circles are in the image? Answer as 'code, count'."}])
++r = {"case": "long_text+image", "answer": lt.get("text"), "ok": ok(lt.get("text", ""), ["6619", "7"]), "ttft": lt.get("ttft"),
++     "prompt_tokens": lt.get("prompt_tokens"), "error": lt.get("error")}
++print(json.dumps(r), flush=True); res.append(r)
++
++# http(s) URL image (fetched by the encoder)
++h = chat([{"type": "image_url", "image_url": {"url": HTTP_IMG}}, {"type": "text", "text": "What objects are shown in this image? Answer in a few words."}])
++r = {"case": "http_url", "url": HTTP_IMG, "answer": h.get("text"), "ok": ok(h.get("text", ""), [["dice", "die"]]), "ttft": h.get("ttft"),
++     "prompt_tokens": h.get("prompt_tokens"), "error": h.get("error")}
++print(json.dumps(r), flush=True); res.append(r)
++
++# a bad image must be a 400, not a crash
++bad = chat([{"type": "image_url", "image_url": {"url": "data:image/png;base64,AAAA"}}, {"type": "text", "text": "what?"}])
++r = {"case": "bad_image_400", "answer": bad.get("error") or bad.get("text"), "ok": "400" in str(bad.get("error")) or "'code': 400" in str(bad.get("text")), "ttft": None}
++print(json.dumps(r), flush=True); res.append(r)
++# a text request still answers
++t = chat([{"type": "text", "text": "What is 17*23? Just the number."}], 10)
++r = {"case": "text_after_images", "answer": t.get("text"), "ok": "391" in t.get("text", ""), "ttft": t.get("ttft")}
++print(json.dumps(r), flush=True); res.append(r)
++json.dump(res, open(OUT, "w"), indent=1)
++print("PASS %d/%d" % (sum(1 for x in res if x["ok"]), len(res)))
+diff --git a/ds41f-4xgx10-switchless/tools/vision/test_image_io.py b/ds41f-4xgx10-switchless/tools/vision/test_image_io.py
+new file mode 100644
+--- /dev/null
++++ b/ds41f-4xgx10-switchless/tools/vision/test_image_io.py
+@@ -0,0 +1,37 @@
++"""Host ingress regressions; no GPU or model prompts."""
++import base64, io, socket, unittest
++from unittest.mock import patch
++from PIL import Image
++import image_io as m
++class Ingress(unittest.TestCase):
++    def setUp(self):
++        b=io.BytesIO(); Image.new('RGB',(4,3)).save(b,format='PNG');self.raw=b.getvalue();self.data=base64.b64encode(self.raw).decode()
++    def test_data(self):self.assertEqual(m.fetch({'url':'data:image/png;base64,'+self.data}),self.raw)
++    def test_record(self):self.assertEqual(m.fetch({'data':self.data}),self.raw)
++    def test_anthropic(self):self.assertEqual(m.fetch({'source':{'type':'base64','media_type':'image/png','data':self.data}}),self.raw)
++    def test_bad_base64(self):
++        with self.assertRaises(ValueError):m.fetch({'data':'AAA!'})
++    def test_mime_mismatch(self):
++        with self.assertRaises(ValueError):m.fetch({'url':'data:image/jpeg;base64,'+self.data})
++    def test_local(self):
++        for u in ('file:///etc/passwd','/etc/passwd','ftp://public.example/img'):
++            with self.assertRaises(ValueError):m.fetch({'url':u})
++    def test_pixel_cap(self):
++        with patch.object(m,'MAX_PIXELS',10):
++            with self.assertRaises(ValueError):m.fetch({'data':self.data})
++    def test_private_dns(self):
++        for host in ('127.0.0.1','192.0.2.56','169.254.169.254','::1','fe80::1','192.0.2.1'):
++            with patch.object(socket,'getaddrinfo',return_value=[(socket.AF_INET,socket.SOCK_STREAM,6,'',(host,80))]):
++                with self.assertRaises(ValueError):m._connection_socket(('example.com',80))
++    def test_mixed_dns(self):
++        with patch.object(socket,'getaddrinfo',return_value=[(2,1,6,'',('8.8.8.8',80)),(2,1,6,'',('127.0.0.1',80))]):
++            with self.assertRaises(ValueError):m._connection_socket(('example.com',80))
++    def test_literal_connect(self):
++        with patch.object(socket,'getaddrinfo',return_value=[(2,1,6,'',('8.8.8.8',443))]),patch.object(socket,'create_connection') as connect:
++            m._connection_socket(('example.com',443));self.assertEqual(connect.call_args.args[0],('8.8.8.8',443))
++    def test_credential_url(self):
++        with self.assertRaises(ValueError):m._url_bytes('https://user:secret@example.com/x')
++    def test_animation(self):
++        b=io.BytesIO();Image.new('RGB',(3,3)).save(b,format='WEBP',save_all=True,append_images=[Image.new('RGB',(3,3),'red')],duration=100)
++        with self.assertRaises(ValueError):m.fetch({'data':base64.b64encode(b.getvalue()).decode()})
++if __name__=='__main__':unittest.main()
+diff --git a/ds41f-4xgx10-switchless/tools/vision/test_reference.py b/ds41f-4xgx10-switchless/tools/vision/test_reference.py
+new file mode 100644
+--- /dev/null
++++ b/ds41f-4xgx10-switchless/tools/vision/test_reference.py
+@@ -0,0 +1,31 @@
++"""Actual-pack CPU oracle. This is tensor/layout qualification, not model image-QA acceptance."""
++import argparse, hashlib, importlib.util, json, pathlib, sys, time
++p=argparse.ArgumentParser();p.add_argument('--model',required=True);p.add_argument('--fixtures',required=True);p.add_argument('--out',required=True);a=p.parse_args()
++model,fixtures,out=map(pathlib.Path,(a.model,a.fixtures,a.out))
++import torch
++torch.set_num_threads(8)
++sys.argv=['vision_encoder','--model',str(model),'--device','cpu']
++spec=importlib.util.spec_from_file_location('encoder',pathlib.Path(__file__).with_name('vision_encoder.py'));e=importlib.util.module_from_spec(spec);spec.loader.exec_module(e)
++vit,aligner,delim=e.load();checks=[]
++from safetensors import safe_open
++manifest=json.loads((model/'vision-pack-manifest.json').read_text())
++with safe_open(model/'vision.safetensors',framework='pt',device='cpu') as f:
++    for item in manifest['tensors']:
++        t=f.get_tensor(item['name']);raw=t.view(torch.int16).numpy().tobytes()
++        assert list(t.shape)==item['shape'] and t.dtype==torch.bfloat16 and hashlib.sha256(raw).hexdigest()==item['sha256']
++checks.append({'check':'exact tensor names/shapes/dtypes/per-tensor checksums','passed':266,'total':266})
++# Independent span assembly as publisher merge_image_embeddings: delimiters and aligner in reading order.
++rows=[]
++with torch.inference_mode():
++ for name,_,_ in json.loads((fixtures/'cases.json').read_text()):
++    t0=time.monotonic();raw=(fixtures/name).read_bytes()
++    got,grid=e.encode(raw)
++    patches,h,w,lh,lw=e.ip.load_image({'data':raw},e.args)
++    types=e.ip.image_token_types(lh,lw)
++    feats=aligner(vit(patches,h,w),h,w)
++    ref=torch.cat([delim['image_start'][None]]+[torch.cat([feats[r*lw:(r+1)*lw],delim['image_newline'][None]]) for r in range(lh)]+[delim['image_end'][None]])
++    diffs=int((got.view(torch.int16)!=ref.view(torch.int16)).sum())
++    assert got.shape==(lh*(lw+1)+2,5120) and got.shape[0]<=1024 and torch.isfinite(got).all() and diffs==0
++    rows.append({'fixture':name,'grid':list(grid),'shape':list(got.shape),'differences':diffs,'elements':got.numel(),'span_sha256':hashlib.sha256(got.view(torch.int16).numpy().tobytes()).hexdigest(),'seconds':time.monotonic()-t0})
++    print(json.dumps(rows[-1]),flush=True)
++out.write_text(json.dumps({'device':'cpu','torch':torch.__version__,'canonical_attention':True,'gpu_acceptance':False,'checks':checks,'images':rows,'all_pass':True},indent=2)+'\n')
+diff --git a/ds41f-4xgx10-switchless/tools/vision/vision_encoder.py b/ds41f-4xgx10-switchless/tools/vision/vision_encoder.py
+new file mode 100644
+--- /dev/null
++++ b/ds41f-4xgx10-switchless/tools/vision/vision_encoder.py
+@@ -0,0 +1,234 @@
++"""dsgx10 vision encoder: DeepSeek-V4.1 1017's ViT + aligner as a small side process.
++
++It turns images into the LLM's embedding rows for an image span, using the checkpoint's own
++reference code (inference/vision.py, inference/image_processor.py, mounted read-only), so the
++preprocessing, the 2D RoPE, the 3x3 aligner and the span layout are the publisher's:
++
++    [IMAGE_START] + ([IMAGE] * n_llm_w + [IMAGE_NEW_LINE]) * n_llm_h + [IMAGE_END]
++
++Every row of the span is returned (bf16, 5120 wide): the delimiters are the learned image_start /
++image_newline / image_end vectors, the IMAGE slots the aligner rows in reading order. The engine puts
++them in place of the token embeddings at the span's positions (prefill only).
++
++Protocol (TCP, 127.0.0.1 only): request  = u32 len, JSON {"images": [record, ...]}
++                                reply    = u32 len, JSON {"ok", "error", "images": [{rows, hash, ...}]},
++                                           u64 len, the rows of every image, bf16, in order.
++A record is what encoding.py's image blocks give: {"url": data-URL | http(s) URL} or {"data": b64}.
++"""
++
++import argparse
++import hashlib
++import json
++import os
++import socket
++import socketserver
++import struct
++import sys
++import threading
++from image_io import fetch, MAX_REQUEST_BYTES
++import time
++from types import SimpleNamespace
++
++import torch
++from PIL import Image
++
++Image.MAX_IMAGE_PIXELS = 40_000_000  # PIL refuses images over twice this (decompression bombs)
++
++p = argparse.ArgumentParser()
++p.add_argument("--model", default="/model")
++p.add_argument("--device", choices=("cuda", "cpu"), default="cuda")
++p.add_argument("--host", default="127.0.0.1")
++p.add_argument("--port", type=int, default=18950)
++p.add_argument("--max-images", type=int, default=16)
++p.add_argument("--max-bytes", type=int, default=32 << 20)  # per fetched image
++p.add_argument("--idle-unload-s", type=float, default=0)   # 0: keep the weights resident
++a = p.parse_args()
++
++sys.path.insert(0, os.path.join(a.model, "inference"))
++import image_processor as ip  # noqa: E402  (the checkpoint's own code)
++import vision as _vision  # noqa: E402
++from vision import Aligner, ViT  # noqa: E402
++
++# The reference calls scaled_dot_product_attention on 3D strided views ([heads, n, d] after a
++# transpose), which only the MATH backend takes (42 ms per layer at 3.8k patches on GB10). The same
++# function on a contiguous 4D view runs the flash kernel (0.65 ms); outputs agree to bf16 rounding.
++import torch.nn.functional as _F  # noqa: E402
++
++
++class _FShim:
++    def __getattr__(self, n):
++        return getattr(_F, n)
++
++    @staticmethod
++    def scaled_dot_product_attention(q, k, v, *a, **kw):
++        if q.dim() == 3:
++            return _F.scaled_dot_product_attention(q.unsqueeze(0).contiguous(), k.unsqueeze(0).contiguous(),
++                                                   v.unsqueeze(0).contiguous(), *a, **kw)[0]
++        return _F.scaled_dot_product_attention(q, k, v, *a, **kw)
++
++
++if os.environ.get("VISION_SDPA_OPT_IN", "0") == "1":
++    _vision.F = _FShim()
++
++cfg = json.load(open(os.path.join(a.model, "inference", "config.json")))
++args = SimpleNamespace(**cfg)
++assert args.vision_n_layers > 0
++
++_model = None
++_lock = threading.Lock()
++_last = time.time()
++
++
++def log(*x):
++    print(time.strftime("%H:%M:%S"), *x, flush=True)
++
++
++def load():
++    """ViT, aligner and the three delimiter vectors, bf16 on the GPU (the reference's dtypes)."""
++    global _model
++    if _model is not None:
++        return _model
++    from safetensors import safe_open
++
++    t0 = time.time()
++    idx = json.load(open(os.path.join(a.model, "model.safetensors.index.json")))["weight_map"]
++    want = [k for k in idx if k.startswith(("vision.", "aligner.", "image_"))]
++    sd = {}
++    for f in sorted({idx[k] for k in want}):
++        with safe_open(os.path.join(a.model, f), framework="pt", device="cpu") as h:
++            for k in want:
++                if idx[k] == f:
++                    sd[k] = h.get_tensor(k)
++    if len(sd) != 266:
++        raise ValueError("native vision pack must contain exactly 266 tensors")
++    torch.set_default_dtype(torch.bfloat16)
++    torch.set_default_device(a.device)  # as generate.py: the RoPE tables (get_vision_cos_sin) are made on it
++    vit, aligner = ViT(args), Aligner(args)
++    vit.load_state_dict({k[len("vision."):]: v for k, v in sd.items() if k.startswith("vision.")}, strict=True)
++    aligner.load_state_dict({k[len("aligner."):]: v for k, v in sd.items() if k.startswith("aligner.")}, strict=True)
++    vit.eval(), aligner.eval()
++    delim = {k: sd[k].to(a.device, torch.bfloat16) for k in ("image_start", "image_newline", "image_end")}
++    _model = (vit, aligner, delim)
++    log(f"loaded {len(sd)} tensors in {time.time() - t0:.1f} s; cuda allocated {(torch.cuda.memory_allocated() / 2**30 if a.device == 'cuda' else 0):.2f} GiB")
++    return _model
++
++
++@torch.inference_mode()
++def encode(raw: bytes):
++    """One image's span rows [n, 5120] bf16 and its grid (the reference's load_image + encode_image +
++    merge_image_embeddings, for one span)."""
++    vit, aligner, delim = load()
++    with torch.device(a.device):  # set_default_device is per thread; the RoPE tables are made here
++        return _encode(raw, vit, aligner, delim)
++
++
++def _encode(raw, vit, aligner, delim):
++    patches, n_vit_h, n_vit_w, n_llm_h, n_llm_w = ip.load_image({"data": raw}, args)
++    types = ip.image_token_types(n_llm_h, n_llm_w)
++    feats = aligner(vit(patches.to(a.device), n_vit_h, n_vit_w), n_vit_h, n_vit_w)  # [n_llm_h * n_llm_w, 5120]
++    assert feats.shape[0] == n_llm_h * n_llm_w, (feats.shape, n_llm_h, n_llm_w)
++    t = types.to(a.device)
++    span = torch.empty((t.numel(), feats.shape[1]), dtype=torch.bfloat16, device=a.device)
++    span[t == ip.IMAGE_START] = delim["image_start"]
++    span[t == ip.IMAGE_END] = delim["image_end"]
++    span[t == ip.IMAGE_NEW_LINE] = delim["image_newline"]
++    span[t == ip.IMAGE] = feats.to(torch.bfloat16)
++    return span, (n_vit_h, n_vit_w, n_llm_h, n_llm_w)
++
++
++def handle(req):
++    recs = req.get("images") or []
++    if not recs or len(recs) > a.max_images:
++        raise ValueError("between 1 and %d images per request" % a.max_images)
++    out, blobs = [], []
++    total_bytes = 0
++    with _lock:
++        for r in recs:
++            t0 = time.time()
++            raw = fetch(r)
++            total_bytes += len(raw)
++            if total_bytes > MAX_REQUEST_BYTES:
++                raise ValueError("image request byte limit")
++            span, g = encode(raw)
++            if a.device == "cuda": torch.cuda.synchronize()
++            ms = 1e3 * (time.time() - t0)
++            blobs.append(span.view(torch.int16).cpu().numpy().tobytes())
++            h = hashlib.sha256(raw).digest()
++            out.append({"rows": span.shape[0], "hash": int.from_bytes(h[:8], "little"), "grid": g, "ms": round(ms, 1),
++                        "bytes": len(raw)})
++            log(f"image {len(raw)} B -> {g[2]}x{g[3]} tokens ({span.shape[0]} rows) in {ms:.0f} ms")
++    return out, b"".join(blobs)
++
++
++def recv_exact(s, n):
++    b = bytearray()
++    while len(b) < n:
++        c = s.recv(min(1 << 20, n - len(b)))
++        if not c:
++            raise ConnectionError("closed")
++        b += c
++    return bytes(b)
++
++
++class H(socketserver.BaseRequestHandler):
++    def handle(self):
++        global _last
++        s = self.request
++        s.settimeout(90)
++        while True:
++            try:
++                (n,) = struct.unpack("<I", recv_exact(s, 4))
++            except ConnectionError:
++                return
++            if n > MAX_REQUEST_BYTES:
++                return
++            try:
++                imgs, data = handle(json.loads(recv_exact(s, n)))
++                hdr = {"ok": True, "images": imgs}
++            except Exception as e:  # noqa: BLE001  (the error goes back to the client as a 400)
++                log("error:", repr(e))
++                hdr, data = {"ok": False, "error": str(e)[:500]}, b""
++            _last = time.time()
++            j = json.dumps(hdr).encode()
++            s.sendall(struct.pack("<I", len(j)) + j + struct.pack("<Q", len(data)) + data)
++
++
++class S(socketserver.ThreadingMixIn, socketserver.TCPServer):
++    # At most 16 in-flight image requests, each bounded at ingress and serialized on the GPU.
++    admission = threading.BoundedSemaphore(16)
++    request_queue_size = 16
++    def process_request(self, request, client_address):
++        if not self.admission.acquire(blocking=False):
++            hdr = json.dumps({"ok": False, "error": "encoder queue full"}).encode()
++            try: request.sendall(struct.pack("<I", len(hdr)) + hdr + struct.pack("<Q", 0))
++            finally: self.shutdown_request(request)
++            return
++        try: super().process_request(request, client_address)
++        except BaseException:
++            self.admission.release()
++            raise
++    def process_request_thread(self, request, client_address):
++        try: super().process_request_thread(request, client_address)
++        finally: self.admission.release()
++    allow_reuse_address = True
++    daemon_threads = True
++
++
++def unloader():
++    global _model
++    while a.idle_unload_s > 0:
++        time.sleep(30)
++        with _lock:
++            if _model is not None and time.time() - _last > a.idle_unload_s:
++                _model = None
++                torch.cuda.empty_cache()
++                log("idle: weights unloaded")
++
++
++if __name__ == "__main__":
++    if os.environ.get("VISION_PRELOAD", "0") == "1":
++        load()
++    threading.Thread(target=unloader, daemon=True).start()
++    srv = S((a.host, a.port), H)
++    log(f"listening on {a.host}:{a.port}")
++    srv.serve_forever()

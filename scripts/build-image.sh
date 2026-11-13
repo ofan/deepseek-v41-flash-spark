@@ -13,7 +13,9 @@ assert re.fullmatch(r'ghcr.io/ofan/deepseek-v41-flash-spark-public:[A-Za-z0-9_.-
 print(ref)
 PY
 )
-python3 scripts/prepare-bundle.py --publication-runtime "$receipt"
+args=(--publication-runtime "$receipt")
+if [ -n "${SOURCE_BUILD_RECEIPT:-}" ]; then args+=(--source-build-receipt "$SOURCE_BUILD_RECEIPT"); fi
+python3 scripts/prepare-bundle.py "${args[@]}"
 docker build --platform linux/arm64 --build-arg "RUNTIME_BASE=$RUNTIME_BASE" \
  -t ghcr.io/ofan/deepseek-v41-flash-spark-public:2026.11.11-native-vision-bundle-candidate .
 echo 'LOCAL unqualified candidate only. Requires full artifact audit and four-rank acceptance.'

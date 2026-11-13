@@ -1,43 +1,79 @@
-# Build and asset preparation
+# Build from the included implementation
 
-## Distribution artifact
+## Choose a route
 
-Use only the digest-pinned sanitized runtime from
+1. **Run the public runtime:** prepare verified text assets, then follow the README.
+   No engine download or private artifact is needed.
+2. **Rebuild from source:** use `vendor/engine/`, compile on an off-serving ARM64
+   CUDA13 host, prepare model/vision assets and assemble a **new unqualified image**.
+   Source, base and patch series are in this repository. Native dependencies and
+   publisher model assets are still external inputs, not vendored binaries.
+
+Published runtime:
 `ghcr.io/ofan/deepseek-v41-flash-spark-public:2026.11.11-native-vision-sanitized-candidate-r4@sha256:bc042a4b33f56d8cbfcfac6f642f3ecf1f59c42ee7a9c26fed81fdfbae3bc979`.
-It includes runtime, engine, frontend, native vision assets and optional GLP-39;
-**text rank/Engram/tokenizer assets must be prepared separately**. Publication is
-held until anonymous readback succeeds; see [status](completion-report.md).
+It contains runtime, engine, frontend, vision pack and authentic optional GLP-39,
+**not text ranks, Engram shards or tokenizer**. Anonymous readback is recorded in
+[completion status](completion-report.md). Four-rank GPU qualification is pending
+for the sanitized public candidate and for any new source build.
 
-The sanitized twin uses unchanged engine source **b7c3eb5**, byte-identical production
-frontend and vision assets, and a generic-path rebuilt engine. It is **not GPU-qualified**.
-An older private predecessor is not a build input or download requirement.
+## Included source and patches
+
+`vendor/engine/` contains the engine, frontend, vision tools and two benchmark tools
+at production **b7c3eb5b12a030725bfb0186d27065bc6e376685**, with deployment paths,
+addresses and local reference names generalized. This is an implementation snapshot,
+not the entire upstream operations/evidence repository. Each file has original and
+sanitized hashes in `SOURCE.json`; `vendor/sanitization.json` discloses the categories.
+The included fleet file is an intentionally incomplete generic template, supplied because CMake copies it beside the binaries; runtime still requires your own completed fleet file. No arithmetic change or parser protocol-literal rewrite is intended by sanitization.
+
+`vendor/upstream/` contains the corresponding base implementation at **4e70b2ab**.
+`patches/` contains four standalone feature patches (GLP steering, DSML parser,
+sampler clamp, native vision) **plus one separate cache-fidelity prerequisite**.
+They form an **ordered five-patch series**, not four independent patches against a
+pristine base. The prerequisite preserves production's prompt/session repairs.
+[Patch manifest and commit mapping](../patches/README.md).
+
+```sh
+python3 scripts/source_tree.py --verify vendor/engine
+python3 scripts/verify-patches.py
+bash scripts/fetch-sources.sh  # compatibility name: copies local source to work/source
+bash scripts/build-engine.sh
+```
+
+Staging refuses existing destinations; select a new destination rather than overwriting
+work. Building verifies the included manifest in both staged trees. Install the compiler,
+CUDA13 and RDMA development prerequisites listed in [setup](setup-spark.md) first.
+CMake builds the engine, converters/verifier and Engram packer; Cargo uses the included
+lockfile. Rust crates must be available from their publishers or your reviewed cache.
+The build writes `work/compiled/source-build.json` with source-manifest and binary hashes;
+it is a provenance receipt, **not GPU acceptance or an exact-production binary claim**.
+
+The optional `rebuild-publication-engine.sh` cross-build helper also consumes the
+included source. Its exact original cross-builder/sysroot is not distributed; prefer
+the documented native ARM64 route unless you supply and qualify your own toolchain.
 
 ## Prepare the text assets
 
-Use an off-serving ARM64 CUDA13 conversion host, not an active serving node.
-See [setup](setup-spark.md) for compiler and memory/storage requirements.
+On the separate build/conversion host, acquire the official checkpoint. No weights
+are downloaded implicitly by build scripts. Use the publisher's Hugging Face CLI and
+honor its acquisition/license terms:
 
 ```sh
-bash scripts/fetch-sources.sh
-bash scripts/build-engine.sh
 hf download deepseek-ai/DeepSeek-V4.1-Flash-1017 \
   --revision 1bae0e1088993b9b82de08f59de5be5a34e42170 --local-dir work/checkpoint
 python3 scripts/convert-assets.py --checkpoint work/checkpoint \
   --checkpoint-revision 1bae0e1088993b9b82de08f59de5be5a34e42170
-# Review the plan, then explicitly perform conversion:
+# Review the printed plan, then explicitly execute:
 python3 scripts/convert-assets.py --checkpoint work/checkpoint \
   --checkpoint-revision 1bae0e1088993b9b82de08f59de5be5a34e42170 --execute
 ```
 
-The source fetch pins `ofan/pico-dgx-ds4` to
-`b7c3eb5b12a030725bfb0186d27065bc6e376685`. CMake builds converters, verifier and
-Engram packer as well as the engine. The conversion wrapper runs, for ranks0–3:
-`dsw_convert`, every-byte `dsw_verify --threads 4`, `engram_pack`, then the pinned
-`make_hashmap_stdlib.py`. It writes `bundle/model/asset-hashes.json` only after all
-commands succeed. Review `work/conversion-logs`: require zero bad tensors and
-bytewise agreement, not just loading/CRC. No re-quantization or training is performed.
-Retain authentic acquisition and license records; the revision argument alone does
-not prove the origin of a local directory.
+The wrapper uses the **in-repo staged implementation**, not an external fork. For
+ranks0–3 it runs `dsw_convert`, every-byte `dsw_verify --threads 4`, `engram_pack`,
+then `make_hashmap_stdlib.py`. Require zero bad tensors and bytewise agreement in
+`work/conversion-logs`, not just loading/CRC. `bundle/model/asset-hashes.json` is
+written only after successful commands. No re-quantization or training is performed.
+Retain authentic snapshot provenance: a command-line revision alone cannot establish
+where an arbitrary local directory came from.
 
 Per-node staging from `bundle/model`:
 
@@ -51,99 +87,101 @@ config.json
 other original checkpoint metadata
 ```
 
-Copy the matching rank and two shards plus common metadata into `/srv/pico/model`
-on each node. Do not copy all ranks to every node unless deliberately provisioning
-that extra storage. Preserve/verify file hashes after transfer. Vision addition does
-not require rewriting already verified stock text ranks. The wrapper's `--reuse`
-mode requires the authentic original conversion receipt and runs four fresh verifiers;
-it does not overwrite text/Engram files or relabel their original lineage.
+Copy only the matching rank and two shards plus common metadata into `/srv/pico/model`
+on each node; verify hashes after transfer. Existing verified text ranks do not need
+rewriting for vision. `--reuse --execute` requires the original authentic conversion
+receipt and runs fresh four-rank verifiers while preserving original conversion lineage.
+Never discard existing verified assets just to rerun this recipe.
 
-## Extract already packaged public runtime assets (optional)
+## Vision and optional steering assets
+
+For **running the published image**, these are already packaged; no extra download
+is needed. To extract packaged runtime assets without starting a container:
 
 ```sh
 bash scripts/stage-public-runtime.sh
 ```
 
-This pulls only the public-package candidate, creates but never starts a temporary
-container, extracts engine/frontend/vision/vector/notices, and verifies locked hashes.
-It is for rebuild/staging, not needed to run the README command. It refuses existing
-output artifacts. No private-image fallback exists. The legacy `stage-qualified.sh`
-name forwards to this script and does **not** imply GPU qualification.
+It stages engine/frontend/vision/vector/notices under `bundle/`, verifies locked
+hashes and refuses existing output artifacts. No private fallback exists. The older
+`stage-qualified.sh` alias does **not** imply GPU qualification.
 
-## Prepare native vision from public source (optional rebuild route)
+For a **source rebuild**, prepare vision from the pinned official snapshot and
+included tools instead:
 
 ```sh
 python3 scripts/prepare-vision.py --checkpoint work/checkpoint \
   --checkpoint-revision 1bae0e1088993b9b82de08f59de5be5a34e42170
-# Review, then add --execute on the build host.
+# Review, then repeat with --execute.
+python3 scripts/fetch-vector.py           # show authentic URL/hash only
+python3 scripts/fetch-vector.py --execute # optional; omit for no bundled vector
 ```
 
-The wrapper stages publisher `inference/vision.py`, `image_processor.py` and config,
-and fork `vision_encoder.py` / `image_io.py`. The pinned fork exporter reads exact
-HTTP206 tensor ranges. Require the **266-tensor** compact pack, **970,536,960 BF16
-payload bytes**, full-file hash
+Vision uses the included `tools/vision/extract_pack.py`, exact HTTP206 tensor ranges,
+publisher `inference/vision.py`, `image_processor.py` and config, and included
+`vision_encoder.py` / `image_io.py`. It requires the **266-tensor** pack,
+**970,536,960 BF16 payload bytes**, full-file SHA256
 `b07abf470c4107ba3029fedb9de1fd8823a40041f99d0d278e536b06ed5bb446`.
-A packaged exact pack is reusable. No synthetic weights or replacement projector.
-The public extraction wrapper has offline tests but has not been run end to end here.
+A pre-obtained exact pack can be reused; no synthetic encoder/projector is allowed.
 Keep canonical attention (`VISION_SDPA_OPT_IN=0`) and serialized preload/encoding.
+[GLP-39 source and MIT credit](steering.md); default OFF.
 
-## Optional vector
+## Assemble a new all-in-one image
+
+Required `bundle/`: binaries, upstream notices, all four text ranks/eight Engram
+shards/hashmap/metadata and their successful conversion receipt; vision files and
+receipt; optionally authentic vector. This layout includes text weights and is
+much larger than the published runtime-only image.
+
+Using the packaged binaries, the extraction step above supplies `bundle/bin` and
+notices. For a local source build, stage its actual outputs instead:
 
 ```sh
-python3 scripts/fetch-vector.py           # show URL/hash only
-python3 scripts/fetch-vector.py --execute # explicit authentic download
+mkdir -p bundle/bin bundle/notices
+cp work/compiled/bin/dsgb10_rank work/compiled/bin/dsfront bundle/bin/
+cp work/compiled/notices/* bundle/notices/
+SOURCE_BUILD_RECEIPT=work/compiled/source-build.json bash scripts/build-image.sh
 ```
 
-See [steering](steering.md) for source, MIT credit and full hash. It defaults OFF.
-The public runtime already includes the authentic optional vector; no download is
-required to enable its runtime flag. Git contains no model/vector payloads.
-
-## Build a distinct all-in-one image (advanced, not required to run)
+Or, after extracting packaged binaries and preparing model/vision receipts:
 
 ```sh
-python3 scripts/prepare-bundle.py --publication-runtime docs/publication-runtime.json
 bash scripts/build-image.sh
 ```
 
-Required bundle tree: `bin/{dsgb10_rank,dsfront}`, `notices/engine-NOTICE`,
-`model/` with all four ranks/eight shards/hashmap/metadata and authentic hash receipt,
-`vision/` with the exact pack/publisher modules/fork helpers and its hash receipt,
-and optionally `vectors/glp39.gguf`.
-The validator enforces provenance, hashes, path safety and steering OFF; the Dockerfile
-requires an explicit audit-cleared runtime base. Adding text assets changes the image
-digest and disk footprint. The script builds locally only; it never pushes or deploys.
-A new native engine compilation need not have the packaged engine's hash: do not edit
-hash guards to call an unqualified binary production-identical.
+The validator checks actual binary hashes, source provenance, model/vision receipts,
+paths and steering OFF. A local source receipt enables a **distinct local build**;
+it does not weaken production locks or claim binary equivalence. The Dockerfile
+inherits only the digest-pinned public audited runtime. A build does not push or
+deploy. New binaries, changed assets or added layers require a new audit and full
+four-rank acceptance before serving/publication. Do not run a local image under the
+published candidate's tag/digest or relabel it qualified.
 
-## Source/provenance mapping
+## Build-step provenance
 
-The retained provenance is homeinfra `cf6e8b67c`, under `docs/operations/evidence/`:
-
-| Step | Source evidence / pinned implementation |
+| Local artifact / step | Recorded origin |
 |---|---|
-| Engine/frontend source | Fork `b7c3eb5`; `pico-image-support-20261108/window-r2/HOST-QUALIFICATION.md` |
-| Text conversion and verification | Pinned `weights/{dsw_convert,dsw_verify}`, `engram_pack`, `make_hashmap_stdlib.py`; `pico-glp-promotion-20261107/README.md` |
-| Compact native vision | Pinned `tools/vision/extract_pack.py`; same host-qualification report |
-| Authentic optional vector | `pico-glp-upstream-prepare-20261107/README.md` |
-| Production gates | `pico-image-support-20261111/retrial-spark-only/REPORT.md` |
-| Sanitized rebuild, audit and owner waivers | Local [publication remediation](publication-remediation.md) and JSON receipts |
+| `vendor/engine`, `SOURCE.json` | Production engine b7c3eb5, generalized deployment data only |
+| `vendor/upstream` + `patches/series` | Pico base4e70b2ab + separate cache/GLP/parser/sampler/vision history |
+| Lossless converter/verifier/Engram | Included `engine/weights`, `engine/engram`; historical `pico-glp-promotion-20261107/README.md` |
+| Compact vision path | Included `tools/vision`; `pico-image-support-20261108/window-r2/HOST-QUALIFICATION.md` |
+| Accepted production model gates | homeinfra cf6e8b67c, `pico-image-support-20261111/retrial-spark-only/REPORT.md` |
+| Published runtime audit | Local `publication-audit.json`, `publication-remediation.md` and owner-adjudicated vendor findings |
 
-These evidence references are provenance, not private dependencies required to run
-this recipe. Only the public-package artifact is a distribution input.
+Evidence references identify historical provenance; they are not private runtime
+or build dependencies. No external engine checkout is required.
 
 ## Residual gaps
 
-1. **Publication held:** separate package is uploaded but still private; owner-authenticated
-   web access is needed to change visibility, followed by anonymous readback. Repository
-   publication is gated on that result.
-2. **Sanitized candidate GPU qualification pending.** The generic-path engine and runtime
-   have host/QEMU tests, not completed four-rank model gates. The PyTorch import smoke
-   timed out; this remains a qualification note, not an audit/publication blocker.
-3. **Independent exact compiler reproduction is not turnkey.** The original native-input
-   cross-toolchain/sysroot bundle is not publicly distributed. Native build commands are
-   supplied, but byte-identical source rebuilding is not promised. Users can run the
-   distributed candidate without rebuilding its engine.
-4. **Full public-source asset pipeline / all-in-one image not executed end to end.**
-   Snapshot acquisition, conversion, compact extraction, full bundle sizing/audit and
-   full-ring acceptance require actual execution. The runtime-only quick-start does not
-   claim to ship text weights or remove the need to prepare them.
+1. **Public sanitized candidate GPU qualification pending.** Same source/unchanged
+   frontend and vision assets do not replace four-rank model acceptance of the new
+   engine/runtime. The earlier incomplete PyTorch import smoke remains a qualification
+   note, not a disclosure finding. No serving deployment is performed by this recipe.
+2. **Full public-source pipeline not executed end to end here.** Acquisition, lossless
+   conversion of this large checkpoint, extraction and all-in-one assembly must be
+   executed/verified on a suitably provisioned build host. Offline tests do not prove
+   that entire resource-intensive workflow or a stranger's fabric.
+3. **Exact compiler reproduction is not promised.** Original cross-toolchain/sysroot
+   inputs are not published. The native ARM64 build is supplied and source-verified,
+   but binary hashes can differ. Qualify your resulting image rather than editing
+   a guard to call it production-identical.
