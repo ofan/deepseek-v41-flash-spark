@@ -106,11 +106,11 @@ class BundleIntegrationTests(unittest.TestCase):
     def run_validator(self,root,b):
         with patch.object(bundle,'ROOT',root),patch.object(sys,'argv',['prepare-bundle','--bundle',str(b)]):
             bundle.main()
-    def test_complete_bundle_writes_off_profile(self):
+    def test_vector_free_bundle_records_on_default_but_requires_explicit_off(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);b=self.fixture(root);self.run_validator(root,b)
             profile=json.loads((b/'profile.json').read_text())
-            self.assertEqual(profile['steering_default'],'off')
+            self.assertEqual(profile['steering_default'],'glp39')
             self.assertIsNone(profile['glp39_sha256'])
             self.assertEqual(len(profile['vision_files_sha256']),7)
     def test_changed_vision_runtime_fails(self):

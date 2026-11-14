@@ -8,7 +8,7 @@
   "engine_binary_sha256": "9b4aadf1ed5a5890d5e201d1f304be4a5461657d54eddf7df8b0f21882f45659",
   "frontend_binary_sha256": "860ec4f3a88c3b6833b88f03829728f537a498deee67cb540f9bd50ad72223f5",
   "optional_glp39_sha256": "9c66d47701e0ceb42c33906f2d3789c0f1f16b21e7d97185f20f7f3f09fbf5cf",
-  "public_steering_default": "off",
+  "public_steering_default": "glp39",
   "target_image": "ghcr.io/ofan/deepseek-v41-flash-spark-public:2026.11.11-native-vision-sanitized-candidate-r4",
   "engine_branch": "feature/native-vision-20261108",
   "vision_pack_sha256": "b07abf470c4107ba3029fedb9de1fd8823a40041f99d0d278e536b06ed5bb446",

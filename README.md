@@ -4,8 +4,8 @@ Run stock **DeepSeek-V4.1-Flash-1017** with the [Pico engine](https://github.com
 [blaesus/dsgb10](https://github.com/blaesus/dsgb10), on **4 × NVIDIA DGX Spark / GB10**:
 **1,048,576-token context**, image input, 16 request slots, and lossless text weights.
 The measured production stack prefills at **8,951 tok/s at 32K** and **8,598 tok/s near 1M**;
-fresh bounded decode measurements are below. Optional GLP-39 activation steering is
-**OFF by default**. This is image understanding, not image generation.
+fresh bounded decode measurements are below. GLP-39 activation steering is
+**ON by default, alpha 0.75, layers 1–39**; explicitly opt out with `--steering off`. This is image understanding, not image generation.
 
 This repository includes the engine/frontend implementation, four feature patches
 plus their cache-fidelity prerequisite, conversion/build scripts, a launcher and
@@ -164,7 +164,7 @@ docker run --name pico --network host --gpus all \
   --mount type=bind,src=/srv/pico/fleet.conf,dst=/etc/pico/fleet.conf,readonly \
   --mount type=bind,src=/srv/pico/spill,dst=/var/lib/pico \
   --tmpfs /run/pico:rw,nosuid,nodev,size=64m \
-  "$IMAGE" --rank "$RANK" --fleet /etc/pico/fleet.conf --steering off
+  "$IMAGE" --rank "$RANK" --fleet /etc/pico/fleet.conf --steering glp39
 ```
 
 Keep these terminals or your own reviewed service supervision in place. Do not
@@ -211,11 +211,15 @@ Limits include 16 images and 1024 span rows/image, plus request/frame/pixel/queu
 bounds; a file extension alone is not input validation. No raw model placeholders,
 audio/video or image-generation API is needed or offered.
 
-## Optional steering
+## Steering (ON by default)
 
-To opt in, replace `--steering off` with **`--steering glp39` on every rank**.
-Tested setting: alpha **0.75**, zero-based layers **1–39**. It uses an authentic
-runtime vector, not changed checkpoint weights. Credit **msuiche**, MIT.
+Use **`--steering glp39` on every rank**, as in the quick-start above.
+Default setting: alpha **0.75**, zero-based layers **1–39**.
+To opt out explicitly, replace it with **`--steering off` on every rank**.
+The pinned public image predates this recipe default; its embedded launcher defaults
+to OFF when the flag is omitted. The explicit quick-start flag enables GLP-39 without
+changing the immutable image. New builds use the in-repo launcher default of ON.
+Steering uses an authentic runtime vector, not changed checkpoint weights. Credit **msuiche**, MIT.
 [Mechanics, provenance and tradeoffs](docs/steering.md).
 
 ## Troubleshooting

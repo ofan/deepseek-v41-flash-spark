@@ -2,9 +2,9 @@
 
 This wrapper adds HTTP generation to the existing DeepInfer HLE evaluator. It does
 not launch an engine, invent questions or replace the existing LLM grading. It
-never changes steering, clocks, routing or saved sessions. The recipe's default
-steering remains OFF; an HLE steering-ON measurement requires a separately
-verified server already running GLP-39 at alpha 0.75, layers 1–39.
+never changes steering, clocks, routing or saved sessions. The recipe defaults to
+GLP-39 ON at alpha 0.75, layers 1–39, with explicit `--steering off` opt-out; an HLE
+steering-ON measurement still requires verification of the server's actual state.
 
 **Current result: not run, zero HLE samples.** The pinned official dataset download
 returned HTTP403 because the stored account is not authorized. See the

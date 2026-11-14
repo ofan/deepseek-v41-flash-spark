@@ -41,11 +41,18 @@ class PublicReleaseTests(unittest.TestCase):
             if not path.is_file():continue
             for match in re.findall(r'ghcr\.io/[A-Za-z0-9_./-]+',path.read_text()):
                 self.assertEqual(match,PUBLIC,str(path.relative_to(ROOT)))
-    def test_quickstart_mounts_and_default_off(self):
+    def test_quickstart_mounts_and_default_glp39(self):
         text=read('README.md')
-        for required in [PUBLIC,DIGEST,'docker pull','docker run','--rank "$RANK"','--steering off',
+        for required in [PUBLIC,DIGEST,'docker pull','docker run','--rank "$RANK"','--steering glp39','--steering off',
                          '/opt/package/model','/etc/pico/fleet.conf','/var/lib/pico','--gpus all','--device /dev/infiniband']:
             self.assertIn(required,text)
+    def test_default_glp39_and_opt_out_documented(self):
+        text=read('README.md')
+        self.assertIn('ON by default, alpha 0.75, layers 1–39',text)
+        self.assertIn('--fleet /etc/pico/fleet.conf --steering glp39',text)
+        self.assertNotIn('--fleet /etc/pico/fleet.conf --steering off',text)
+        self.assertIn('`--steering off` on every rank',text)
+        self.assertIn('immutable image',text)
     def test_qualification_honest_in_reader_docs(self):
         for name in ['README.md','docs/build.md','docs/benchmarks.md']:
             text=read(name).lower()

@@ -56,7 +56,10 @@ fresh model acceptance of the sanitized public runtime.
   source manifest and labels the assembled result unqualified.
 - README/setup cover requirements, model preparation, public image pull, completed
   user-specific fleet config, per-rank launch, health/text/image requests and troubleshooting.
-  Steering defaults OFF. No private mirror acquisition is required or instructed.
+  Steering now defaults ON: GLP-39, alpha 0.75, layers 1–39; explicit
+  `--steering off` opts out on every rank. Quick-start passes `--steering glp39`
+  explicitly because the immutable published image retains its older embedded
+  launcher. No private mirror acquisition is required or instructed.
 
 ## Public access readback
 
@@ -78,7 +81,7 @@ state is in `public-release.json`.
 ## Verification and limits
 
 - **106/106 recipe tests**, including source-tamper/mode rejection, staging, exact
-  patch replay, source-build receipt validation, unchanged default OFF, benchmark
+  patch replay, source-build receipt validation, the then-current OFF default, benchmark
   provenance and disclosure-detector regressions.
 - **38/38 Rust frontend tests** (`cargo test --locked --lib -j2`).
 - Host GLP reader test passes with the authentic vector; arithmetic comparison has

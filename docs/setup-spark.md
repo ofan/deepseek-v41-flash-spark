@@ -24,6 +24,14 @@ headers, Python and the locked Rust dependencies for building/conversion. Read
 [the included-source build instructions](build.md), not an external fork's local
 operations scripts. CPU or network metadata checks alone cannot qualify the ring.
 
+## Steering at launch
+
+Use `--steering glp39` on **every rank** as in the README quick-start: steering is
+**ON by default, alpha 0.75, layers 1–39**. To opt out, pass `--steering off` on
+every rank instead. Do not mix settings across the ring. The explicit ON flag
+is required for the pinned public image, whose older embedded launcher defaults
+to OFF when the flag is omitted; new source builds default to ON.
+
 ## Optional GPU clock cap
 
 Fresh read-only inspection on 2026-11-13 found an active persistent **2,200 MHz maximum graphics-clock cap on all four GPUs**, command shape:

@@ -73,7 +73,7 @@ def main():
     profile={k:lock[k] for k in ('engine_commit','frontend_commit','model_repository','model_revision')}
     profile.update(engine_sha256=lock['engine_binary_sha256'], frontend_sha256=lock['frontend_binary_sha256'],
                    glp39_sha256=lock['optional_glp39_sha256'] if vector.exists() else None,
-                   steering_default='off', vision_pack_sha256=lock['vision_pack_sha256'], vision_files_sha256=vr['sha256'])
+                   steering_default='glp39', vision_pack_sha256=lock['vision_pack_sha256'], vision_files_sha256=vr['sha256'])
     if a.publication_runtime:
         profile.update(runtime_manifest_digest=runtime['manifest_digest'],qualification='source rebuilt; new GPU acceptance required')
     if a.source_build_receipt:profile['qualification']='LOCAL SOURCE BUILD; new GPU qualification and privacy audit required'

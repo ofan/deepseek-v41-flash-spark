@@ -5,7 +5,7 @@ For first-time users:
 1. [Project overview and launch walkthrough](../README.md).
 2. [Hardware, host and fabric preparation](setup-spark.md).
 3. [Build from included source and prepare model assets](build.md).
-4. [Optional steering, OFF by default](steering.md).
+4. [GLP-39 steering, ON by default (explicit opt-out)](steering.md).
 5. [Benchmarks, method, latency caveats and public timing receipts](benchmarks.md).
 6. [Current completion and qualification status](completion-report.md).
 

@@ -157,7 +157,7 @@ def configure(state, output, recipe, engine, notice, vector=None):
     vision={n[len('opt/package/vision/'):]:r['sha256'] for n,r in state.items() if n.startswith('opt/package/vision/') and r['kind']=='file'}
     profile={k:lock[k] for k in ('engine_commit','frontend_commit','model_repository','model_revision')}
     profile.update(engine_sha256=digest(engine)[7:],frontend_sha256=lock['frontend_binary_sha256'],
-                   vision_files_sha256=vision,vision_pack_sha256=lock['vision_pack_sha256'],steering_default='off',glp39_sha256=lock['optional_glp39_sha256'],
+                   vision_files_sha256=vision,vision_pack_sha256=lock['vision_pack_sha256'],steering_default='glp39',glp39_sha256=lock['optional_glp39_sha256'],
                    qualification='new source rebuild; GPU serving acceptance not rerun')
     add_bytes(state,output,'opt/package/profile.json',(json.dumps(profile,indent=2)+'\n').encode())
     # Do not inherit account files, network configuration, machine IDs or hosts.
@@ -199,7 +199,7 @@ def write_oci(state,output,receipt,tag):
              'Entrypoint':['/usr/bin/python3','/opt/recipe/entrypoint.py'],'WorkingDir':'/opt/package',
              'ExposedPorts':{'8888/tcp':{}},'Labels':{'org.opencontainers.image.title':'Pico native vision runtime candidate',
              'org.opencontainers.image.source':'https://github.com/ofan/deepseek-v41-flash-spark',
-             'org.opencontainers.image.description':'Sanitized source-rebuilt runtime; external text assets; steering off by default'}},
+             'org.opencontainers.image.description':'Sanitized source-rebuilt runtime; external text assets; GLP-39 ON by default, alpha 0.75, layers 1-39'}},
              'rootfs':{'type':'layers','diff_ids':[diff]},'history':[{'created':STAMP,'created_by':'Explicit runtime allowlist and generic-path engine rebuild'}]}
     raw=json.dumps(config,separators=(',',':')).encode();cd='sha256:'+hashlib.sha256(raw).hexdigest();(blobs/cd[7:]).write_bytes(raw)
     manifest={'schemaVersion':2,'mediaType':'application/vnd.oci.image.manifest.v1+json',

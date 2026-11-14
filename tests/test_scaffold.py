@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[1]
 def load(name,filename):
@@ -17,8 +18,39 @@ scrub=load('scrub','check-scrub.py')
 bundle=load('bundle','prepare-bundle.py')
 
 class ScaffoldTests(unittest.TestCase):
-    def test_default_is_off(self):
-        self.assertEqual(json.loads((ROOT/'sources.lock.json').read_text())['public_steering_default'],'off')
+    def test_default_is_glp39(self):
+        self.assertEqual(json.loads((ROOT/'sources.lock.json').read_text())['public_steering_default'],'glp39')
+    def launch(self, rank, flags=(), check_side_effect=None):
+        profile=json.dumps(dict(engine_sha256='engine',frontend_sha256='frontend',
+                                glp39_sha256='vector'))
+        argv=['entrypoint','--rank',str(rank),'--fleet','fleet.conf','--no-vision',*flags]
+        with patch('sys.argv',argv), patch.object(entry.Path,'read_text',return_value=profile), \
+             patch.object(entry.Path,'is_file',return_value=True), patch.object(entry.Path,'mkdir'), \
+             patch.object(entry,'check',side_effect=check_side_effect) as checked, \
+             patch.object(entry,'supervise',return_value=0) as run:
+            self.assertEqual(entry.main(),0)
+        return checked,run
+    def test_omitted_flag_enables_glp39_on_every_rank(self):
+        for rank in range(4):
+            with self.subTest(rank=rank):
+                checked,run=self.launch(rank)
+                checked.assert_any_call('/opt/package/vectors/glp39.gguf','vector')
+                env=run.call_args.args[1]
+                self.assertEqual(env['WEIGHTLESS_STEER_PATH'],'/opt/package/vectors/glp39.gguf')
+                self.assertEqual(env['WEIGHTLESS_STEER_ALPHA'],'0.75')
+                self.assertEqual(env['WEIGHTLESS_STEER_LAYERS'],','.join(map(str,range(1,40))))
+    def test_explicit_off_skips_vector_and_clears_inherited_environment(self):
+        with patch.dict(entry.os.environ,{key:'inherited' for key in entry.STEER_VARS}):
+            for rank in range(4):
+                checked,run=self.launch(rank,('--steering','off'))
+                self.assertEqual(checked.call_count,2)
+                self.assertFalse(set(entry.STEER_VARS)&run.call_args.args[1].keys())
+    def test_default_refuses_missing_or_invalid_vector(self):
+        for failure in (FileNotFoundError('Vector absent'),ValueError('Artifact hash mismatch')):
+            def verify(path, expected):
+                if path.endswith('glp39.gguf'):raise failure
+            with self.subTest(failure=type(failure).__name__), self.assertRaises(type(failure)):
+                self.launch(0,check_side_effect=verify)
     def test_off_clears_inherited_steering(self):
         env={key:'inherited' for key in entry.STEER_VARS}
         self.assertFalse(set(entry.STEER_VARS)&entry.steering_environment(env,'off').keys())

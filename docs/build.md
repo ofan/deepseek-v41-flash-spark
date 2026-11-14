@@ -114,7 +114,7 @@ python3 scripts/prepare-vision.py --checkpoint work/checkpoint \
   --checkpoint-revision 1bae0e1088993b9b82de08f59de5be5a34e42170
 # Review, then repeat with --execute.
 python3 scripts/fetch-vector.py           # show authentic URL/hash only
-python3 scripts/fetch-vector.py --execute # optional; omit for no bundled vector
+python3 scripts/fetch-vector.py --execute # required for the default GLP-39 ON launch
 ```
 
 Vision uses the included `tools/vision/extract_pack.py`, exact HTTP206 tensor ranges,
@@ -124,7 +124,9 @@ publisher `inference/vision.py`, `image_processor.py` and config, and included
 `b07abf470c4107ba3029fedb9de1fd8823a40041f99d0d278e536b06ed5bb446`.
 A pre-obtained exact pack can be reused; no synthetic encoder/projector is allowed.
 Keep canonical attention (`VISION_SDPA_OPT_IN=0`) and serialized preload/encoding.
-[GLP-39 source and MIT credit](steering.md); default OFF.
+[GLP-39 source and MIT credit](steering.md); default ON, alpha 0.75, layers 1–39.
+A vector-free bundle is only usable with explicit `--steering off` on every rank;
+default ON fails startup if the authentic vector or its verified hash is missing.
 
 ## Assemble a new all-in-one image
 
@@ -150,7 +152,7 @@ bash scripts/build-image.sh
 ```
 
 The validator checks actual binary hashes, source provenance, model/vision receipts,
-paths and steering OFF. A local source receipt enables a **distinct local build**;
+paths and the GLP-39 ON default (alpha 0.75, layers 1–39). A local source receipt enables a **distinct local build**;
 it does not weaken production locks or claim binary equivalence. The Dockerfile
 inherits only the digest-pinned public audited runtime. A build does not push or
 deploy. New binaries, changed assets or added layers require a new audit and full

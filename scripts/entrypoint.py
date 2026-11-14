@@ -93,7 +93,8 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--rank',type=int,choices=range(4),required=True)
     p.add_argument('--fleet',required=True)
-    p.add_argument('--steering',choices=('off','glp39'),default='off')
+    p.add_argument('--steering',choices=('off','glp39'),default='glp39',
+                   help='GLP-39 ON by default (alpha 0.75, layers 1-39); off explicitly disables steering')
     p.add_argument('--no-vision',action='store_true',help='Disable image side encoder/frontend ingress')
     p.add_argument('--listen',default='0.0.0.0:8888')
     p.add_argument('--spill',default='/var/lib/pico')

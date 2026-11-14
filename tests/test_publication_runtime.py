@@ -167,6 +167,6 @@ class PublicationTests(unittest.TestCase):
         text=(ROOT/'scripts/assemble-runtime.py').read_text()
         self.assertIn("source_inherited_layers=0",text)
         self.assertIn("'history':[{'created':STAMP",text)
-        self.assertIn("steering_default='off'",(ROOT/'scripts/prepare-bundle.py').read_text())
+        self.assertIn("steering_default='glp39'",(ROOT/'scripts/prepare-bundle.py').read_text())
 
 if __name__=='__main__':unittest.main()

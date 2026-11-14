@@ -30,7 +30,7 @@ def main():
         with tmp.open('rb') as f:actual=hashlib.file_digest(f,'sha256').hexdigest()
         if actual!=lock['optional_glp39_sha256']:raise ValueError('Wrong authentic vector hash')
         tmp.rename(out)
-        print('Authentic optional GLP-39 verified. Steering default remains OFF.')
+        print('Authentic GLP-39 verified. Default ON: alpha 0.75, layers 1-39; opt out with --steering off.')
     finally:
         if tmp.exists():tmp.unlink()
 

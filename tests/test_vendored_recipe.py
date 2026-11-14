@@ -105,7 +105,7 @@ class SourceBuildReceiptTests(unittest.TestCase):
     def test_valid_local_receipt_labels_unqualified(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);b,r=self.fixture(root);self.run_it(root,b,r)
-            p=json.loads((b/'profile.json').read_text());self.assertIn('LOCAL SOURCE BUILD',p['qualification']);self.assertEqual(p['steering_default'],'off')
+            p=json.loads((b/'profile.json').read_text());self.assertIn('LOCAL SOURCE BUILD',p['qualification']);self.assertEqual(p['steering_default'],'glp39')
     def test_wrong_manifest_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);b,r=self.fixture(root);j=json.loads(r.read_text());j['source_manifest_sha256']='0'*64;r.write_text(json.dumps(j))
