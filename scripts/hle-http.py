@@ -227,10 +227,26 @@ class LoadGuard:
         self.responses = set()
         self.lock = threading.Lock()
         self.observations = self.max_external_active = 0
+        self.active_requests = 0
         self.reason = None
 
+    def request_started(self):
+        with self.lock:
+            self.active_requests += 1
+
+    def request_finished(self):
+        with self.lock:
+            if self.active_requests < 1:
+                raise RuntimeError('Unbalanced benchmark request accounting')
+            self.active_requests -= 1
+
     def sample(self):
-        proc = subprocess.run(shlex.split(self.command), capture_output=True, timeout=10, check=True)
+        # A read-only server counter can subtract only our dispatched requests,
+        # not idle keep-alive sockets (which include non-generating health checks).
+        env = os.environ.copy()
+        with self.lock:
+            env['HLE_BENCHMARK_INFLIGHT'] = str(self.active_requests)
+        proc = subprocess.run(shlex.split(self.command), capture_output=True, timeout=10, check=True, env=env)
         n = json.loads(proc.stdout)['external_active']
         if type(n) is not int or n < 0:
             raise ValueError('Invalid load observer count')
@@ -350,12 +366,15 @@ def generate(args):
         index, record = item
         guard.wait()
         start = time.monotonic()
-        response = requests.post(args.base_url.rstrip('/') + '/chat/completions',
-                                 headers=headers, json=payload(record, index, args),
-                                 stream=True, timeout=(10, 30))
-        with guard.lock:
-            guard.responses.add(response)
+        response = None
+        active = True
+        guard.request_started()
         try:
+            response = requests.post(args.base_url.rstrip('/') + '/chat/completions',
+                                     headers=headers, json=payload(record, index, args),
+                                     stream=True, timeout=(10, 30))
+            with guard.lock:
+                guard.responses.add(response)
             if response.status_code != 200:
                 # Retain evidence locally; never print bodies, endpoints or exception URLs.
                 write_json(dest / ('http-error-' + str(index) + '.json'),
@@ -364,6 +383,8 @@ def generate(args):
                             'body_sha256': digest(response.content)})
                 raise RuntimeError('Generation HTTP ' + str(response.status_code))
             d = consume_sse(response.iter_lines(), cancelled, start + args.request_deadline)
+            guard.request_finished()
+            active = False
             if guard.sample() != 0:
                 guard.abort('Exclusive benchmark violated at completion; rerun the affected wave')
             if cancelled.is_set():
@@ -385,9 +406,12 @@ def generate(args):
                 print(json.dumps({'completed': len(complete), 'expected': len(records),
                                   'task_index': index, 'finish_reason': row['finish_reason']}), flush=True)
         finally:
-            with guard.lock:
-                guard.responses.discard(response)
-            response.close()
+            if active:
+                guard.request_finished()
+            if response is not None:
+                with guard.lock:
+                    guard.responses.discard(response)
+                response.close()
 
     watcher.start()
     error = None

@@ -93,6 +93,15 @@ clients. Validate that accounting independently before a shared-production run.
 The command is split as arguments, not executed by a shell. It must return within
 10seconds. Do not place credentials in its argument string.
 
+The adapter supplies `HLE_BENCHMARK_INFLIGHT` to each observer invocation: the
+number of its own dispatched generation requests that have not completed. A
+monitor using an authoritative server active/queued counter can subtract this
+count to exclude this client. It is zero before dispatch and at the completion
+check; a transport failure also clears it. Do **not** count idle HTTP keep-alive
+connections as inference: health checks can keep such connections open without
+running the model. Validate the server counter's start/end coverage; missing,
+stale or inconsistent observations must stop the run rather than assume idle.
+
 Before any scored run, use the gateway's admission controls to pause **other**
 Spark clients, allow active requests to finish, and record the exact prior state
 and the pause start time. Leave the dataset/client traffic an explicitly isolated

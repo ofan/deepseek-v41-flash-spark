@@ -213,6 +213,54 @@ class HLEHttpTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 guard.sample()
 
+    def test_observer_receives_only_current_benchmark_inference_count(self):
+        guard = hle.LoadGuard('fixture', 1, threading.Event())
+        result = argparse.Namespace(stdout=b'{"external_active":0}')
+        with patch.object(hle.subprocess, 'run', return_value=result) as run:
+            guard.sample()
+            self.assertEqual(run.call_args.kwargs['env']['HLE_BENCHMARK_INFLIGHT'], '0')
+            guard.request_started()
+            guard.sample()
+            self.assertEqual(run.call_args.kwargs['env']['HLE_BENCHMARK_INFLIGHT'], '1')
+            guard.request_finished()
+            guard.sample()
+            self.assertEqual(run.call_args.kwargs['env']['HLE_BENCHMARK_INFLIGHT'], '0')
+        with self.assertRaisesRegex(RuntimeError, 'Unbalanced'):
+            guard.request_finished()
+
+    def test_generation_completion_and_transport_error_clear_own_count(self):
+        for fail in [False, True]:
+            with self.subTest(fail=fail), tempfile.TemporaryDirectory() as d:
+                data, provenance = self.staged(d)
+                args = self.args(concurrency=1, server_max_tokens=262144, out_dir=str(Path(d)/'run'),
+                                 data_file=str(data), provenance=str(provenance), request_deadline=5,
+                                 pause_timeout=1, load_command='fixture', api_key_env='FIXTURE_ABSENT_TOKEN',
+                                 base_url='http://localhost/v1')
+                counts, guards = [], []
+                def sample(guard):
+                    counts.append(guard.active_requests)
+                    guards.append(guard)
+                    return 0
+                class Response:
+                    status_code = 200
+                    headers = {}
+                    def iter_lines(self):
+                        self.assert_active()
+                        return iter(stream())
+                    def assert_active(self):
+                        if guards[-1].active_requests != 1:
+                            raise AssertionError('Inference not counted while streaming')
+                    def close(self): pass
+                kw = {'side_effect': RuntimeError('fixture')} if fail else {'return_value': Response()}
+                with patch('requests.post', **kw), patch.object(hle.LoadGuard, 'monitor'), \
+                     patch.object(hle.LoadGuard, 'sample', sample), \
+                     patch.dict(os.environ, {'EVAL_JUDGE_MODEL': 'fixture-judge', 'EVAL_JUDGE_BASE_URL': 'http://localhost/v1', 'EVAL_JUDGE_API_KEY': 'fixture'}), \
+                     contextlib.redirect_stdout(io.StringIO()):
+                    result = hle.generate(args)
+                self.assertEqual(guards[-1].active_requests, 0)
+                self.assertEqual(counts, [0] if fail else [0, 0])
+                self.assertEqual(result, 1 if fail else 0)
+
     def test_one_external_request_aborts_immediately(self):
         guard=hle.LoadGuard('fixture',1,threading.Event())
         with patch.object(guard.done,'wait',return_value=False), patch.object(guard,'sample',return_value=1), patch.object(guard,'abort') as abort:
