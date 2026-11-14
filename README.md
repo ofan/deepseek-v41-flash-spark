@@ -196,7 +196,7 @@ Both checks come from the same accepted production re-trial evidence above.
 
 ## Quality
 
-The target standardized comparison is **HLE without tools, text-only subset**,
+The selected standardized comparison is **HLE without tools, text-only subset**,
 for which [DeepSeek's official model card](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017/blob/main/README.md)
 reports **44.0%**. The recipe comparison is GLP-39 **ON, alpha 0.75**, layers 1â€“39.
 
@@ -204,16 +204,18 @@ reports **44.0%**. The recipe comparison is GLP-39 **ON, alpha 0.75**, layers 1â
 |---|---:|---|---|
 | HLE without tools, text-only | **44.0%** | **Not measured** | N/A |
 
-**No standardized recipe quality score or point delta is claimed yet.** The
-[client-only HTTP adapter](docs/hle-http.md) is now implemented around the existing
-HLE prompts and LLM scorer. The pinned official dataset returned **HTTP 403**:
-the stored account is not authorized for `cais/hle`. **Zero HLE questions ran**;
-no mirror, generated questions or smoke score was substituted. Dataset access
-under the official terms is required before a score can be measured. There is
-also a known settings difference: production caps output at **32,768 tokens**,
-whereas the official card recommends at least **256K**; the adapter refuses silent
-clipping. No serving or clock setting was changed.
-[Official reference, adapter verification and access evidence](docs/benchmarks.md#standardized-quality-comparison--not-run).
+**No recipe quality score or point delta is claimed.** Dataset access is resolved:
+the pinned official revision was staged and verified locally at **2,158 text-only
+questions** of 2,500. The run is stopped by a protocol difference, not by access.
+Unchanged production caps output at **32,768 tokens**, while the official card
+reports HLE at **at least 256K**. In diagnostic requests drawn from the official
+question set at that cap, **5 of 9 produced no answer at all** because they reached
+the 32,768-token limit first; the four that finished needed 19K-26K tokens. A capped
+score would measure a shorter protocol, and the complete text-only set projects to
+roughly **60 million output tokens, about six days of exclusive serving**. Neither a
+partial subset nor a shortened-budget result is published as the HLE score. No
+serving, clock or routing setting was changed.
+[Official reference, dataset provenance and probe evidence](docs/benchmarks.md#standardized-quality-comparison--dataset-staged).
 
 **Serving acceptance check:** GLP-39 scored **14/14** on the existing small local
 suite: six capability checks, two long-context retrieval checks and six P5

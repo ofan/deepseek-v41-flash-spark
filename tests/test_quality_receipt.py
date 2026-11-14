@@ -27,11 +27,15 @@ class QualityReceiptTests(unittest.TestCase):
 
     def test_local_acceptance_is_not_a_standardized_score(self):
         planned = json.loads((ROOT / 'docs/benchmarks/2026-11-14-standardized-quality.json').read_text())
-        self.assertEqual(planned['status'], 'not_run_dataset_access_denied')
+        self.assertEqual(planned['status'], 'not_run_output_cap_protocol_mismatch')
         self.assertEqual(planned['samples_run'], 0)
-        self.assertEqual(planned['dataset']['http_status'], 403)
-        self.assertFalse(planned['dataset']['staged'])
-        self.assertIsNone(planned['dataset']['actual_text_samples'])
+        self.assertEqual(planned['dataset']['http_status'], 200)
+        self.assertTrue(planned['dataset']['staged'])
+        self.assertEqual(planned['dataset']['actual_text_samples'], 2158)
+        self.assertEqual(planned['dataset']['actual_total_samples'], 2500)
+        self.assertRegex(planned['dataset']['parquet_sha256'], r'^[a-f0-9]{64}$')
+        self.assertRegex(planned['dataset']['text_jsonl_sha256'], r'^[a-f0-9]{64}$')
+        self.assertFalse(planned['dataset']['questions_or_answers_published'])
         self.assertFalse(planned['adapter']['evaluator_sources_changed'])
         self.assertEqual(planned['adapter']['actual_hle_generation_requests'], 0)
         self.assertEqual(planned['adapter']['default_concurrency'], 1)
@@ -43,6 +47,22 @@ class QualityReceiptTests(unittest.TestCase):
         self.assertFalse(planned['clock_settings_changed'])
         self.assertFalse(planned['engine_restarted'])
         self.assertFalse(planned['new_eval_prompts_authored'])
+
+    def test_blocker_is_the_output_cap_not_dataset_access(self):
+        planned = json.loads((ROOT / 'docs/benchmarks/2026-11-14-standardized-quality.json').read_text())
+        probes = planned['diagnostic_probes']
+        self.assertEqual(probes['scored_samples'], 0)
+        self.assertEqual(probes['requests'], 9)
+        self.assertEqual(probes['ended_at_cap_with_no_content'], 5)
+        self.assertEqual(probes['ended_with_answer'], 4)
+        self.assertEqual(probes['settings']['max_tokens'], 32768)
+        self.assertFalse(probes['published'])
+        self.assertGreater(probes['projection']['estimated_days'], 1)
+        isolation = planned['isolation']
+        self.assertFalse(isolation['admission_pause_applied'])
+        self.assertEqual(isolation['scored_samples_requiring_rerun'], 0)
+        self.assertEqual(planned['generation_setting_preflight']['pinned_frontend_compiled_default_max_output_tokens'], 32768)
+        self.assertFalse(planned['generation_setting_preflight']['judge_model_frozen'])
 
     def test_official_reference_is_not_comparable(self):
         self.assertFalse(self.receipt['official_comparison_is_matching'])
@@ -67,8 +87,11 @@ class QualityReceiptTests(unittest.TestCase):
         readme = (ROOT / 'README.md').read_text()
         details = (ROOT / 'docs/benchmarks.md').read_text()
         quality = readme.split('## Quality\n', 1)[1].split('## Requirements\n', 1)[0]
-        self.assertIn('No standardized recipe quality score or point delta is claimed yet.', quality)
+        self.assertIn('No recipe quality score or point delta is claimed.', quality)
         self.assertIn('Not measured', quality)
+        self.assertIn('2,158 text-only', quality)
+        self.assertIn('32,768', quality)
+        self.assertIn('5 of 9 produced no answer', quality)
         self.assertIn('Serving acceptance check', quality)
         self.assertNotIn('Steering OFF', quality)
         self.assertNotIn('OFF/ON', quality)

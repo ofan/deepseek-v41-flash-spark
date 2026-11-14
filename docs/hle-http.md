@@ -6,10 +6,12 @@ never changes steering, clocks, routing or saved sessions. The recipe defaults t
 GLP-39 ON at alpha 0.75, layers 1–39, with explicit `--steering off` opt-out; an HLE
 steering-ON measurement still requires verification of the server's actual state.
 
-**Current result: not run, zero HLE samples.** The pinned official dataset download
-returned HTTP403 because the stored account is not authorized. See the
-[access receipt and settings caveat](benchmarks.md#standardized-quality-comparison--not-run).
-The implementation is offline-tested, not yet validated on actual HLE generations.
+**Current result: not run, zero scored HLE samples.** The pinned official dataset
+is now staged and locally verified at 2,158 text-only questions. The run is stopped
+by the production 32,768-token output cap, which is below the official 256K
+recommendation and truncates about half of the diagnostic questions. See the
+[dataset receipt and protocol caveat](benchmarks.md#standardized-quality-comparison--dataset-staged).
+The implementation is offline-tested, not yet validated on scored HLE generations.
 
 ## Sources and installation
 

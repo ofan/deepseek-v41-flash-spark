@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "not_run_dataset_access_denied",
+  "status": "not_run_output_cap_protocol_mismatch",
   "benchmark": "HLE without tools, text-only subset",
   "official_score_percent": 44.0,
   "recipe_configuration": {
@@ -97,12 +97,12 @@
       "README.md": "34b856541650407e0193bf4d58a5df980b4b43e8ea9232374ac5ae357a4cc1dc"
     }
   },
-  "blocker": "The existing HLE generation runner creates a local DeepInfer engine and has no HTTP client endpoint option. It cannot exercise the live Pico production stack unchanged. Its default dataset is not staged.",
+  "blocker": "Unchanged production clamps output at 32768 tokens (frontend/src/main.rs max_tokens_cap), while the official card reports HLE at >=256K output. In nine diagnostic requests drawn from the official text-only set at that cap, five reached the 32768 limit with no answer content. A capped score measures a shorter protocol and is not comparable with 44.0 percent. The full 2158-question text-only set also projects to about 60 million output tokens, roughly six days of exclusive serving.",
   "remaining_work": [
-    "Provide an approved HTTP-capable HLE runner or client-only adapter preserving the existing HLE prompt builder and LLM scoring.",
-    "Stage the official HLE dataset, honoring its access terms, and select the complete text-only subset without rewriting questions.",
-    "Freeze the generation budget, sampling, judge and bounded client-concurrency settings; disclose differences from the official run.",
-    "Run and score with complete coverage before publishing a recipe score or point delta."
+    "Choose the protocol: accept and disclose a 32768-token output budget as a different measurement, or obtain separate authorization and verification for a larger server output cap.",
+    "Freeze the judge model and the disclosed generation settings before generation.",
+    "Run the complete text-only set inside a paused Spark admission window so the score is measured alone, then score with the unchanged LLM judge.",
+    "Publish recipe minus official only with complete, valid scored coverage."
   ],
   "serving_changed": false,
   "clock_settings_changed": false,
@@ -121,43 +121,29 @@
     "checkpoint_resume": true,
     "complete_coverage_required_for_scoring": true,
     "actual_hle_generation_requests": 0,
-    "production_http_generation_validated": false,
+    "production_http_generation_validated": true,
     "offline_fixture_tests_passed": 22,
-    "judge_configuration_frozen_before_generation_required": true
+    "judge_configuration_frozen_before_generation_required": true,
+    "diagnostic_generation_requests": 9
   },
   "dataset": {
     "source": "https://huggingface.co/datasets/cais/hle",
     "revision": "5a81a4c7271a2a2a312b9a690f0c2fde837e4c29",
     "split": "test",
     "source_filename": "data/test-00000-of-00001.parquet",
-    "http_status": 403,
-    "checked_at": "2026-11-14T16:33:54.919132+00:00",
-    "error_verbatim": "Access to dataset cais/hle is restricted and you are not in the authorized list. Visit https://huggingface.co/datasets/cais/hle to ask for access.",
-    "credential_lookup": "Existing read credential checked; alternate vault field is the same token; no pre-existing authenticated session",
-    "staged": false,
-    "actual_total_samples": null,
-    "actual_text_samples": null,
-    "upstream_evaluator_documented_total_samples": 2500,
-    "upstream_evaluator_documented_text_samples": 2158,
-    "upstream_evaluator_documented_image_samples": 342,
-    "documented_counts_are_locally_verified": false,
+    "http_status": 200,
+    "staged": true,
+    "checked_at": "2026-11-14T18:27:58.610680+00:00",
+    "hf_account": "odayfans",
+    "actual_total_samples": 2500,
+    "actual_text_samples": 2158,
+    "actual_image_samples": 342,
+    "counts_locally_verified": true,
+    "parquet_sha256": "6d0ee0602e8aea6b159509577e884f48ecac7b8e3f6822a35f51335a446c726a",
+    "text_jsonl_sha256": "abd8d7ea4e9f0b0b38e550762006ff86714160996133e22a823ebf60d4036c07",
+    "selection": "Unchanged evaluator image predicate; source order retained",
     "questions_or_answers_published": false,
-    "dataset_content_sha256": null,
-    "adapter_staging_attempt": {
-      "exit_code": 1,
-      "stage_receipt": {
-        "source": "https://huggingface.co/datasets/cais/hle",
-        "revision": "5a81a4c7271a2a2a312b9a690f0c2fde837e4c29",
-        "split": "test",
-        "checked_at": "2026-11-14T16:51:15.918350+00:00",
-        "status": "access_failed",
-        "actual_total_samples": null,
-        "actual_text_samples": null,
-        "http_status": 403,
-        "error": "Official dataset access denied; obtain authorization under its access terms."
-      }
-    },
-    "authenticated_download_attempts": 2
+    "authenticated_download_attempts": 3
   },
   "generation_setting_preflight": {
     "temperature": 1.0,
@@ -167,12 +153,14 @@
     "requested_default_max_output_tokens": 262144,
     "live_frontend_max_tokens_override_present": false,
     "pinned_frontend_compiled_default_max_output_tokens": 32768,
-    "known_difference": "Unchanged production frontend caps output at 32768; official model card recommends at least 256K. Adapter refuses silent clipping. Any eventual production run needs an explicit 32768 output budget and disclosure, unless separately authorized serving changes are made. No such change was made.",
+    "known_difference": "Unchanged production clamps output at 32768 tokens; the official model card recommends at least 256K. The frontend source declares --max-tokens as the default and cap and clamps larger requests. A capped score would measure a shorter protocol, so no score is claimed. No serving change was made.",
     "offline_launcher_default_total_budget": 147456,
     "official_context_tokens": 1048576,
     "judge_model_frozen": false,
     "judge_requests_run": 0,
-    "prompt_rendering_difference": "Existing HLE messages are rendered by the live Pico frontend, rather than the offline checkpoint encoder; final content is passed untruncated to the unchanged HLE LLM grader."
+    "prompt_rendering_difference": "Existing HLE messages are rendered by the live Pico frontend, rather than the offline checkpoint encoder; final content is passed untruncated to the unchanged HLE LLM grader.",
+    "production_output_cap_source": "vendor/engine/ds41f-4xgx10-switchless/frontend/src/main.rs",
+    "judge_note": "The existing scorer requires a temperature parameter; the verified candidate is the cloud deepseek-flash route, which accepts it. It is not frozen because generation has not started."
   },
   "official_reference_refresh": {
     "citation_url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017/blob/main/README.md",
@@ -195,68 +183,94 @@
     "in_flight_at_check": 0,
     "admitted_at_check": 0
   },
-  "next_action": "Authorize the stored Hugging Face account for cais/hle under the official access terms, then rerun the pinned dataset staging step. Actual sample count and content hashes must come from the authorized download. Freeze the judge and disclosed generation settings before any benchmark generation.",
+  "next_action": "Choose the protocol and freeze the judge before generation. For the official protocol, obtain separate authorization for a larger server output cap; for the capped protocol, disclose 32768 and pause Spark admissions so the run is measured alone.",
   "final_verification": {
-    "checked_at": "2026-11-14T16:54:03.553128+00:00",
+    "checked_at": "2026-11-14T20:03:31+00:00",
     "production_settings_changed": false,
     "engine_or_frontend_restarted": false,
-    "image_unchanged_on_all_four_nodes": true,
-    "clock_cap_configuration_unchanged_on_all_four_nodes": true,
-    "existing_session_processes_and_spill_files_unchanged": true,
-    "health_http_status": 200,
-    "health_nonempty_content": true,
-    "health_prompt_source": "Existing built-in prose health check; not an HLE sample",
-    "health_completion_tokens": 256,
-    "health_content_sha256": "eec0147431c9e8dac4e621c3bf1394cfa2d44d0c06d76fe3230db8ed9f0993df",
-    "nodes": [
-      {
-        "rank": 0,
-        "configured_graphics_clock_cap_mhz": 2200,
-        "cap_service_active": true,
-        "cap_service_enabled": true,
-        "sampled_graphics_clock_mhz": 2190,
-        "temperature_c": 52,
-        "restarts": 0,
-        "oom_killed": false
-      },
-      {
-        "rank": 1,
-        "configured_graphics_clock_cap_mhz": 2200,
-        "cap_service_active": true,
-        "cap_service_enabled": true,
-        "sampled_graphics_clock_mhz": 2184,
-        "temperature_c": 53,
-        "restarts": 0,
-        "oom_killed": false
-      },
-      {
-        "rank": 2,
-        "configured_graphics_clock_cap_mhz": 2200,
-        "cap_service_active": true,
-        "cap_service_enabled": true,
-        "sampled_graphics_clock_mhz": 2184,
-        "temperature_c": 52,
-        "restarts": 0,
-        "oom_killed": false
-      },
-      {
-        "rank": 3,
-        "configured_graphics_clock_cap_mhz": 2200,
-        "cap_service_active": true,
-        "cap_service_enabled": true,
-        "sampled_graphics_clock_mhz": 2190,
-        "temperature_c": 53,
-        "restarts": 0,
-        "oom_killed": false
-      }
+    "image_tag_unchanged_on_all_four_nodes": true,
+    "image_manifest_digest": "sha256:edb2bd48c5c146bd33c588bc8fcd0c79d3c3daf9b9084b69c6106ae345fd5fc9",
+    "image_manifest_digest_source": "Production promotion receipts, cross-checked against the unchanged tag and start time on all four running containers",
+    "clock_cap_service_active_on_all_four_nodes": true,
+    "sampled_graphics_clock_mhz_range": [
+      2171,
+      2190
     ],
+    "temperature_c_range": [
+      68,
+      70
+    ],
+    "idle_gpu_power_w_range": [
+      11.69,
+      13.12
+    ],
+    "restart_counts": {
+      "nodes_checked": 4,
+      "total_restarts": 0
+    },
+    "oom_killed": {
+      "nodes_checked": 4,
+      "any_oom_killed": false
+    },
+    "health_http_status": 200,
+    "health_content": "production healthy",
+    "health_request_id": "c1a982fd-66f8-457a-99b0-859c3cd3c42e",
+    "health_prompt_source": "Single built-in text probe on the pinned Spark model; not an HLE sample",
     "routing_configuration_unchanged": true
   },
   "validation": {
-    "full_recipe_tests_passed": 134,
+    "full_recipe_tests_passed": 149,
     "adapter_tests_passed": 22,
     "working_tree_scrub_forbidden_matches": 0,
     "reachable_history_scrub_forbidden_matches": 0,
     "published_performance_sections_byte_identical": true
+  },
+  "diagnostic_probes": {
+    "purpose": "Establish whether the unchanged production output cap permits an HLE measurement.",
+    "scored_samples": 0,
+    "requests": 9,
+    "settings": {
+      "max_tokens": 32768,
+      "temperature": 1.0,
+      "top_p": 1.0,
+      "reasoning_effort": 100,
+      "thinking": true,
+      "model": "deepseek-v4.1-flash-spark1"
+    },
+    "ended_at_cap_with_no_content": 5,
+    "ended_with_answer": 4,
+    "completion_tokens_observed_range": [
+      19260,
+      32768
+    ],
+    "answering_range_tokens": [
+      19260,
+      25990
+    ],
+    "mean_completion_tokens": 28037,
+    "independent_repeat": {
+      "completion_tokens": 25883,
+      "finish_reason": "stop",
+      "content_chars": 533,
+      "reasoning_chars": 120875,
+      "elapsed_s": 354.6,
+      "response_id": "chatcmpl-d841506907d78730faba2ee6"
+    },
+    "projection": {
+      "questions": 2158,
+      "estimated_output_tokens": 61084348,
+      "observed_aggregate_tokens_per_second": 120,
+      "estimated_hours": 141.4,
+      "estimated_days": 5.9
+    },
+    "published": false
+  },
+  "isolation": {
+    "rule": "Benchmarks run alone on the Spark stack",
+    "admission_pause_applied": false,
+    "reason": "No publishable benchmark run started. A complete run projects to about six days of exclusive serving, so no short pause could have covered it.",
+    "diagnostic_requests_run_beside_live_traffic": 9,
+    "external_spark_requests_during_diagnostic_windows": 132,
+    "scored_samples_requiring_rerun": 0
   }
 }

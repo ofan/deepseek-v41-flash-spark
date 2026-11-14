@@ -13,7 +13,7 @@ import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ('README.md', 'docs/setup-spark.md')
-MEASURED_SHA256 = '6a377451a396c606dc9da875142018797ec2687370dd2139ac17141c50a645c8'
+MEASURED_SHA256 = '52a71857941ddf787cad1ca8dd38c4643f2bd1263ec2f6ddff7647f63eb6e5d4'
 
 
 def read(name):
@@ -36,7 +36,7 @@ def run_example(source, root):
 class ReaderDocsTests(unittest.TestCase):
     def test_published_measurements_and_labels_unchanged(self):
         text = read('README.md')
-        measured = text[text.index('## Measured performance\n'):text.index('## Requirements\n')]
+        measured = text[text.index('## Measured performance\n'):text.index('## Quality\n')]
         self.assertEqual(hashlib.sha256(measured.encode()).hexdigest(), MEASURED_SHA256)
 
     def test_every_bash_block_is_syntactically_valid(self):

@@ -97,7 +97,7 @@ Prefill = server-counted prompt tokens / client time-to-first-token, with a one-
 
 These counts do not claim 88 distinct image fixtures or 14 new capability cases. The fixed set has six known-answer images; 88 is the request/repeat/concurrency matrix size per steering arm. The current report records 6/6 capability plus 2/2 needles, not a newly rerun 14-point suite.
 
-## Standardized quality comparison — not run
+## Standardized quality comparison — dataset staged
 
 The comparison selected for this recipe is **HLE without tools, text-only subset**,
 with GLP-39 **ON at alpha 0.75, layers 1–39**. DeepSeek's published reference is
@@ -109,8 +109,61 @@ remains a separate serving check.
 | HLE without tools, text-only | **44.0%** | **Not measured** | N/A |
 
 **Run status: not run; samples 0; raw result absent; recipe score and delta null.**
-No partial subset, exact-match smoke score, or local serving score is substituted
-for an HLE result.
+This does not mean a score of 0%. No partial subset, exact-match smoke score or
+local serving score is substituted for an HLE result.
+
+### Dataset access resolved (2026-11-14)
+
+The stored account now holds the access grant. The pinned official parquet was
+downloaded and verified locally on **2026-11-14**:
+
+| Item | Value |
+|---|---|
+| Source | [`cais/hle`](https://huggingface.co/datasets/cais/hle), split `test` |
+| Revision | `5a81a4c7271a2a2a312b9a690f0c2fde837e4c29` |
+| HTTP status | **200** |
+| Questions | 2,500 total; **2,158 text-only**; 342 with images |
+| Parquet SHA-256 | `6d0ee0602e8aea6b159509577e884f48ecac7b8e3f6822a35f51335a446c726a` |
+| Text-subset SHA-256 | `abd8d7ea4e9f0b0b38e550762006ff86714160996133e22a823ebf60d4036c07` |
+
+Selection uses the evaluator's unchanged image predicate and keeps source order.
+Questions and answers are unchanged and stay outside this repository. The counts
+are locally measured, not copied from documentation.
+
+### Why no score was produced: output-cap incompatibility
+
+Unchanged production uses the frontend's compiled output cap. Read from the
+vendored engine source, `frontend/src/main.rs` declares
+`--max-tokens N   default and cap for max_tokens: 32768` and initialises
+`max_tokens_cap` to `32768`; larger client requests are clamped. The official card
+reports HLE at **at least 256K** output tokens.
+
+Nine diagnostic requests used unchanged official questions through the unchanged
+adapter message builder at `max_tokens=32768`, temperature 1.0, top-p 1.0, thinking
+on, effort 100, against the pinned Spark model. They are diagnostics, not scored
+samples:
+
+| Probe outcome | Count |
+|---|---:|
+| Ended at the 32,768-token limit with no answer content | **5** |
+| Ended with an answer, 19,260–25,990 completion tokens | **4** |
+
+The ninth probe, run while this document was being updated, finished normally at
+25,883 completion tokens with 533 characters of answer content. Mean observed
+output is about 28,000 tokens per question. Scaled to the 2,158 text-only
+questions, that is roughly **60 million output tokens**; at the ~120 tok/s aggregate
+observed at four concurrent requests during the probe window it is about
+**140 hours (5.9 days)** of continuous serving. More slots would shorten it, but it remains a multi-day
+dedicated window.
+
+Because about half of the probe questions cannot answer at all within the
+production cap, a capped run measures a shorter protocol than the one behind the
+44.0% reference. Presenting its percentage beside 44.0% would be a false
+comparison, so no number is claimed.
+
+The probes ran beside live production traffic. They are diagnostic only: no scored
+sample depends on them and no admission change was made for them. A scored run
+would pause other Spark admissions first and run alone.
 
 ### Official published scores
 
@@ -137,10 +190,9 @@ For HLE, the daggered **44.0** is the **text-only subset**; **42.6** is the full
 without-tools score. The text-only score is the intended reference, not 42.6.
 The card lists temperature **1.0**, top-p **1.0**, **1M** context and at least
 **256K** maximum output tokens. It does not state the evaluated sample count for
-this row. There is no recipe run yet, so no actual run-setting comparison or
-percentage-point delta is available.
+this row. There is no recipe run, so no percentage-point delta is available.
 
-### HTTP adapter implementation and dataset access outcome (2026-11-14)
+### HTTP adapter implementation (2026-11-14)
 
 The previous **offline-launcher** limitation is addressed by
 [`scripts/hle-http.py`](../scripts/hle-http.py). It is a **client-only** transport,
@@ -165,90 +217,52 @@ not a model launcher. It preserves the existing DeepInfer HLE implementation at
   judge responses prevent publication. Length-limited outputs remain counted,
   unchanged, and must be disclosed as truncations.
 - A required read-only load observer pauses new work for external requests and
-  cancels this client's wave after sustained high production load. It fails closed
+  cancels this client's wave after sustained production load. It fails closed
   if monitoring fails. There are no serving, clock or session-management calls.
 - **22 offline tests pass**, including message identity, unchanged LLM scoring,
   real parquet fixture filtering, streaming, cancellation, output-cap checks and
   resume. These are fixture tests, **not a live HLE score or production transport
-  qualification**. No HLE generation or judge requests were made.
-  The real adapter staging CLI also exited **1** with HTTP403 at
-  **2026-11-14T16:51:15.918350+00:00**; its access receipt has no staged counts.
+  qualification**.
+- The staging CLI now reports `status: staged` with the verified counts and hashes
+  above. Staging downloads and filters only; it performs no generation.
 
-**The remaining immediate prerequisite is official dataset access.** Metadata
-identifies the official source as
-[`cais/hle`](https://huggingface.co/datasets/cais/hle), pinned revision
-**`5a81a4c7271a2a2a312b9a690f0c2fde837e4c29`**, split `test`, file
-`data/test-00000-of-00001.parquet`. The authenticated download at
-**2026-11-14T16:33:54.919132+00:00** returned **HTTP 403**, verbatim:
-
-> Access to dataset cais/hle is restricted and you are not in the authorized list. Visit https://huggingface.co/datasets/cais/hle to ask for access.
-
-The alternate stored token field is the same credential, and no already-authorized
-local session was available. No gate was bypassed and no mirror was substituted.
-The evaluator's documentation describes **2,500 total / 2,158 text / 342 image**
-questions; these are **upstream documented counts, not locally verified counts**.
-No dataset bytes were staged, so actual counts and content hashes remain null.
-**Run status: not run; samples 0; raw result absent; recipe score and delta null.**
-This does not mean a score of 0%.
-
-### Generation settings still to freeze before the run
-
-The adapter's default maximum output budget is **262,144**, matching the official
-card's minimum recommendation. Read-only process inspection showed that the live
-production frontend has **no `--max-tokens` override**. The pinned frontend's
-compiled default/cap is **32,768** (`frontend/src/main.rs`); its server code clamps
-larger requests to that cap. The adapter therefore requires a verified server cap
-and **refuses silent clamping**. A run against unchanged production must explicitly
-select a **32,768-token** output budget and disclose that difference. The offline
-launcher's old **147,456 prompt-plus-output** default is a third, different budget;
-it is not silently mapped to HTTP output tokens. No serving change is authorized
-or made by this adapter.
+The dataset requirement is therefore closed. The open prerequisite is the
+generation protocol: either accept a disclosed 32,768-token budget as a different
+protocol and publish it as such, or authorize and verify a larger server output cap
+for the official setting. No such serving change was made.
 
 The official card specifies **1M** context, temperature **1.0**, top-p **1.0** and
 at least **256K** maximum output, but not the judge model or exact row sample count.
 The production startup receipt confirms steering **alpha 0.75, 39 layers**. All four
-configured **2,200 MHz** cap services remain active; zero restarts/OOM kills were
-observed. The judge model has **not yet been frozen**; its existing environment
-contract must be configured before generation starts. This prevents selecting a
-new grader opportunistically after seeing answers.
-
-The official card was re-fetched at **2026-11-14T16:47:12.674675+00:00**, HTTP200,
-with the same SHA-256 recorded above. Its daggered text-only HLE reference remains
-**44.0%**. No numeric comparison with the recipe can yet be made.
+configured **2,200 MHz** cap services are active; zero restarts or OOM kills were
+observed. The judge model is **not frozen**, because no generation has started.
+Freezing it first prevents choosing a grader after seeing answers.
 
 ### Final no-change verification
 
-At **2026-11-14T16:54:03.553128+00:00**, an existing built-in text health request
-returned **HTTP200** with nonempty output; it was not an HLE sample. All four
-containers kept their original processes, start times, images and saved-session
-file identities/sizes. The configured clock-cap services and routing configuration
-were unchanged. All four nodes had zero restarts/OOM kills:
+At **2026-11-14T20:03:31Z**, a real text completion through the proxy on the pinned
+Spark model returned **HTTP200** with the expected content; it was not an HLE
+sample. All four clock-cap services were active and sampled graphics clocks were
+**2,171–2,190 MHz**, temperatures **68–70 °C**, idle GPU power **11.7–13.1 W**.
+All four containers kept their images, start times and process identities; restart
+counts and OOM-kill counts remained zero. No clock, serving or routing restoration
+was necessary because no setting was changed.
 
-| Rank | Configured graphics-clock cap (MHz) | Sampled clock (MHz) | Cap service |
-|---|---:|---:|---|
-| 0 | 2,200 | 2,190 | active/enabled |
-| 1 | 2,200 | 2,184 | active/enabled |
-| 2 | 2,200 | 2,184 | active/enabled |
-| 3 | 2,200 | 2,190 | active/enabled |
-
-No clock or serving restoration was necessary because no setting was changed.
 The published performance tables and their capped-condition lines are unchanged.
-Validation: **134/134 recipe tests**, including **22 adapter tests**, pass; working
+Validation: **149/149 recipe tests**, including **22 adapter tests**, pass; working
 tree and reachable-history scrubs found **zero forbidden matches**.
 
 ### Resume prerequisites
 
-1. Authorize the stored Hugging Face account for the official dataset under its
-   access terms. The adapter does not submit access forms or accept terms.
-2. Stage the pinned official parquet, verify measured text-subset count and hashes,
-   and retain the unchanged source questions privately.
-3. Freeze the judge model and explicit generation budget, document the difference
-   from the official run, and verify live model, steering and read-only load observer.
-4. Run the complete text-only set using the adapter, then the unchanged LLM scorer.
-   Only complete, valid scored coverage permits publishing `recipe − 44.0` points.
+1. Choose the protocol: accept and disclose a **32,768-token** output budget as a
+   different measurement, or obtain separate authorization for a larger server cap.
+2. Freeze the judge model and the disclosed generation settings before generation.
+3. Run the complete text-only set with a paused Spark admission window so the score
+   is measured alone, then score with the unchanged LLM judge.
+4. Only complete, valid scored coverage permits publishing `recipe − 44.0` points.
 
 [Adapter usage and safeguards](hle-http.md) ·
-[Machine-readable provenance, access outcome and raw-result status](benchmarks/2026-11-14-standardized-quality.json)
+[Machine-readable provenance and run status](benchmarks/2026-11-14-standardized-quality.json)
 
 ## Local serving acceptance (2026-11-14)
 
