@@ -1,6 +1,7 @@
 # DeepSeek V4.1 Flash on 4 DGX Sparks
 
-Run stock **DeepSeek-V4.1-Flash-1017** with the Pico engine on **4 × NVIDIA DGX Spark / GB10**:
+Run stock **DeepSeek-V4.1-Flash-1017** with the [Pico engine](https://github.com/Picom-code/pico-dgx-ds4), forked from
+[blaesus/dsgb10](https://github.com/blaesus/dsgb10), on **4 × NVIDIA DGX Spark / GB10**:
 **1,048,576-token context**, image input, 16 request slots, and lossless text weights.
 The measured production stack prefills at **8,951 tok/s at 32K** and **8,598 tok/s near 1M**;
 fresh bounded decode measurements are below. Optional GLP-39 activation steering is
