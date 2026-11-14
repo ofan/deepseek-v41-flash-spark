@@ -67,26 +67,28 @@ here. Evidence: homeinfra `cf6e8b67c`,
 
 Both checks come from the same accepted production re-trial evidence above.
 
-## Local quality check (2026-11-14)
+## Quality
 
-This is a **small serving acceptance check**, not a standardized model-quality
-benchmark: six short capability checks, two long-context retrieval checks, and six
-existing P5 capability checks. The fresh GLP-39 run scored **14/14 (100%)**.
+The target standardized comparison is **HLE without tools, text-only subset**,
+for which [DeepSeek's official model card](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017/blob/main/README.md)
+reports **44.0%**. The recipe comparison is GLP-39 **ON, alpha 0.75**, layers 1–39.
 
-| Benchmark | DeepSeek official | Steering OFF | GLP-39 ON, alpha 0.75 | ON minus OFF |
-|---|---|---|---|---|
-| Local 14-check serving suite | No published counterpart | **Not run — blocked** | **14/14 (100%)** | N/A |
-| HLE without tools, **non-matching reference** | **42.6%** (text-only subset **44.0%**) | Not measured | Not measured | N/A |
+| Benchmark | DeepSeek official | This recipe, GLP-39 ON | Recipe minus official |
+|---|---:|---|---|
+| HLE without tools, text-only | **44.0%** | **Not measured** | N/A |
 
-The official HLE figure comes from the
-[DeepSeek model card](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017/blob/main/README.md).
-Its tasks and settings differ from this local suite; **no official-to-local point
-comparison is valid**. A perfect local score does not mean a perfect HLE score.
-OFF is not a zero or a historical score: the current engine loads steering at
-startup, and its current session-retention setting does not preserve resumable
-sessions across that switch. No engine restart or steering change was made to
-obtain this result. **The requested fresh OFF/ON comparison remains incomplete.**
-[Settings, per-check results, load monitoring and blocker evidence](docs/benchmarks.md#quality-check-2026-11-14--partial-offon-comparison).
+**No standardized recipe quality score or point delta is claimed yet.** The
+available HLE evaluator is an offline DeepInfer engine launcher, not a client for
+the live Pico API, and its dataset is not staged. Running that launcher unchanged
+would measure a different engine, not this recipe. An HTTP-capable evaluation path
+and the official dataset are needed before this table can contain a recipe score.
+[Official scores, evaluator readiness and remaining work](docs/benchmarks.md#standardized-quality-comparison--not-run).
+
+**Serving acceptance check:** GLP-39 scored **14/14** on the existing small local
+suite: six capability checks, two long-context retrieval checks and six P5
+capability checks. This checks serving correctness; it is **not HLE**, is not a
+broad model-quality estimate, and cannot be compared numerically with 44.0%.
+[Settings and per-check receipt](docs/benchmarks.md#local-serving-acceptance-2026-11-14).
 
 ## Requirements
 

@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "status": "not_run_tooling_blocker",
+  "benchmark": "HLE without tools, text-only subset",
+  "official_score_percent": 44.0,
+  "recipe_configuration": {
+    "engine": "b7c3eb5",
+    "steering": "GLP-39",
+    "alpha": 0.75,
+    "layers": "1-39",
+    "graphics_clock_cap_mhz": 2200
+  },
+  "samples_run": 0,
+  "recipe_score_percent": null,
+  "recipe_minus_official_percentage_points": null,
+  "raw_result": null,
+  "official_source": {
+    "source_url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017/raw/main/README.md",
+    "retrieved_at": "2026-11-14T16:09:57.174817+00:00",
+    "http_status": 200,
+    "source_sha256": "b72b796e4f4c739eca5d0ad360a7679b39118ca7eb64891f7151a527b292c42a",
+    "source_bytes": 5231,
+    "published_scores": [
+      {
+        "benchmark": "HLE w/o tools",
+        "official_score": "42.6 (44.0\u2020)"
+      },
+      {
+        "benchmark": "Terminal-Bench 4.0",
+        "official_score": "42.3"
+      },
+      {
+        "benchmark": "DeepSWE v1.1",
+        "official_score": "77.0"
+      },
+      {
+        "benchmark": "ProgramBench",
+        "official_score": "29.1"
+      },
+      {
+        "benchmark": "NL2Repo-Bench",
+        "official_score": "68.2"
+      },
+      {
+        "benchmark": "Automation-Bench v1.0.6",
+        "official_score": "60.5"
+      },
+      {
+        "benchmark": "Agents\u2019 Last Exam",
+        "official_score": "35.4"
+      },
+      {
+        "benchmark": "Apex Bench v1.1",
+        "official_score": "72.1"
+      },
+      {
+        "benchmark": "Chartography (w/tools)",
+        "official_score": "83.0"
+      },
+      {
+        "benchmark": "BabyVision (w/tools)",
+        "official_score": "92.5"
+      },
+      {
+        "benchmark": "ZeroBench-main (w/tools)",
+        "official_score": "51.0"
+      }
+    ],
+    "text_only_hle_score": 44.0,
+    "official_settings": {
+      "temperature": 1.0,
+      "top_p": 1.0,
+      "context_window": "1M tokens",
+      "max_tokens": ">=256K"
+    }
+  },
+  "readiness": {
+    "existing_evaluator": "DeepInfer offline batch HLE",
+    "source_commit": "774ce244b87cc0eb8d4b94ab9f5de2ab22049f01",
+    "generation_http_endpoint_option": false,
+    "generation_creates_local_engine": true,
+    "defaults": {
+      "expert_parallelism": 8,
+      "max_num_seqs": 384,
+      "n_sample": 1,
+      "temperature": 1.0,
+      "top_p": 1.0,
+      "reasoning_effort": 100
+    },
+    "default_dataset_staged": false,
+    "requires_llm_judge": true,
+    "source_file_sha256": {
+      "run_eval.py": "5f1fd6d70da0a15858b53a4724e79501e85f5cbd889ae117ec383b4981f66fc5",
+      "score.py": "af3755cd5c0a1bb050296b03999773d6aead6360e197234b1bd8438fbcb293a4",
+      "hle/bench.py": "1219444fd04b236d481218946b8c29606fc8bed03a43d7d6862b368d3c0dfd14",
+      "hle/run.sh": "f0f6508d1dc2dc0244fc1105b02d54319587edc672351706d4966df05000fdab",
+      "README.md": "34b856541650407e0193bf4d58a5df980b4b43e8ea9232374ac5ae357a4cc1dc"
+    }
+  },
+  "blocker": "The existing HLE generation runner creates a local DeepInfer engine and has no HTTP client endpoint option. It cannot exercise the live Pico production stack unchanged. Its default dataset is not staged.",
+  "remaining_work": [
+    "Provide an approved HTTP-capable HLE runner or client-only adapter preserving the existing HLE prompt builder and LLM scoring.",
+    "Stage the official HLE dataset, honoring its access terms, and select the complete text-only subset without rewriting questions.",
+    "Freeze the generation budget, sampling, judge and bounded client-concurrency settings; disclose differences from the official run.",
+    "Run and score with complete coverage before publishing a recipe score or point delta."
+  ],
+  "serving_changed": false,
+  "clock_settings_changed": false,
+  "engine_restarted": false,
+  "new_eval_prompts_authored": false
+}

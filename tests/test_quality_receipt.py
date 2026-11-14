@@ -25,12 +25,18 @@ class QualityReceiptTests(unittest.TestCase):
             self.assertNotIn('content', row)
             self.assertNotIn('prompt', row)
 
-    def test_missing_off_is_not_a_zero_or_historical_score(self):
-        self.assertEqual(self.receipt['steering_off']['status'], 'not_run')
-        self.assertIsNone(self.receipt['steering_off']['score'])
-        self.assertIsNone(self.receipt['on_minus_off_percentage_points'])
-        self.assertFalse(self.receipt['engine_restarted'])
-        self.assertFalse(self.receipt['serving_settings_changed'])
+    def test_local_acceptance_is_not_a_standardized_score(self):
+        planned = json.loads((ROOT / 'docs/benchmarks/2026-11-14-standardized-quality.json').read_text())
+        self.assertEqual(planned['status'], 'not_run_tooling_blocker')
+        self.assertEqual(planned['samples_run'], 0)
+        self.assertIsNone(planned['recipe_score_percent'])
+        self.assertIsNone(planned['recipe_minus_official_percentage_points'])
+        self.assertIsNone(planned['raw_result'])
+        self.assertEqual(planned['official_score_percent'], 44.0)
+        self.assertFalse(planned['serving_changed'])
+        self.assertFalse(planned['clock_settings_changed'])
+        self.assertFalse(planned['engine_restarted'])
+        self.assertFalse(planned['new_eval_prompts_authored'])
 
     def test_official_reference_is_not_comparable(self):
         self.assertFalse(self.receipt['official_comparison_is_matching'])
@@ -51,15 +57,32 @@ class QualityReceiptTests(unittest.TestCase):
         self.assertEqual(settings['p5']['max_tokens'], 8192)
         self.assertEqual(settings['p5']['reasoning_effort'], 'high')
 
-    def test_docs_disclose_partial_comparison(self):
+    def test_docs_separate_standardized_quality_from_acceptance(self):
         readme = (ROOT / 'README.md').read_text()
         details = (ROOT / 'docs/benchmarks.md').read_text()
-        self.assertIn('The requested fresh OFF/ON comparison remains incomplete.', readme)
-        self.assertIn('non-matching reference', readme)
-        self.assertIn('No clock\nunlock, engine restart', details)
+        quality = readme.split('## Quality\n', 1)[1].split('## Requirements\n', 1)[0]
+        self.assertIn('No standardized recipe quality score or point delta is claimed yet.', quality)
+        self.assertIn('Not measured', quality)
+        self.assertIn('Serving acceptance check', quality)
+        self.assertNotIn('Steering OFF', quality)
+        self.assertNotIn('OFF/ON', quality)
+        self.assertNotIn('blocked', quality.lower())
+        self.assertIn('Run status: not run; samples 0', details)
+        self.assertIn('HLE w/o tools | 42.6 full; **44.0 text-only**', details)
         condition = '**Benchmarks measured with every GPU capped at 2,200 MHz (graphics clock).**'
         self.assertIn(condition, readme)
         self.assertIn(condition, details)
+
+    def test_existing_hle_runner_blocker_has_evidence(self):
+        planned = json.loads((ROOT / 'docs/benchmarks/2026-11-14-standardized-quality.json').read_text())
+        readiness = planned['readiness']
+        self.assertFalse(readiness['generation_http_endpoint_option'])
+        self.assertTrue(readiness['generation_creates_local_engine'])
+        self.assertFalse(readiness['default_dataset_staged'])
+        self.assertEqual(readiness['defaults']['expert_parallelism'], 8)
+        self.assertEqual(readiness['defaults']['max_num_seqs'], 384)
+        for value in readiness['source_file_sha256'].values():
+            self.assertRegex(value, r'^[a-f0-9]{64}$')
 
 
 if __name__ == '__main__':
