@@ -29,3 +29,11 @@ CUDA, NVIDIA runtime components, Linux distribution packages, RDMA libraries,
 Rust crates, reference code and any other dependencies retain their own licenses.
 The MIT statements above do NOT relicense those components. A distributable
 image requires a complete dependency/license inventory before publication.
+
+HLE evaluation-only code: DeepSeek, DeepInfer, Apache-2.0.
+Source: https://github.com/deepseek-ai/DeepInfer
+Revision: 774ce244b87cc0eb8d4b94ab9f5de2ab22049f01
+Unchanged evaluator subset and license: vendor/hle-evaluator.
+The recipe MIT license does not relicense the evaluator or HLE dataset.
+Dataset access and terms: https://huggingface.co/datasets/cais/hle
+Dataset questions and answers are not distributed by this repository.

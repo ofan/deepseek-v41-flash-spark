@@ -78,11 +78,15 @@ reports **44.0%**. The recipe comparison is GLP-39 **ON, alpha 0.75**, layers 1â
 | HLE without tools, text-only | **44.0%** | **Not measured** | N/A |
 
 **No standardized recipe quality score or point delta is claimed yet.** The
-available HLE evaluator is an offline DeepInfer engine launcher, not a client for
-the live Pico API, and its dataset is not staged. Running that launcher unchanged
-would measure a different engine, not this recipe. An HTTP-capable evaluation path
-and the official dataset are needed before this table can contain a recipe score.
-[Official scores, evaluator readiness and remaining work](docs/benchmarks.md#standardized-quality-comparison--not-run).
+[client-only HTTP adapter](docs/hle-http.md) is now implemented around the existing
+HLE prompts and LLM scorer. The pinned official dataset returned **HTTP 403**:
+the stored account is not authorized for `cais/hle`. **Zero HLE questions ran**;
+no mirror, generated questions or smoke score was substituted. Dataset access
+under the official terms is required before a score can be measured. There is
+also a known settings difference: production caps output at **32,768 tokens**,
+whereas the official card recommends at least **256K**; the adapter refuses silent
+clipping. No serving or clock setting was changed.
+[Official reference, adapter verification and access evidence](docs/benchmarks.md#standardized-quality-comparison--not-run).
 
 **Serving acceptance check:** GLP-39 scored **14/14** on the existing small local
 suite: six capability checks, two long-context retrieval checks and six P5

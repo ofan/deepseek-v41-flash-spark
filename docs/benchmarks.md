@@ -140,46 +140,115 @@ The card lists temperature **1.0**, top-p **1.0**, **1M** context and at least
 this row. There is no recipe run yet, so no actual run-setting comparison or
 percentage-point delta is available.
 
-### Exact tooling blocker
+### HTTP adapter implementation and dataset access outcome (2026-11-14)
 
-An existing HLE implementation was found in **DeepInfer**, source revision
+The previous **offline-launcher** limitation is addressed by
+[`scripts/hle-http.py`](../scripts/hle-http.py). It is a **client-only** transport,
+not a model launcher. It preserves the existing DeepInfer HLE implementation at
 **`774ce244b87cc0eb8d4b94ab9f5de2ab22049f01`**:
 
-- `eval/hle/bench.py` constructs the existing HLE answer-format prompt and records.
-- `eval/run_eval.py` is an **offline batch** generator. It imports `create_llm`,
-  creates its own DeepInfer model and calls `llm.generate`. Its argument parser
-  has **no HTTP endpoint / base-URL option**. Defaults include expert parallelism
-  **8** and maximum **384 sequences**, not a bounded client against Pico's 16 slots.
-- Its default HLE dataset, `eval/data/hle_test.jsonl`, is **not staged**.
-  The tool documentation requires obtaining the official `cais/hle` dataset
-  under its access terms. No questions were synthesized or substituted.
-- `eval/score.py` requires an **LLM judge** for HLE. The included normalized-string
-  equality function is explicitly smoke-only, not a comparable HLE evaluator.
+- Unmodified `eval/hle/bench.py` constructs every question/message and selects
+  text-only records using its existing image predicate.
+- Unmodified `eval/score.py`, `common/judge.py` and Pass@k utilities perform
+  LLM grading and aggregation. Exact-match smoke scores are never substituted.
+- The vendored subset is Apache-2.0 with its original license and per-file hashes
+  in [`vendor/hle-evaluator/SOURCE.json`](../vendor/hle-evaluator/SOURCE.json).
+- Streaming HTTP generation defaults to **one concurrent request**, one sample per
+  question, temperature **1.0**, top-p **1.0**, thinking enabled, effort **100**,
+  deterministic per-question seeds matching the original one-sample seed plan,
+  and no tools. The existing messages are rendered by the server frontend instead
+  of the offline checkpoint encoder. Final answer content is sent untruncated to
+  the existing LLM judge; separately streamed reasoning is not graded.
+- Full-set checkpoint/resume never resubmits completed samples. Incomplete streams,
+  missing usage, unexpected tool calls and HTTP failures do not become successes.
+  Scoring requires complete task coverage and the existing LLM judge; unparsed
+  judge responses prevent publication. Length-limited outputs remain counted,
+  unchanged, and must be disclosed as truncations.
+- A required read-only load observer pauses new work for external requests and
+  cancels this client's wave after sustained high production load. It fails closed
+  if monitoring fails. There are no serving, clock or session-management calls.
+- **22 offline tests pass**, including message identity, unchanged LLM scoring,
+  real parquet fixture filtering, streaming, cancellation, output-cap checks and
+  resume. These are fixture tests, **not a live HLE score or production transport
+  qualification**. No HLE generation or judge requests were made.
+  The real adapter staging CLI also exited **1** with HTTP403 at
+  **2026-11-14T16:51:15.918350+00:00**; its access receipt has no staged counts.
 
-The default Python environments on the build host and four GPU hosts, and the
-serving container, did not have Inspect/Inspect Evals, lm-eval, LightEval or
-Simple Evals available as an alternative HTTP-capable harness. This records the
-inspected environments, not a claim that HLE is impossible or unavailable anywhere.
+**The remaining immediate prerequisite is official dataset access.** Metadata
+identifies the official source as
+[`cais/hle`](https://huggingface.co/datasets/cais/hle), pinned revision
+**`5a81a4c7271a2a2a312b9a690f0c2fde837e4c29`**, split `test`, file
+`data/test-00000-of-00001.parquet`. The authenticated download at
+**2026-11-14T16:33:54.919132+00:00** returned **HTTP 403**, verbatim:
 
-Running the offline launcher unchanged would not benchmark the production Pico
-engine. Changing it into a client is outside the **unchanged existing tooling**
-constraint. No offline model launch, serving change, engine restart or clock
-change was made. No standardized benchmark requests were submitted.
+> Access to dataset cais/hle is restricted and you are not in the authorized list. Visit https://huggingface.co/datasets/cais/hle to ask for access.
 
-### What is needed to obtain the score
+The alternate stored token field is the same credential, and no already-authorized
+local session was available. No gate was bypassed and no mirror was substituted.
+The evaluator's documentation describes **2,500 total / 2,158 text / 342 image**
+questions; these are **upstream documented counts, not locally verified counts**.
+No dataset bytes were staged, so actual counts and content hashes remain null.
+**Run status: not run; samples 0; raw result absent; recipe score and delta null.**
+This does not mean a score of 0%.
 
-Use an approved HTTP-capable HLE runner, or approve a client-only transport adapter
-around the existing prompt builder and LLM scorer; preserve the standard questions
-and scoring rather than authoring new prompts. Stage the official dataset under
-its access terms and verify complete text-only coverage. Freeze the generation
-budget, sampling settings, judge and bounded concurrency before starting; disclose
-any differences from the official run. Keep GLP-39 ON, the graphics-clock caps at
-2,200 MHz, and production otherwise unchanged. Only after complete scored coverage
-can a recipe score and `recipe − 44.0` percentage-point delta be published.
+### Generation settings still to freeze before the run
 
-[Machine-readable readiness and official-source record](benchmarks/2026-11-14-standardized-quality.json)
-contains the explicit not-run status, null result/delta, evaluator source hashes
-and remaining steps. It contains no dataset questions or generated answers.
+The adapter's default maximum output budget is **262,144**, matching the official
+card's minimum recommendation. Read-only process inspection showed that the live
+production frontend has **no `--max-tokens` override**. The pinned frontend's
+compiled default/cap is **32,768** (`frontend/src/main.rs`); its server code clamps
+larger requests to that cap. The adapter therefore requires a verified server cap
+and **refuses silent clamping**. A run against unchanged production must explicitly
+select a **32,768-token** output budget and disclose that difference. The offline
+launcher's old **147,456 prompt-plus-output** default is a third, different budget;
+it is not silently mapped to HTTP output tokens. No serving change is authorized
+or made by this adapter.
+
+The official card specifies **1M** context, temperature **1.0**, top-p **1.0** and
+at least **256K** maximum output, but not the judge model or exact row sample count.
+The production startup receipt confirms steering **alpha 0.75, 39 layers**. All four
+configured **2,200 MHz** cap services remain active; zero restarts/OOM kills were
+observed. The judge model has **not yet been frozen**; its existing environment
+contract must be configured before generation starts. This prevents selecting a
+new grader opportunistically after seeing answers.
+
+The official card was re-fetched at **2026-11-14T16:47:12.674675+00:00**, HTTP200,
+with the same SHA-256 recorded above. Its daggered text-only HLE reference remains
+**44.0%**. No numeric comparison with the recipe can yet be made.
+
+### Final no-change verification
+
+At **2026-11-14T16:54:03.553128+00:00**, an existing built-in text health request
+returned **HTTP200** with nonempty output; it was not an HLE sample. All four
+containers kept their original processes, start times, images and saved-session
+file identities/sizes. The configured clock-cap services and routing configuration
+were unchanged. All four nodes had zero restarts/OOM kills:
+
+| Rank | Configured graphics-clock cap (MHz) | Sampled clock (MHz) | Cap service |
+|---|---:|---:|---|
+| 0 | 2,200 | 2,190 | active/enabled |
+| 1 | 2,200 | 2,184 | active/enabled |
+| 2 | 2,200 | 2,184 | active/enabled |
+| 3 | 2,200 | 2,190 | active/enabled |
+
+No clock or serving restoration was necessary because no setting was changed.
+The published performance tables and their capped-condition lines are unchanged.
+Validation: **134/134 recipe tests**, including **22 adapter tests**, pass; working
+tree and reachable-history scrubs found **zero forbidden matches**.
+
+### Resume prerequisites
+
+1. Authorize the stored Hugging Face account for the official dataset under its
+   access terms. The adapter does not submit access forms or accept terms.
+2. Stage the pinned official parquet, verify measured text-subset count and hashes,
+   and retain the unchanged source questions privately.
+3. Freeze the judge model and explicit generation budget, document the difference
+   from the official run, and verify live model, steering and read-only load observer.
+4. Run the complete text-only set using the adapter, then the unchanged LLM scorer.
+   Only complete, valid scored coverage permits publishing `recipe − 44.0` points.
+
+[Adapter usage and safeguards](hle-http.md) ·
+[Machine-readable provenance, access outcome and raw-result status](benchmarks/2026-11-14-standardized-quality.json)
 
 ## Local serving acceptance (2026-11-14)
 

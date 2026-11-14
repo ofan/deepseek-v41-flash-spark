@@ -27,8 +27,14 @@ class QualityReceiptTests(unittest.TestCase):
 
     def test_local_acceptance_is_not_a_standardized_score(self):
         planned = json.loads((ROOT / 'docs/benchmarks/2026-11-14-standardized-quality.json').read_text())
-        self.assertEqual(planned['status'], 'not_run_tooling_blocker')
+        self.assertEqual(planned['status'], 'not_run_dataset_access_denied')
         self.assertEqual(planned['samples_run'], 0)
+        self.assertEqual(planned['dataset']['http_status'], 403)
+        self.assertFalse(planned['dataset']['staged'])
+        self.assertIsNone(planned['dataset']['actual_text_samples'])
+        self.assertFalse(planned['adapter']['evaluator_sources_changed'])
+        self.assertEqual(planned['adapter']['actual_hle_generation_requests'], 0)
+        self.assertEqual(planned['adapter']['default_concurrency'], 1)
         self.assertIsNone(planned['recipe_score_percent'])
         self.assertIsNone(planned['recipe_minus_official_percentage_points'])
         self.assertIsNone(planned['raw_result'])

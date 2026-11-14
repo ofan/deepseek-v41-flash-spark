@@ -1,0 +1,17 @@
+{
+  "source": "https://github.com/deepseek-ai/DeepInfer",
+  "commit": "774ce244b87cc0eb8d4b94ab9f5de2ab22049f01",
+  "license": "Apache-2.0",
+  "files_sha256": {
+    "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "eval/score.py": "af3755cd5c0a1bb050296b03999773d6aead6360e197234b1bd8438fbcb293a4",
+    "eval/hle/bench.py": "1219444fd04b236d481218946b8c29606fc8bed03a43d7d6862b368d3c0dfd14",
+    "eval/common/__init__.py": "5384bfdb2df380b6557cc7a71d16891415bccaa87699406e236f752c6415389f",
+    "eval/common/io.py": "cfeacd6f06570bcf0649b9a14557f0a8e6adbb61fa1b976edafd9d49e57c2d79",
+    "eval/common/loader.py": "273e8fb0ced95982bbb34845a97de223d7038855003b2098509e64475a384b66",
+    "eval/common/paths.py": "365ab96e2515385f83207981dc40ef9c723f9b5278b221c87c2372942c0ad953",
+    "eval/common/passk.py": "aee51e7d444205c49cbcef815e62dd918b9d98726a04e1c388c8a2695869c7f7",
+    "eval/common/judge.py": "f09b8a45645e7f0e5250ad251bbda1cf6a829593ec282d13fc6bbad1edb4b4f9"
+  },
+  "changes": "None. This is the existing HLE prompt builder and scorer, not the engine launcher."
+}
