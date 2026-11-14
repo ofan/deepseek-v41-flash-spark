@@ -27,6 +27,8 @@ Four GB10s, TP4, **2,200 MHz configured graphics-clock cap on every GPU**.
 The GPUs report power limit **N/A**; no wattage cap is inferred. Fresh decode runs
 on **2026-11-13**, steering GLP-39 alpha0.75, 256 output tokens per request:
 
+**Benchmarks measured with every GPU capped at 2,200 MHz (graphics clock).**
+
 | Concurrent streams | Prose decode tok/s | Code decode tok/s |
 |---:|---:|---:|
 | 1 | 72.297 | 73.187 |

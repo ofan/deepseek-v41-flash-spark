@@ -6,6 +6,8 @@ These rates do not qualify the sanitized distribution candidate; its GPU serving
 
 ## Fresh decode battery (2026-11-13)
 
+**Benchmarks measured with every GPU capped at 2,200 MHz (graphics clock).**
+
 Read-only requests against the live production vision image `2026.11.08-native-vision-trial-r1`,
 engine **b7c3eb5**, stock 1017 + GLP-39 alpha0.75, layers1–39, TP4,16 slots,1M context.
 Every GPU has an **active configured 2,200 MHz graphics-clock cap**. Post-run samples
