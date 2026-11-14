@@ -204,18 +204,20 @@ reports **44.0%**. The recipe comparison is GLP-39 **ON, alpha 0.75**, layers 1â
 |---|---:|---|---|
 | HLE without tools, text-only | **44.0%** | **Not measured** | N/A |
 
-**No recipe quality score or point delta is claimed.** Dataset access is resolved:
-the pinned official revision was staged and verified locally at **2,158 text-only
-questions** of 2,500. The run is stopped by a protocol difference, not by access.
-Unchanged production caps output at **32,768 tokens**, while the official card
-reports HLE at **at least 256K**. In diagnostic requests drawn from the official
-question set at that cap, **5 of 9 produced no answer at all** because they reached
-the 32,768-token limit first; the four that finished needed 19K-26K tokens. A capped
-score would measure a shorter protocol, and the complete text-only set projects to
-roughly **60 million output tokens, about six days of exclusive serving**. Neither a
-partial subset nor a shortened-budget result is published as the HLE score. No
-serving, clock or routing setting was changed.
-[Official reference, dataset provenance and probe evidence](docs/benchmarks.md#standardized-quality-comparison--dataset-staged).
+**No recipe quality score or point delta is claimed.** The official dataset is
+staged and verified at **2,158 text-only questions** of 2,500. Live production still
+has a **32,768-token** output cap. The source launcher now explicitly sets a
+**262,144-token** output default and cap, with `--max-output-tokens` to select a
+different limit; this is a recipe fix, **not a deployed production change or a new
+published image**. The official card recommends at least 256K output tokens.
+
+The earlier capped diagnostic requests ran beside other traffic and are excluded
+from any score. Their five capped responses in nine requests are not a full-dataset
+accuracy ceiling, and their contended throughput cannot establish the runtime of
+an isolated full run. A disclosed 32,768-token comparison was explicitly requested;
+the budget difference alone does not prevent running and reporting it. No full,
+isolated, graded run has completed. Neither a score nor a point delta is available.
+[Dataset, settings and run status](docs/benchmarks.md#standardized-quality-comparison--dataset-staged).
 
 **Serving acceptance check:** GLP-39 scored **14/14** on the existing small local
 suite: six capability checks, two long-context retrieval checks and six P5

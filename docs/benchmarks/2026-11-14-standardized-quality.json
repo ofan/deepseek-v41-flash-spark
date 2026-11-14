@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "not_run_output_cap_protocol_mismatch",
+  "status": "source_output_budget_fixed_live_run_pending",
   "benchmark": "HLE without tools, text-only subset",
   "official_score_percent": 44.0,
   "recipe_configuration": {
@@ -97,12 +97,12 @@
       "README.md": "34b856541650407e0193bf4d58a5df980b4b43e8ea9232374ac5ae357a4cc1dc"
     }
   },
-  "blocker": "Unchanged production clamps output at 32768 tokens (frontend/src/main.rs max_tokens_cap), while the official card reports HLE at >=256K output. In nine diagnostic requests drawn from the official text-only set at that cap, five reached the 32768 limit with no answer content. A capped score measures a shorter protocol and is not comparable with 44.0 percent. The full 2158-question text-only set also projects to about 60 million output tokens, roughly six days of exclusive serving.",
+  "blocker": "No complete isolated graded run has completed. Source launcher now passes max-tokens 262144; live production is unchanged at 32768. A disclosed capped comparison remains authorized. Deployment and benchmark-isolation verification are not claimed.",
   "remaining_work": [
-    "Choose the protocol: accept and disclose a 32768-token output budget as a different measurement, or obtain separate authorization and verification for a larger server output cap.",
-    "Freeze the judge model and the disclosed generation settings before generation.",
-    "Run the complete text-only set inside a paused Spark admission window so the score is measured alone, then score with the unchanged LLM judge.",
-    "Publish recipe minus official only with complete, valid scored coverage."
+    "Verify the selected live output cap and freeze generation and judge settings.",
+    "Pause other Spark admissions and drain external work; run bounded checkpointed exclusive windows.",
+    "Regenerate all affected contended samples; restore admissions exactly and verify a pinned-model completion after each window.",
+    "Score full coverage and publish truncation count and known differences from the official 44.0 reference."
   ],
   "serving_changed": false,
   "clock_settings_changed": false,
@@ -110,7 +110,7 @@
   "new_eval_prompts_authored": false,
   "adapter": {
     "path": "scripts/hle-http.py",
-    "sha256": "971b3e18e290b0f36c162a994af5ee6c8e8b647c3ae3bcd72c94c5890c5c7571",
+    "sha256": "4582862ea6fe860ccdb132dcf61f60407912e35432333f6b96b0889a03cd2fad",
     "evaluator_source": "https://github.com/deepseek-ai/DeepInfer",
     "evaluator_commit": "774ce244b87cc0eb8d4b94ab9f5de2ab22049f01",
     "evaluator_manifest": "vendor/hle-evaluator/SOURCE.json",
@@ -122,7 +122,7 @@
     "complete_coverage_required_for_scoring": true,
     "actual_hle_generation_requests": 0,
     "production_http_generation_validated": true,
-    "offline_fixture_tests_passed": 22,
+    "offline_fixture_tests_passed": 24,
     "judge_configuration_frozen_before_generation_required": true,
     "diagnostic_generation_requests": 9
   },
@@ -134,7 +134,6 @@
     "http_status": 200,
     "staged": true,
     "checked_at": "2026-11-14T18:27:58.610680+00:00",
-    "hf_account": "odayfans",
     "actual_total_samples": 2500,
     "actual_text_samples": 2158,
     "actual_image_samples": 342,
@@ -153,14 +152,13 @@
     "requested_default_max_output_tokens": 262144,
     "live_frontend_max_tokens_override_present": false,
     "pinned_frontend_compiled_default_max_output_tokens": 32768,
-    "known_difference": "Unchanged production clamps output at 32768 tokens; the official model card recommends at least 256K. The frontend source declares --max-tokens as the default and cap and clamps larger requests. A capped score would measure a shorter protocol, so no score is claimed. No serving change was made.",
+    "known_difference": "Live production remains 32768 versus official recommendation >=256K; the capped run is authorized with disclosure and truncation counts. Source launcher fixes the omission using the existing frontend max-tokens option; no live rollout claimed.",
     "offline_launcher_default_total_budget": 147456,
     "official_context_tokens": 1048576,
     "judge_model_frozen": false,
     "judge_requests_run": 0,
     "prompt_rendering_difference": "Existing HLE messages are rendered by the live Pico frontend, rather than the offline checkpoint encoder; final content is passed untruncated to the unchanged HLE LLM grader.",
-    "production_output_cap_source": "vendor/engine/ds41f-4xgx10-switchless/frontend/src/main.rs",
-    "judge_note": "The existing scorer requires a temperature parameter; the verified candidate is the cloud deepseek-flash route, which accepts it. It is not frozen because generation has not started."
+    "production_output_cap_source": "vendor/engine/ds41f-4xgx10-switchless/frontend/src/main.rs"
   },
   "official_reference_refresh": {
     "citation_url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017/blob/main/README.md",
@@ -183,7 +181,7 @@
     "in_flight_at_check": 0,
     "admitted_at_check": 0
   },
-  "next_action": "Choose the protocol and freeze the judge before generation. For the official protocol, obtain separate authorization for a larger server output cap; for the capped protocol, disclose 32768 and pause Spark admissions so the run is measured alone.",
+  "next_action": "Choose the unchanged-production 32768 budget already authorized, or perform a controlled launcher upgrade and verify 262144 before a new run. Do not mix budgets or use contended diagnostic generations.",
   "final_verification": {
     "checked_at": "2026-11-14T20:03:31+00:00",
     "production_settings_changed": false,
@@ -216,11 +214,12 @@
     "health_content": "production healthy",
     "health_request_id": "c1a982fd-66f8-457a-99b0-859c3cd3c42e",
     "health_prompt_source": "Single built-in text probe on the pinned Spark model; not an HLE sample",
-    "routing_configuration_unchanged": true
+    "routing_configuration_unchanged": true,
+    "historical_receipt": true
   },
   "validation": {
-    "full_recipe_tests_passed": 149,
-    "adapter_tests_passed": 22,
+    "full_recipe_tests_passed": 155,
+    "adapter_tests_passed": 24,
     "working_tree_scrub_forbidden_matches": 0,
     "reachable_history_scrub_forbidden_matches": 0,
     "published_performance_sections_byte_identical": true
@@ -257,20 +256,82 @@
       "response_id": "chatcmpl-d841506907d78730faba2ee6"
     },
     "projection": {
-      "questions": 2158,
-      "estimated_output_tokens": 61084348,
-      "observed_aggregate_tokens_per_second": 120,
-      "estimated_hours": 141.4,
-      "estimated_days": 5.9
+      "status": "withdrawn_not_an_isolated_runtime_estimate",
+      "reason": "Contended concurrency-four throughput does not establish runtime at default concurrency one; small repeated diagnostic sample is not representative."
     },
     "published": false
   },
   "isolation": {
     "rule": "Benchmarks run alone on the Spark stack",
     "admission_pause_applied": false,
-    "reason": "No publishable benchmark run started. A complete run projects to about six days of exclusive serving, so no short pause could have covered it.",
+    "reason": "No full scored run completed. No admission change was made; prior contended diagnostics are excluded and must be regenerated if included in a future scored run.",
     "diagnostic_requests_run_beside_live_traffic": 9,
     "external_spark_requests_during_diagnostic_windows": 132,
-    "scored_samples_requiring_rerun": 0
-  }
+    "scored_samples_requiring_rerun": 0,
+    "contended_diagnostic_requests_excluded": 9
+  },
+  "source_output_budget_fix": {
+    "source_path": "scripts/entrypoint.py",
+    "default_max_output_tokens": 262144,
+    "flag": "--max-output-tokens",
+    "frontend_option": "--max-tokens",
+    "context_tokens": 1048576,
+    "engine_changed": false,
+    "public_image_rebuilt": false,
+    "live_deployed": false,
+    "gpu_qualified": false,
+    "launcher_sha256": "405f3843d4f9176606cbb8a82040fb0edd53381aa973945b292f02fc679ee833",
+    "verification": {
+      "checked_at": "2026-11-14T20:20:19.028561+00:00",
+      "deployed_frontend_help_confirms_existing_max_tokens_option": true,
+      "production_output_cap_changed": false,
+      "clock_cap_command": "nvidia-smi -lgc 0,2200",
+      "ranks": [
+        {
+          "rank": 0,
+          "cap_service_active": true,
+          "configured_cap_mhz": 2200,
+          "sampled_graphics_clock_mhz": 2190,
+          "restart_count": 0,
+          "oom_killed": false
+        },
+        {
+          "rank": 1,
+          "cap_service_active": true,
+          "configured_cap_mhz": 2200,
+          "sampled_graphics_clock_mhz": 2184,
+          "restart_count": 0,
+          "oom_killed": false
+        },
+        {
+          "rank": 2,
+          "cap_service_active": true,
+          "configured_cap_mhz": 2200,
+          "sampled_graphics_clock_mhz": 2190,
+          "restart_count": 0,
+          "oom_killed": false
+        },
+        {
+          "rank": 3,
+          "cap_service_active": true,
+          "configured_cap_mhz": 2200,
+          "sampled_graphics_clock_mhz": 2184,
+          "restart_count": 0,
+          "oom_killed": false
+        }
+      ],
+      "pinned_model_health_http_status": 200,
+      "pinned_model_health_content_matches": true,
+      "health_request_id": "0452d40f-699e-4b59-be50-2ea0659d80e4",
+      "admission_controls_changed": false,
+      "pause_window": null,
+      "benchmark_samples_generated": 0,
+      "scored_samples_regenerated": 0,
+      "diagnostic_generations_excluded": 9
+    }
+  },
+  "report_corrections": [
+    "Capped run with disclosure was authorized; output-budget mismatch is not a refusal prerequisite.",
+    "Contended diagnostics do not establish a full-set accuracy ceiling or an exclusive runtime requirement."
+  ]
 }

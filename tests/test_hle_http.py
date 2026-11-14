@@ -213,6 +213,30 @@ class HLEHttpTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 guard.sample()
 
+    def test_one_external_request_aborts_immediately(self):
+        guard=hle.LoadGuard('fixture',1,threading.Event())
+        with patch.object(guard.done,'wait',return_value=False), patch.object(guard,'sample',return_value=1), patch.object(guard,'abort') as abort:
+            guard.monitor()
+        abort.assert_called_once()
+        self.assertIn('Exclusive benchmark violated',abort.call_args.args[0])
+
+    def test_generation_rejects_contamination_before_checkpoint(self):
+        with tempfile.TemporaryDirectory() as d:
+            data,provenance=self.staged(d)
+            args=self.args(concurrency=1,server_max_tokens=262144,out_dir=str(Path(d)/'run'),
+                           data_file=str(data),provenance=str(provenance),request_deadline=5,
+                           pause_timeout=1,load_command='fixture',api_key_env='FIXTURE_ABSENT_TOKEN',base_url='http://localhost/v1')
+            class Response:
+                status_code=200
+                headers={}
+                def iter_lines(self):return iter(stream())
+                def close(self):pass
+            with patch('requests.post',return_value=Response()), patch.object(hle.LoadGuard,'monitor'), patch.object(hle.LoadGuard,'sample',side_effect=[0,1]), patch.dict(os.environ,{'EVAL_JUDGE_MODEL':'fixture-judge','EVAL_JUDGE_BASE_URL':'http://localhost/v1','EVAL_JUDGE_API_KEY':'fixture'}):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertNotEqual(hle.generate(args),0)
+            raw=Path(args.out_dir)/'raw_rank000.jsonl'
+            self.assertTrue(not raw.exists() or not raw.read_text().strip())
+
     def test_no_serving_or_clock_mutations(self):
         s = (ROOT/'scripts/hle-http.py').read_text()
         for fragment in ['systemctl', 'docker restart', 'nvidia-smi', '/_/config', '/_/models/']:

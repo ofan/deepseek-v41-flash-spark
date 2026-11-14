@@ -81,6 +81,36 @@ class ScaffoldTests(unittest.TestCase):
         c=entry.command_plan(0,'fleet.conf','listener','spill',vision=False)[1]
         for flag,value in [('--encoding','1017'),('--temperature','1'),('--top-p','1'),('--session-cache-tokens','160000000')]:
             self.assertEqual(c[c.index(flag)+1],value)
+    def test_output_budget_default_is_explicit_and_frontend_only(self):
+        for rank in range(4):
+            commands=entry.command_plan(rank,'fleet.conf','listener','spill')
+            engine=next(c for c in commands if c[0].endswith('dsgb10_rank'))
+            self.assertNotIn('--max-tokens',engine)
+            frontend=[c for c in commands if c[0].endswith('dsfront')]
+            self.assertEqual(len(frontend),int(rank==0))
+            if frontend:
+                self.assertEqual(frontend[0][frontend[0].index('--max-tokens')+1],'262144')
+    def test_cli_output_budget_reaches_frontend_and_preserves_engine(self):
+        _,default=self.launch(0)
+        for value in ('32768','262144'):
+            _,custom=self.launch(0,('--max-output-tokens',value))
+            a=default.call_args.args[0];b=custom.call_args.args[0]
+            self.assertEqual(a[0],b[0])
+            self.assertEqual(b[1][b[1].index('--max-tokens')+1],value)
+            self.assertEqual(default.call_args.args[1],custom.call_args.args[1])
+    def test_invalid_output_budget_fails_before_start(self):
+        import contextlib,io
+        for value in ('0','-1','1048577','bogus','1.5'):
+            with self.subTest(value=value), contextlib.redirect_stderr(io.StringIO()):
+                with patch.object(entry,'supervise') as run, self.assertRaises(SystemExit):
+                    self.launch(0,('--max-output-tokens',value))
+                run.assert_not_called()
+    def test_source_help_documents_budget_without_gpu(self):
+        import subprocess,sys
+        p=subprocess.run([sys.executable,'-B',str(ROOT/'scripts/entrypoint.py'),'--help'],text=True,capture_output=True)
+        self.assertEqual(p.returncode,0,p.stderr)
+        self.assertIn('--max-output-tokens',p.stdout)
+        self.assertIn('262144',p.stdout)
     def test_artifact_hash_success(self):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'artifact';p.write_bytes(b'fixture')

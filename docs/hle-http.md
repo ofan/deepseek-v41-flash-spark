@@ -6,12 +6,14 @@ never changes steering, clocks, routing or saved sessions. The recipe defaults t
 GLP-39 ON at alpha 0.75, layers 1–39, with explicit `--steering off` opt-out; an HLE
 steering-ON measurement still requires verification of the server's actual state.
 
-**Current result: not run, zero scored HLE samples.** The pinned official dataset
-is now staged and locally verified at 2,158 text-only questions. The run is stopped
-by the production 32,768-token output cap, which is below the official 256K
-recommendation and truncates about half of the diagnostic questions. See the
-[dataset receipt and protocol caveat](benchmarks.md#standardized-quality-comparison--dataset-staged).
-The implementation is offline-tested, not yet validated on scored HLE generations.
+**Current result: no complete, isolated, scored HLE run.** The official dataset
+is staged and verified at 2,158 text-only questions. The source launcher fixes the
+output-budget omission with `--max-tokens 262144`; live production and the public
+image have not been changed. See [launch and verification instructions](setup-spark.md#output-budget-source-launcher-fix).
+The authorized 32,768-token run is also valid as a **disclosed shorter-budget
+comparison**, not an exact reproduction of the official settings. Dataset probes
+run alongside other work are excluded from the benchmark and must be regenerated
+under exclusive admission controls if their questions are used in a scored run.
 
 ## Sources and installation
 
@@ -64,13 +66,16 @@ The per-question seed is the source-order index, matching the offline one-sample
 seed plan. HTTP uses the live frontend's message renderer, not the offline
 checkpoint encoder; that distinction must be disclosed.
 
-**Production caveat:** the currently inspected server uses its compiled
-**32,768-token output cap**, while the official card recommends **at least256K**.
-The adapter refuses a requested output budget above the verified cap. For an
-unchanged-production run, explicitly set the output budget to32768 and record this
-setting difference. A larger output cap requires separate serving authorization;
-this script cannot change it. Do not call a shortened-budget measurement an exact
-reproduction of the official settings.
+**Production caveat:** live production still has a **32,768-token** output cap;
+the official card recommends at least **256K**. Source launches now explicitly
+set **262,144**; this is not evidence that live production has changed. Read the
+actual frontend process arguments after deployment. The adapter refuses a budget
+above the verified server cap. For the authorized unchanged-production comparison,
+set both `HLE_SERVER_OUTPUT_CAP` and `HLE_OUTPUT_BUDGET` to `32768`, count all
+length-limited responses, and label the difference next to the score. After a
+controlled launcher upgrade and cap verification, `262144` may be used instead.
+Changing budgets requires a **new run directory**: do not mix capped and larger-
+budget samples. The engine source and evaluator/scoring remain unchanged.
 
 Freeze the judge model and these existing scorer variables **before generation**:
 `EVAL_JUDGE_BASE_URL`, `EVAL_JUDGE_API_KEY`, `EVAL_JUDGE_MODEL`. The scorer is
@@ -88,12 +93,23 @@ clients. Validate that accounting independently before a shared-production run.
 The command is split as arguments, not executed by a shell. It must return within
 10seconds. Do not place credentials in its argument string.
 
+Before any scored run, use the gateway's admission controls to pause **other**
+Spark clients, allow active requests to finish, and record the exact prior state
+and the pause start time. Leave the dataset/client traffic an explicitly isolated
+path; do not alter unrelated routes or delete saved sessions. Restore the exact
+admission state afterward, and verify a real pinned-model completion. The adapter
+does not perform these control-plane mutations itself.
+
 New samples wait while other work is active; the default wait budget is300seconds.
-A monitor runs every5seconds. At least four external requests in three consecutive
-samples stops this client's wave. Monitor failure stops closed. This is a
-conservative load signal, **not a proof of fair scheduling**: if existing sessions
-show starvation, interrupt the adapter immediately. It preserves completed samples
-for resume and never resets server sessions.
+The monitor checks every5seconds. **Any** observed external request cancels this
+client's current wave; a completion-time check also rejects contaminated work.
+Observer failure stops closed. Five-second polling cannot prove no short external
+request occurred between checks: retain the admission-control receipt and request
+journal as the authoritative isolation evidence. Exclude and regenerate affected
+samples if contention is discovered later. Do not reuse the earlier contended
+diagnostics as benchmark samples. Record how many samples were regenerated, the
+pause interval, and the restore completion's request ID. Keep the pause bounded;
+checkpoint between windows rather than leaving admissions paused unattended.
 
 ## Run and resume
 

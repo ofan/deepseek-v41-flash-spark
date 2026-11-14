@@ -130,40 +130,43 @@ Selection uses the evaluator's unchanged image predicate and keeps source order.
 Questions and answers are unchanged and stay outside this repository. The counts
 are locally measured, not copied from documentation.
 
-### Why no score was produced: output-cap incompatibility
+### Output-budget fix and limits of the diagnostics
 
-Unchanged production uses the frontend's compiled output cap. Read from the
-vendored engine source, `frontend/src/main.rs` declares
-`--max-tokens N   default and cap for max_tokens: 32768` and initialises
-`max_tokens_cap` to `32768`; larger client requests are clamped. The official card
-reports HLE at **at least 256K** output tokens.
+The production frontend uses its compiled **32,768-token** default and cap because
+the launcher omitted `--max-tokens`. No engine patch is required: the existing
+frontend already accepts an explicit override. The source recipe now passes
+`--max-tokens 262144` by default; `--max-output-tokens` configures this in the
+launcher, validated between 1 and the 1,048,576-token context. Input plus output
+still cannot exceed context. See the [source-launcher setup](setup-spark.md#output-budget-source-launcher-fix).
 
-Nine diagnostic requests used unchanged official questions through the unchanged
-adapter message builder at `max_tokens=32768`, temperature 1.0, top-p 1.0, thinking
-on, effort 100, against the pinned Spark model. They are diagnostics, not scored
-samples:
+**Deployment status:** source fix only. The immutable public image, production
+processes, clock cap, steering and saved sessions are unchanged. No live long-
+output proof or new HLE score is claimed. A controlled drain/start and live cap
+verification remain necessary before calling production fixed.
 
-| Probe outcome | Count |
-|---|---:|
-| Ended at the 32,768-token limit with no answer content | **5** |
-| Ended with an answer, 19,260–25,990 completion tokens | **4** |
+Nine prior diagnostic requests used official questions at `max_tokens=32768`,
+temperature 1.0, top-p 1.0, thinking on, effort 100. Five reached the length limit
+with no final answer content; four completed with content (19,260–25,990 output
+tokens). They ran beside other traffic, included a repeated question, and were
+not an isolated or representative scored sample. All are excluded from HLE scores.
 
-The ninth probe, run while this document was being updated, finished normally at
-25,883 completion tokens with 533 characters of answer content. Mean observed
-output is about 28,000 tokens per question. Scaled to the 2,158 text-only
-questions, that is roughly **60 million output tokens**; at the ~120 tok/s aggregate
-observed at four concurrent requests during the probe window it is about
-**140 hours (5.9 days)** of continuous serving. More slots would shorten it, but it remains a multi-day
-dedicated window.
+**Correction to the previous report:** the disclosed **32,768-token** comparison
+was explicitly requested. A settings difference does not make that run prohibited
+or unreportable; it must be clearly labeled beside the official **44.0%**. The
+probe fraction cannot establish a dataset accuracy ceiling. The earlier roughly
+six-day projection used contended throughput at concurrency four, not the adapter's
+default concurrency one, and cannot establish the duration of an isolated full run.
+It is withdrawn as a scheduling requirement or blocker, not replaced by an invented
+runtime. A full run must keep the requested output budget fixed and count every
+capped response without dropping it.
 
-Because about half of the probe questions cannot answer at all within the
-production cap, a capped run measures a shorter protocol than the one behind the
-44.0% reference. Presenting its percentage beside 44.0% would be a false
-comparison, so no number is claimed.
-
-The probes ran beside live production traffic. They are diagnostic only: no scored
-sample depends on them and no admission change was made for them. A scored run
-would pause other Spark admissions first and run alone.
+For a scored run, pause other Spark admissions through the gateway, drain active
+non-benchmark requests, confirm zero external engine activity, and record the
+window. The client now aborts on **any observed external request**, rather than
+waiting for several competing sessions. Polling alone is not proof of isolation;
+retain admission and journal receipts. Rerun every affected question under the
+same frozen settings. Resume between bounded windows if needed, restore admissions
+exactly after each window, and verify a real pinned-model completion.
 
 ### Official published scores
 
@@ -216,20 +219,21 @@ not a model launcher. It preserves the existing DeepInfer HLE implementation at
   Scoring requires complete task coverage and the existing LLM judge; unparsed
   judge responses prevent publication. Length-limited outputs remain counted,
   unchanged, and must be disclosed as truncations.
-- A required read-only load observer pauses new work for external requests and
-  cancels this client's wave after sustained production load. It fails closed
-  if monitoring fails. There are no serving, clock or session-management calls.
-- **22 offline tests pass**, including message identity, unchanged LLM scoring,
+- A required read-only load observer waits for zero external work and rejects
+  a wave if any external request is observed during generation or at completion.
+  Gateway admission pause and journal evidence are required in addition to polling.
+  No serving, clock or session-management mutation is made by the adapter.
+- **24 offline adapter tests pass**, including message identity, unchanged LLM scoring,
   real parquet fixture filtering, streaming, cancellation, output-cap checks and
   resume. These are fixture tests, **not a live HLE score or production transport
   qualification**.
 - The staging CLI now reports `status: staged` with the verified counts and hashes
   above. Staging downloads and filters only; it performs no generation.
 
-The dataset requirement is therefore closed. The open prerequisite is the
-generation protocol: either accept a disclosed 32,768-token budget as a different
-protocol and publish it as such, or authorize and verify a larger server output cap
-for the official setting. No such serving change was made.
+The dataset requirement is closed. The source-launcher fix is implemented but not
+live-deployed. The originally requested 32,768-token run remains an authorized,
+disclosed comparison, not an official-settings reproduction. No full isolated,
+graded run has completed, and no score or delta is claimed.
 
 The official card specifies **1M** context, temperature **1.0**, top-p **1.0** and
 at least **256K** maximum output, but not the judge model or exact row sample count.
@@ -249,17 +253,31 @@ counts and OOM-kill counts remained zero. No clock, serving or routing restorati
 was necessary because no setting was changed.
 
 The published performance tables and their capped-condition lines are unchanged.
-Validation: **149/149 recipe tests**, including **22 adapter tests**, pass; working
+
+### Source-fix validation (2026-11-14)
+
+The deployed frontend help confirms that `--max-tokens` already exists. All four
+clock-cap services remain active with `nvidia-smi -lgc 0,2200`; sampled graphics
+clocks were 2,184–2,190 MHz. Containers retain their original start times, with
+zero restarts and no OOM kills. A real pinned-model completion returned HTTP200
+with the expected text. No admission pause was applied and no benchmark sample
+was generated or regenerated in this source-fix update. The nine contended prior
+diagnostic generations remain excluded. Live output-budget deployment and HLE
+grading remain pending.
+
+Validation: **155/155 recipe tests**, including **24 adapter tests**, pass; working
 tree and reachable-history scrubs found **zero forbidden matches**.
 
-### Resume prerequisites
+### Resume checklist
 
-1. Choose the protocol: accept and disclose a **32,768-token** output budget as a
-   different measurement, or obtain separate authorization for a larger server cap.
-2. Freeze the judge model and the disclosed generation settings before generation.
-3. Run the complete text-only set with a paused Spark admission window so the score
-   is measured alone, then score with the unchanged LLM judge.
-4. Only complete, valid scored coverage permits publishing `recipe − 44.0` points.
+1. Keep the authorized **32,768-token** budget for an unchanged-production run,
+   or verify a controlled launcher upgrade before choosing **262,144** in a new run.
+2. Freeze the judge, generation settings and complete official text-only set.
+3. Record and pause other Spark admissions, drain active work, verify isolation,
+   and run bounded checkpointed windows. Regenerate all affected/contended samples.
+4. Restore prior admissions and sessions after each window; verify a real completion.
+5. Score complete coverage with the unchanged evaluator; publish capped-response
+   counts and setting differences with `recipe − 44.0` only once grading finishes.
 
 [Adapter usage and safeguards](hle-http.md) ·
 [Machine-readable provenance and run status](benchmarks/2026-11-14-standardized-quality.json)

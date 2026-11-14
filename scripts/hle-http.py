@@ -226,7 +226,6 @@ class LoadGuard:
         self.done = threading.Event()
         self.responses = set()
         self.lock = threading.Lock()
-        self.high_samples = 0
         self.observations = self.max_external_active = 0
         self.reason = None
 
@@ -257,9 +256,8 @@ class LoadGuard:
     def monitor(self):
         while not self.done.wait(5):
             try:
-                self.high_samples = self.high_samples + 1 if self.sample() >= 4 else 0
-                if self.high_samples >= 3:
-                    self.abort('At least four external requests observed for three consecutive load samples')
+                if self.sample() != 0:
+                    self.abort('Exclusive benchmark violated: external request observed; rerun the affected wave')
                     return
             except Exception:
                 self.abort('Load observer failed; stopped closed')
@@ -366,6 +364,8 @@ def generate(args):
                             'body_sha256': digest(response.content)})
                 raise RuntimeError('Generation HTTP ' + str(response.status_code))
             d = consume_sse(response.iter_lines(), cancelled, start + args.request_deadline)
+            if guard.sample() != 0:
+                guard.abort('Exclusive benchmark violated at completion; rerun the affected wave')
             if cancelled.is_set():
                 raise RuntimeError('Generation cancelled; partial sample not checkpointed')
             row = {'task_id': record['task_id'], 'sample_idx': 0, 'seq_seed': index,

@@ -530,6 +530,61 @@ must print `true 0 false`. On rank 0, `curl --fail http://127.0.0.1:8888/health`
 must print `ok`; then run the README's real text and image checks. Do not treat
 container status alone as serving proof.
 
+### Output budget: source-launcher fix
+
+An output token is one piece of generated text or reasoning. The source launcher
+now sends `--max-tokens 262144` to the frontend (the HTTP request handler). That flag
+sets both its default and its maximum output length. Pass
+`--max-output-tokens 32768` to the **source launcher** to retain the older limit;
+pass `--max-output-tokens 262144` for the new limit. The model still has a total
+input-plus-output context of **1,048,576 tokens**. A long input reduces the room
+available for output. GLP-39 remains ON by default, alpha 0.75, layers 1–39.
+
+**The immutable public image has not been rebuilt.** Its embedded launcher does
+not accept the new flag. For a fresh setup using that image, use the reviewed
+source launcher as a read-only mount. First, in your local clone, copy it to the
+same generic path on **each of the four machines**:
+
+```bash
+sudo install -d -m 0755 /srv/pico/recipe
+sudo install -m 0644 scripts/entrypoint.py /srv/pico/recipe/entrypoint.py
+python3 -B /srv/pico/recipe/entrypoint.py --help | grep -- '--max-output-tokens'
+sha256sum /srv/pico/recipe/entrypoint.py
+```
+
+**Verify:** help lists `--max-output-tokens`; the SHA-256 is identical on all four
+machines. On a running stack, schedule and drain work before using the documented
+stop/start sequence. Do not replace a live launcher's file or stop active sessions
+without that window. Never remove the saved-session directory.
+
+When starting each rank with the existing README command, add these arguments
+**before** `"$IMAGE"`:
+
+```bash
+--mount type=bind,src=/srv/pico/recipe/entrypoint.py,dst=/opt/recipe/entrypoint.py,readonly
+--entrypoint python3
+```
+
+Then replace that command's arguments **starting with** `"$IMAGE"` with:
+
+```bash
+"$IMAGE" /opt/recipe/entrypoint.py --rank "$RANK" --fleet /etc/pico/fleet.conf --steering glp39 --max-output-tokens 262144
+```
+
+**Verify on rank 0:**
+
+```bash
+docker top pico -eo args | grep '[d]sfront serve' | grep -- '--max-tokens 262144'
+curl --fail --max-time 10 http://127.0.0.1:8888/health
+```
+
+Success is one frontend command containing `--max-tokens 262144`, followed by
+`ok`. Follow this with the README text and image requests. This command/config
+check is **not** a GPU qualification or a completed long-output test. No changed
+image digest or new performance/quality result is claimed. To roll back at the
+next drained stop/start, remove the mount and entrypoint override and use the
+original README image command; the immutable image is unchanged.
+
 ## Optional tuning — not required commands for first launch
 
 - **Graphics clock cap:** a maximum GPU calculation frequency. Production's recorded

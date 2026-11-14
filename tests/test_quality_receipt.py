@@ -27,7 +27,7 @@ class QualityReceiptTests(unittest.TestCase):
 
     def test_local_acceptance_is_not_a_standardized_score(self):
         planned = json.loads((ROOT / 'docs/benchmarks/2026-11-14-standardized-quality.json').read_text())
-        self.assertEqual(planned['status'], 'not_run_output_cap_protocol_mismatch')
+        self.assertEqual(planned['status'], 'source_output_budget_fixed_live_run_pending')
         self.assertEqual(planned['samples_run'], 0)
         self.assertEqual(planned['dataset']['http_status'], 200)
         self.assertTrue(planned['dataset']['staged'])
@@ -57,7 +57,11 @@ class QualityReceiptTests(unittest.TestCase):
         self.assertEqual(probes['ended_with_answer'], 4)
         self.assertEqual(probes['settings']['max_tokens'], 32768)
         self.assertFalse(probes['published'])
-        self.assertGreater(probes['projection']['estimated_days'], 1)
+        self.assertEqual(probes['projection']['status'], 'withdrawn_not_an_isolated_runtime_estimate')
+        fix=planned['source_output_budget_fix']
+        self.assertEqual(fix['default_max_output_tokens'],262144)
+        self.assertFalse(fix['live_deployed'])
+        self.assertFalse(fix['public_image_rebuilt'])
         isolation = planned['isolation']
         self.assertFalse(isolation['admission_pause_applied'])
         self.assertEqual(isolation['scored_samples_requiring_rerun'], 0)
@@ -91,7 +95,9 @@ class QualityReceiptTests(unittest.TestCase):
         self.assertIn('Not measured', quality)
         self.assertIn('2,158 text-only', quality)
         self.assertIn('32,768', quality)
-        self.assertIn('5 of 9 produced no answer', quality)
+        self.assertIn('262,144-token',quality)
+        self.assertIn('not a deployed production change',quality)
+        self.assertIn('disclosed',quality)
         self.assertIn('Serving acceptance check', quality)
         self.assertNotIn('Steering OFF', quality)
         self.assertNotIn('OFF/ON', quality)

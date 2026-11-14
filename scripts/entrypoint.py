@@ -9,6 +9,15 @@ import signal
 import subprocess
 import time
 
+DEFAULT_MAX_OUTPUT_TOKENS = 262144
+CONTEXT_TOKENS = 1048576
+
+def output_budget(value):
+    n = int(value)
+    if not 1 <= n <= CONTEXT_TOKENS:
+        raise argparse.ArgumentTypeError('Output budget must be 1..1048576 tokens')
+    return n
+
 STEER_VARS = ('WEIGHTLESS_STEER_PATH','WEIGHTLESS_STEER_ALPHA','WEIGHTLESS_STEER_LAYERS')
 
 def steering_environment(parent, mode):
@@ -31,9 +40,10 @@ def check(path, expected):
     if not expected or actual!=expected:
         raise ValueError('Artifact hash mismatch: '+Path(path).name)
 
-def command_plan(rank, fleet, listen, spill, vision=True):
+def command_plan(rank, fleet, listen, spill, vision=True, max_output_tokens=DEFAULT_MAX_OUTPUT_TOKENS):
     if rank not in range(4):
         raise ValueError('Rank must be 0..3')
+    max_output_tokens=output_budget(max_output_tokens)
     socket='/run/pico/engine.sock'
     model='/opt/package/model'
     engine=['/opt/package/bin/dsgb10_rank','--fleet',fleet,'--rank',str(rank),
@@ -49,6 +59,7 @@ def command_plan(rank, fleet, listen, spill, vision=True):
         commands.append(['/opt/package/bin/dsfront','serve','--listen',listen,'--engine-socket',socket,
                          '--tokenizer',model+'/tokenizer.json','--model-name','deepseek-v4.1-flash',
                          '--encoding','1017','--temperature','1','--top-p','1',
+                         '--max-tokens',str(max_output_tokens),
                          '--session-cache-tokens','160000000'])
     if rank==0 and vision:
         commands[1].extend(['--vision-addr','127.0.0.1:18950'])
@@ -95,6 +106,8 @@ def main():
     p.add_argument('--fleet',required=True)
     p.add_argument('--steering',choices=('off','glp39'),default='glp39',
                    help='GLP-39 ON by default (alpha 0.75, layers 1-39); off explicitly disables steering')
+    p.add_argument('--max-output-tokens', type=output_budget, default=DEFAULT_MAX_OUTPUT_TOKENS,
+                   help='Frontend default and cap for output tokens (262144); input plus output still fits 1048576 context')
     p.add_argument('--no-vision',action='store_true',help='Disable image side encoder/frontend ingress')
     p.add_argument('--listen',default='0.0.0.0:8888')
     p.add_argument('--spill',default='/var/lib/pico')
@@ -115,7 +128,7 @@ def main():
     Path(a.spill).mkdir(parents=True,exist_ok=True)
     env=steering_environment(os.environ,a.steering)
     env.update(VISION_SDPA_OPT_IN='0',VISION_PRELOAD='1')
-    return supervise(command_plan(a.rank,a.fleet,a.listen,a.spill,vision=not a.no_vision),env)
+    return supervise(command_plan(a.rank,a.fleet,a.listen,a.spill,vision=not a.no_vision,max_output_tokens=a.max_output_tokens),env)
 
 if __name__=='__main__':
     raise SystemExit(main())
